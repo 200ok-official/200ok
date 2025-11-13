@@ -1,0 +1,24 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "200 OK - 軟體接案平台",
+  description: "專業的軟體開發接案媒合平台，連結優秀的開發者與案主",
+  keywords: ["接案", "軟體開發", "外包", "freelance", "案件媒合"],
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="zh-TW">
+      <body className={inter.className}>{children}</body>
+    </html>
+  );
+}
+

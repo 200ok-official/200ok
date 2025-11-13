@@ -28,18 +28,14 @@
 
 ## 2️⃣ Phase 2 — Database Schema
 ### Tasks
-- 使用 Prisma 或 Supabase Schema 建立資料表
+- 使用 upabase Schema 建立資料表
 - 五大資料表：User, Project, Bid, Message, Review
 - Enum、Foreign keys、Index 設定
 - 建立 migration
 
 ### Output Requirements
-- Prisma schema.prisma 或等效 SQL Schema
+- SQL Schema
 - Migration SQL
-
-### Completion Criteria
-- 成功執行 `npx prisma migrate dev`
-- Prisma Studio 能看到五個資料表
 
 ---
 

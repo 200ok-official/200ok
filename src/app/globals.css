@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary: #20263e;
+    --primary-dark: #181d30;
+    --primary-light: #2d3451;
+    --secondary: #e6dfcf;
+    --secondary-light: #f0ebe0;
+    --secondary-dark: #d4cab7;
+    --accent: #c5ae8c;
+    --accent-light: #d4c5a8;
+    --accent-dark: #b59b75;
+  }
+
+  body {
+    @apply bg-secondary text-primary antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold text-primary;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply rounded-lg px-6 py-3 font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary text-white hover:bg-primary-dark focus:ring-primary;
+  }
+
+  .btn-secondary {
+    @apply btn border-2 border-primary bg-transparent text-primary hover:bg-primary hover:text-white focus:ring-primary;
+  }
+
+  .btn-disabled {
+    @apply btn cursor-not-allowed bg-gray-300 text-gray-500 opacity-60;
+  }
+
+  .card {
+    @apply rounded-xl bg-white p-6 shadow-md transition-shadow hover:shadow-lg;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-20;
+  }
+
+  .label {
+    @apply mb-2 block text-sm font-semibold text-primary;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-sm font-medium;
+  }
+
+  .badge-primary {
+    @apply badge bg-primary text-white;
+  }
+
+  .badge-secondary {
+    @apply badge bg-accent text-white;
+  }
+
+  .badge-success {
+    @apply badge bg-green-500 text-white;
+  }
+
+  .badge-warning {
+    @apply badge bg-yellow-500 text-white;
+  }
+
+  .badge-error {
+    @apply badge bg-red-500 text-white;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Safari and Chrome */
+  }
+}
+
