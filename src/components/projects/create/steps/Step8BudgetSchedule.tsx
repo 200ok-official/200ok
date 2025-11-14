@@ -8,12 +8,15 @@ interface Props {
 }
 
 const BUDGET_PRESETS = [
-  { label: "$20k 以下", min: 10000, max: 20000 },
+  { label: "$20k 以下", min: 5000, max: 20000 },
   { label: "$20k - $50k", min: 20000, max: 50000 },
   { label: "$50k - $100k", min: 50000, max: 100000 },
   { label: "$100k - $200k", min: 100000, max: 200000 },
   { label: "$200k 以上", min: 200000, max: 500000 },
 ];
+
+const MIN_BUDGET = 5000;
+const MAX_BUDGET = 500000;
 
 const PAYMENT_METHODS = [
   { value: "one_time", label: "一次付清", desc: "專案完成後一次付款" },
@@ -22,11 +25,23 @@ const PAYMENT_METHODS = [
 ];
 
 export const Step8BudgetSchedule: React.FC<Props> = ({ data, updateData }) => {
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number, isMin: boolean = false, isMax: boolean = false) => {
+    let formatted = "";
     if (value >= 1000) {
-      return `$${(value / 1000).toFixed(0)}k`;
+      formatted = `$${(value / 1000).toFixed(0)}k`;
+    } else {
+      formatted = `$${value.toLocaleString()}`;
     }
-    return `$${value.toLocaleString()}`;
+    
+    // 顯示「以下」或「以上」
+    if (isMin && value <= MIN_BUDGET) {
+      return `${formatted} 以下`;
+    }
+    if (isMax && value >= MAX_BUDGET) {
+      return `${formatted} 以上`;
+    }
+    
+    return formatted;
   };
 
   const handleBudgetMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,38 +118,40 @@ export const Step8BudgetSchedule: React.FC<Props> = ({ data, updateData }) => {
                   <div className="text-center">
                     <p className="text-xs text-[#c5ae8c] mb-1">最低預算</p>
                     <p className="text-2xl font-bold text-[#20263e]">
-                      {formatCurrency(data.budgetMin || 40000)}
+                      {formatCurrency(data.budgetMin || 40000, true, false)}
                     </p>
                   </div>
                   <div className="text-[#c5ae8c]">~</div>
                   <div className="text-center">
                     <p className="text-xs text-[#c5ae8c] mb-1">最高預算</p>
                     <p className="text-2xl font-bold text-[#20263e]">
-                      {formatCurrency(data.budgetMax || 80000)}
+                      {formatCurrency(data.budgetMax || 80000, false, true)}
                     </p>
                   </div>
                 </div>
 
                 {/* 雙頭拉桿 - 使用 CSS 疊層實作 */}
-                <div className="relative h-10 flex items-center">
+                <div className="relative h-12 flex items-center">
                   {/* 背景軌道 */}
-                  <div className="absolute w-full h-2 bg-gray-200 rounded-lg"></div>
+                  <div className="absolute w-full h-2 bg-gray-200 rounded-lg" style={{ top: '50%', transform: 'translateY(-50%)' }}></div>
                   
                   {/* 已選中的範圍 */}
                   <div
                     className="absolute h-2 bg-[#20263e] rounded-lg"
                     style={{
-                      left: `${((data.budgetMin || 40000 - 10000) / (500000 - 10000)) * 100}%`,
-                      right: `${100 - ((data.budgetMax || 80000 - 10000) / (500000 - 10000)) * 100}%`,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      left: `${((data.budgetMin || 40000) - MIN_BUDGET) / (MAX_BUDGET - MIN_BUDGET) * 100}%`,
+                      right: `${100 - (((data.budgetMax || 80000) - MIN_BUDGET) / (MAX_BUDGET - MIN_BUDGET) * 100)}%`,
                     }}
                   ></div>
 
                   {/* 最低預算拉桿 */}
                   <input
                     type="range"
-                    min="10000"
-                    max="500000"
-                    step="10000"
+                    min={MIN_BUDGET}
+                    max={MAX_BUDGET}
+                    step="5000"
                     value={data.budgetMin || 40000}
                     onChange={(e) => {
                       const newMin = parseInt(e.target.value);
@@ -143,8 +160,10 @@ export const Step8BudgetSchedule: React.FC<Props> = ({ data, updateData }) => {
                         handleBudgetMinChange(e);
                       }
                     }}
-                    className="absolute w-full h-2 top-0 appearance-none bg-transparent rounded-lg cursor-pointer pointer-events-none"
+                    className="absolute w-full appearance-none bg-transparent rounded-lg cursor-pointer pointer-events-none"
                     style={{
+                      top: '50%',
+                      transform: 'translateY(-50%)',
                       zIndex: data.budgetMin > (data.budgetMax || 80000) - 50000 ? 5 : 3,
                     }}
                   />
@@ -152,9 +171,9 @@ export const Step8BudgetSchedule: React.FC<Props> = ({ data, updateData }) => {
                   {/* 最高預算拉桿 */}
                   <input
                     type="range"
-                    min="10000"
-                    max="500000"
-                    step="10000"
+                    min={MIN_BUDGET}
+                    max={MAX_BUDGET}
+                    step="5000"
                     value={data.budgetMax || 80000}
                     onChange={(e) => {
                       const newMax = parseInt(e.target.value);
@@ -163,8 +182,10 @@ export const Step8BudgetSchedule: React.FC<Props> = ({ data, updateData }) => {
                         handleBudgetMaxChange(e);
                       }
                     }}
-                    className="absolute w-full h-2 top-0 appearance-none bg-transparent rounded-lg cursor-pointer pointer-events-none"
+                    className="absolute w-full appearance-none bg-transparent rounded-lg cursor-pointer pointer-events-none"
                     style={{
+                      top: '50%',
+                      transform: 'translateY(-50%)',
                       zIndex: data.budgetMax <= (data.budgetMin || 40000) + 50000 ? 5 : 4,
                     }}
                   />
