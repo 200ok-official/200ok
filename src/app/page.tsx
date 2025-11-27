@@ -409,7 +409,7 @@ export default function HomePage() {
               </Button>
             </Link>
             <Link href="/projects">
-              <Button variant="primary" size="sm" className="bg-white text-[#313b62] hover:bg-gray-100">
+              <Button variant="outline" size="sm" className="border-white text-white hover:bg-white hover:text-[#20263e]">
                 查看案件
               </Button>
             </Link>
