@@ -153,7 +153,7 @@ export default function FreelancersPage() {
           </h3>
           <div className="flex flex-wrap gap-2">
             <Badge
-              variant={selectedSkill === null ? "primary" : "secondary"}
+              variant="default"
               className={`cursor-pointer px-4 py-2 font-semibold ${
                 selectedSkill === null
                   ? "bg-[#20263e] text-white"
@@ -166,7 +166,7 @@ export default function FreelancersPage() {
             {popularSkills.map((skill) => (
               <Badge
                 key={skill}
-                variant={selectedSkill === skill ? "primary" : "secondary"}
+                variant="default"
                 className={`cursor-pointer px-4 py-2 font-semibold transition ${
                   selectedSkill === skill
                     ? "bg-[#20263e] text-white"
@@ -261,7 +261,7 @@ export default function FreelancersPage() {
                         {freelancer.skills.slice(0, 3).map((skill, index) => (
                           <Badge
                             key={index}
-                            variant="secondary"
+                            variant="default"
                             className="text-xs bg-[#e6dfcf] text-[#20263e] border border-[#c5ae8c]"
                           >
                             {skill}
@@ -269,7 +269,7 @@ export default function FreelancersPage() {
                         ))}
                         {freelancer.skills.length > 3 && (
                           <Badge
-                            variant="secondary"
+                            variant="default"
                             className="text-xs bg-[#e6dfcf] text-[#20263e] border border-[#c5ae8c]"
                           >
                             +{freelancer.skills.length - 3}

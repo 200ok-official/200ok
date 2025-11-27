@@ -342,7 +342,7 @@ export default function RegisterPage() {
           <Card className="p-8 max-w-2xl mx-auto bg-white border-2 border-[#c5ae8c] shadow-lg">
             <div className="mb-6 flex items-center">
               <Badge
-                variant={selectedRole === "freelancer" ? "primary" : "secondary"}
+                variant="default"
                 className="text-base px-4 py-2"
               >
                 {selectedRole === "freelancer" ? "接案工程師" : "發案者"}

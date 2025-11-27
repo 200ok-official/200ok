@@ -6,6 +6,7 @@ interface BadgeProps {
   variant?: "default" | "success" | "warning" | "danger" | "info";
   size?: "sm" | "md" | "lg";
   className?: string;
+  onClick?: () => void;
 }
 
 export const Badge: React.FC<BadgeProps> = ({
@@ -13,6 +14,7 @@ export const Badge: React.FC<BadgeProps> = ({
   variant = "default",
   size = "md",
   className,
+  onClick,
 }) => {
   const baseStyles = "inline-flex items-center font-medium rounded-full";
 
@@ -31,7 +33,11 @@ export const Badge: React.FC<BadgeProps> = ({
   };
 
   return (
-    <span className={clsx(baseStyles, variants[variant], sizes[size], className)}>
+    <span
+      className={clsx(baseStyles, variants[variant], sizes[size], className)}
+      onClick={onClick}
+      style={onClick ? { cursor: "pointer" } : undefined}
+    >
       {children}
     </span>
   );

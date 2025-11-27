@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import { UnauthorizedError, ForbiddenError } from "./error.middleware";
 import { UserRole } from "@/types";
 
@@ -57,7 +57,7 @@ export function generateAccessToken(payload: {
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn,
     issuer: "200ok",
-  });
+  } as SignOptions);
 }
 
 /**
@@ -72,7 +72,7 @@ export function generateRefreshToken(payload: {
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn,
     issuer: "200ok",
-  });
+  } as SignOptions);
 }
 
 /**
