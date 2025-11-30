@@ -240,8 +240,9 @@ export default function HomePage() {
             <div className="relative">
               <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide px-2 scroll-smooth">
               {recommendedFreelancers.slice(0, 5).map((freelancer) => (
-                <Card key={freelancer.id} className="p-6 hover:shadow-lg transition-all border-2 border-[#c5ae8c] hover:border-[#20263e] flex-shrink-0 w-80">
-                  <div className="flex items-start space-x-4">
+                <Link key={freelancer.id} href={`/users/${freelancer.id}`}>
+                  <Card className="p-6 transition-all duration-300 border border-[#c5ae8c] flex-shrink-0 w-80 cursor-pointer hover:shadow-lg hover:-translate-y-1">
+                    <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0">
                       {freelancer.avatar_url ? (
                         <img
@@ -299,14 +300,10 @@ export default function HomePage() {
                           )}
                         </div>
                       )}
-                      <Link href={`/freelancers/${freelancer.id}`}>
-                        <Button size="sm" className="w-full bg-[#20263e] hover:bg-[#2d3550] text-white">
-                          查看檔案
-                        </Button>
-                      </Link>
                     </div>
                   </div>
                 </Card>
+                </Link>
               ))}
               </div>
               {/* 左右滑動提示 */}

@@ -199,11 +199,11 @@ export default function FreelancersPage() {
         {!loading && filteredFreelancers.length > 0 && (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredFreelancers.map((freelancer) => (
-              <Card
-                key={freelancer.id}
-                className="p-6 hover:shadow-xl transition-all bg-white border-2 border-[#c5ae8c] hover:border-[#20263e]"
-              >
-                <div className="flex items-start space-x-4">
+              <Link key={freelancer.id} href={`/users/${freelancer.id}`}>
+                <Card
+                  className="p-6 transition-all duration-300 bg-white border border-[#c5ae8c] cursor-pointer hover:shadow-lg hover:-translate-y-1"
+                >
+                  <div className="flex items-start space-x-4">
                   {/* Avatar */}
                   <div className="flex-shrink-0">
                     {freelancer.avatar_url ? (
@@ -280,20 +280,14 @@ export default function FreelancersPage() {
 
                     {/* Hourly Rate */}
                     {freelancer.hourly_rate && (
-                      <p className="text-sm font-semibold text-[#20263e] mb-3">
+                      <p className="text-sm font-semibold text-[#20263e]">
                         時薪：<span className="text-[#c5ae8c]">${freelancer.hourly_rate}</span> / 小時
                       </p>
                     )}
-
-                    {/* Action Button */}
-                    <Link href={`/freelancers/${freelancer.id}`}>
-                      <Button className="w-full py-2 text-sm bg-[#20263e] hover:bg-[#2d3550] text-white font-semibold">
-                        查看個人檔案
-                      </Button>
-                    </Link>
                   </div>
                 </div>
               </Card>
+              </Link>
             ))}
           </div>
         )}
