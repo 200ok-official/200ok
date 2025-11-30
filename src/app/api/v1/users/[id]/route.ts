@@ -1,7 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { UserService } from "@/services/user.service";
 import { asyncHandler } from "@/middleware/error.middleware";
-import { successResponse } from "@/lib/response";
 
 /**
  * 取得使用者公開資料
@@ -18,7 +17,23 @@ export const GET = asyncHandler(
     const userService = new UserService();
     const user = await userService.getUserById(userId);
 
-    return successResponse(user);
+    // 強制不緩存
+    const response = NextResponse.json(
+      {
+        success: true,
+        data: user,
+      },
+      {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      }
+    );
+
+    return response;
   }
 );
 

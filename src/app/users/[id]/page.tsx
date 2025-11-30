@@ -79,14 +79,17 @@ export default function UserProfilePage() {
 
   const fetchUserData = async () => {
     try {
-      const url = `/api/v1/users/${userId}`;
+      const url = `/api/v1/users/${userId}?t=${Date.now()}`;
       console.log("Fetching from:", url);
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        cache: 'no-store',
+      });
       console.log("Response status:", response.status);
       
       if (response.ok) {
         const data = await response.json();
         console.log("Response data:", data);
+        console.log("Bio from API:", data.data?.bio?.substring(0, 50));
         if (data.success && data.data) {
           setUser(data.data);
         } else {
