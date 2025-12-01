@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 
@@ -58,8 +59,7 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    // TODO: 實作 Google OAuth
-    window.location.href = "/api/auth/google";
+    signIn("google", { callbackUrl: "/" });
   };
 
   return (
