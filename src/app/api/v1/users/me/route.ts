@@ -8,9 +8,11 @@ import { successResponse, updatedResponse } from "@/lib/response";
 
 const updateUserSchema = z.object({
   name: z.string().min(2, "姓名至少需要 2 個字元").max(100).optional(),
+  phone: z.string().optional(),
   bio: z.string().max(1000, "自我介紹過長").optional(),
   skills: z.array(z.string()).optional(),
   portfolio_links: z.array(z.string().url("請輸入有效的連結")).optional(),
+  roles: z.array(z.enum(["freelancer", "client", "admin"])).optional(),
 });
 
 /**

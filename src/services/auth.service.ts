@@ -57,7 +57,7 @@ export class AuthService extends BaseService {
     // 雜湊密碼
     const password_hash = await hashPassword(password);
 
-    // 建立使用者
+    // 建立使用者（email_verified 預設為 false）
     const { data: user, error } = await this.db
       .from("users")
       .insert({
@@ -65,6 +65,7 @@ export class AuthService extends BaseService {
         email,
         password_hash,
         roles,
+        email_verified: false,
       })
       .select()
       .single();
@@ -72,6 +73,11 @@ export class AuthService extends BaseService {
     if (error || !user) {
       throw new BadRequestError(`註冊失敗: ${error?.message}`);
     }
+
+    // 發送驗證郵件（不阻塞註冊流程）
+    this.sendVerificationEmail(user.id, user.email, user.name).catch(error => {
+      console.error("[REGISTER_SEND_EMAIL_ERROR]", error);
+    });
 
     // 生成 tokens
     const access_token = generateAccessToken({
@@ -126,6 +132,11 @@ export class AuthService extends BaseService {
 
     if (!isPasswordValid) {
       throw new UnauthorizedError("Email 或密碼錯誤");
+    }
+
+    // 檢查 email 是否已驗證
+    if (!user.email_verified) {
+      throw new UnauthorizedError("請先驗證您的電子郵件，檢查您的信箱以完成驗證");
     }
 
     // 生成 tokens
@@ -314,16 +325,145 @@ export class AuthService extends BaseService {
   }
 
   /**
-   * 驗證 Email
+   * 生成信箱驗證 token 並發送郵件
    */
-  async verifyEmail(userId: string): Promise<void> {
-    const { error } = await this.db
-      .from("users")
-      .update({ email_verified: true })
-      .eq("id", userId);
+  async sendVerificationEmail(userId: string, email: string, name: string): Promise<{ success: boolean; message: string }> {
+    try {
+      // 生成驗證 token（使用 crypto 生成隨機字串）
+      const token = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      
+      // 儲存 token 到資料庫（24小時有效）
+      const { error } = await this.db
+        .from("email_verification_tokens")
+        .insert({
+          user_id: userId,
+          token,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        });
 
-    if (error) {
-      throw new BadRequestError(`驗證 Email 失敗: ${error.message}`);
+      if (error) {
+        console.error("[SEND_VERIFICATION_EMAIL_ERROR]", error);
+        return { success: false, message: "儲存驗證 token 失敗" };
+      }
+
+      // 生成驗證連結
+      const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${token}`;
+      
+      // 使用 Resend 發送驗證郵件
+      const { sendVerificationEmail } = await import("@/lib/email");
+      const emailResult = await sendVerificationEmail(email, name, verificationUrl);
+
+      if (!emailResult.success) {
+        console.error("[SEND_VERIFICATION_EMAIL_ERROR]", emailResult.error);
+        // 即使郵件發送失敗，也不刪除 token，讓使用者可以重新發送
+        return { success: false, message: "發送驗證郵件失敗，請稍後重試" };
+      }
+
+      console.log(`[EMAIL] 驗證郵件已發送到 ${email}`);
+      return { success: true, message: "驗證郵件已發送" };
+    } catch (error: any) {
+      console.error("[SEND_VERIFICATION_EMAIL_ERROR]", error);
+      return { success: false, message: error.message || "發送驗證郵件失敗" };
+    }
+  }
+
+  /**
+   * 驗證 Email Token
+   */
+  async verifyEmail(token: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      // 查找驗證 token
+      const { data: tokenRecord, error: tokenError } = await this.db
+        .from("email_verification_tokens")
+        .select("*")
+        .eq("token", token)
+        .single();
+
+      if (tokenError || !tokenRecord) {
+        return { success: false, message: "無效的驗證 token" };
+      }
+
+      // 檢查是否過期
+      if (new Date() > new Date(tokenRecord.expires_at)) {
+        await this.db.from("email_verification_tokens").delete().eq("id", tokenRecord.id);
+        return { success: false, message: "驗證連結已過期" };
+      }
+
+      // 更新使用者狀態
+      const { error: updateError } = await this.db
+        .from("users")
+        .update({ email_verified: true })
+        .eq("id", tokenRecord.user_id);
+
+      if (updateError) {
+        return { success: false, message: "更新驗證狀態失敗" };
+      }
+
+      // 刪除已使用的 token
+      await this.db.from("email_verification_tokens").delete().eq("id", tokenRecord.id);
+
+      return { success: true };
+    } catch (error: any) {
+      console.error("[VERIFY_EMAIL_ERROR]", error);
+      return { success: false, message: error.message || "驗證失敗" };
+    }
+  }
+
+  /**
+   * 重新發送驗證郵件（帶有速率限制）
+   */
+  async resendVerificationEmail(email: string): Promise<{ success: boolean; message: string }> {
+    try {
+      // 查找使用者
+      const { data: user, error: userError } = await this.db
+        .from("users")
+        .select("id, name, email, email_verified")
+        .eq("email", email)
+        .single();
+
+      if (userError || !user) {
+        return { success: false, message: "找不到該電子郵件的帳號" };
+      }
+
+      if (user.email_verified) {
+        return { success: false, message: "此帳號已經完成驗證" };
+      }
+
+      // 檢查重發限制：查看最近的 token 建立時間
+      const { data: recentToken } = await this.db
+        .from("email_verification_tokens")
+        .select("created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (recentToken) {
+        const lastSentTime = new Date(recentToken.created_at).getTime();
+        const now = Date.now();
+        const timeDiff = now - lastSentTime;
+        const cooldownMinutes = 2; // 2 分鐘冷卻時間
+        const cooldownMs = cooldownMinutes * 60 * 1000;
+
+        if (timeDiff < cooldownMs) {
+          const remainingSeconds = Math.ceil((cooldownMs - timeDiff) / 1000);
+          return {
+            success: false,
+            message: `請稍後再試，您可以在 ${remainingSeconds} 秒後重新發送驗證郵件`,
+          };
+        }
+      }
+
+      // 刪除舊的驗證 token
+      await this.db.from("email_verification_tokens").delete().eq("user_id", user.id);
+
+      // 發送新的驗證郵件
+      return await this.sendVerificationEmail(user.id, user.email, user.name);
+    } catch (error: any) {
+      console.error("[RESEND_VERIFICATION_EMAIL_ERROR]", error);
+      return { success: false, message: error.message || "重新發送驗證郵件失敗" };
     }
   }
 
