@@ -106,9 +106,13 @@ export class BidService extends BaseService {
     // 創建提案對話（自動扣款 100 代幣）
     const conversation = await this.conversationService.createProposalConversation(
       freelancerId,
-      (project as any).client_id,
       projectId,
-      (bid as any).id
+      data.proposal_content,
+      {
+        amount: data.proposed_amount,
+        estimated_days: data.estimated_days,
+        proposal: data.proposal_content,
+      }
     );
 
     // 發送初始提案訊息
