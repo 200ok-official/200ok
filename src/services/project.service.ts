@@ -8,52 +8,119 @@ import {
 export type ProjectStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'closed' | 'cancelled';
 
 export interface CreateProjectData {
+  // 基本資訊
   title: string;
   description: string;
+  project_mode?: 'new_development' | 'maintenance_modification';
   project_type?: string;
+  
+  // 預算與時程
   budget_min: number;
   budget_max: number;
   budget_estimate_only?: boolean;
   start_date?: Date;
   deadline?: Date;
   deadline_flexible?: boolean;
-  required_skills?: string[];
-  project_brief?: any;
-  reference_links?: string[];
-  design_style?: string;
   payment_method?: string;
   payment_schedule?: any;
-  deliverables?: string[];
-  communication_preference?: string[];
+  
+  // 共用欄位
+  required_skills?: string[];
+  reference_links?: string[];
   special_requirements?: string;
   tag_ids?: string[];
+  
+  // 全新開發專案欄位
+  new_usage_scenario?: string;
+  new_goals?: string;
+  new_features?: string[];
+  new_outputs?: string[];
+  new_outputs_other?: string;
+  new_design_style?: string[];
+  new_integrations?: string[];
+  new_integrations_other?: string;
+  new_deliverables?: string[];
+  new_communication_preference?: string[];
+  new_special_requirements?: string;
+  new_concerns?: string[];
+  
+  // 修改維護專案欄位
+  maint_system_name?: string;
+  maint_system_purpose?: string;
+  maint_current_users_count?: string;
+  maint_system_age?: string;
+  maint_current_problems?: string;
+  maint_desired_improvements?: string;
+  maint_new_features?: string;
+  maint_known_tech_stack?: string[];
+  maint_has_source_code?: boolean;
+  maint_has_documentation?: boolean;
+  maint_can_provide_access?: boolean;
+  maint_technical_contact?: string;
+  maint_expected_outcomes?: string;
+  maint_success_criteria?: string;
+  maint_additional_notes?: string;
 }
 
 export interface UpdateProjectData {
+  // 基本資訊
   title?: string;
   description?: string;
+  project_mode?: 'new_development' | 'maintenance_modification';
   project_type?: string;
+  
+  // 預算與時程
   budget_min?: number;
   budget_max?: number;
   budget_estimate_only?: boolean;
   start_date?: Date;
   deadline?: Date;
   deadline_flexible?: boolean;
-  required_skills?: string[];
-  project_brief?: any;
-  reference_links?: string[];
-  design_style?: string;
   payment_method?: string;
   payment_schedule?: any;
-  deliverables?: string[];
-  communication_preference?: string[];
+  
+  // 共用欄位
+  required_skills?: string[];
+  reference_links?: string[];
   special_requirements?: string;
   status?: ProjectStatus;
   tag_ids?: string[];
+  
+  // 全新開發專案欄位
+  new_usage_scenario?: string;
+  new_goals?: string;
+  new_features?: string[];
+  new_outputs?: string[];
+  new_outputs_other?: string;
+  new_design_style?: string[];
+  new_integrations?: string[];
+  new_integrations_other?: string;
+  new_deliverables?: string[];
+  new_communication_preference?: string[];
+  new_special_requirements?: string;
+  new_concerns?: string[];
+  
+  // 修改維護專案欄位
+  maint_system_name?: string;
+  maint_system_purpose?: string;
+  maint_current_users_count?: string;
+  maint_system_age?: string;
+  maint_current_problems?: string;
+  maint_desired_improvements?: string;
+  maint_new_features?: string;
+  maint_known_tech_stack?: string[];
+  maint_has_source_code?: boolean;
+  maint_has_documentation?: boolean;
+  maint_can_provide_access?: boolean;
+  maint_technical_contact?: string;
+  maint_expected_outcomes?: string;
+  maint_success_criteria?: string;
+  maint_additional_notes?: string;
 }
 
 export interface SearchProjectsParams {
   status?: ProjectStatus | ProjectStatus[];
+  project_mode?: 'new_development' | 'maintenance_modification';
   skills?: string[];
   tags?: string[];
   budget_min?: number;
@@ -355,6 +422,7 @@ export class ProjectService extends BaseService {
   async searchProjects(params: SearchProjectsParams) {
     const {
       status,
+      project_mode,
       skills,
       tags,
       budget_min,
@@ -403,6 +471,11 @@ export class ProjectService extends BaseService {
     }
     if (budget_max !== undefined) {
       query = query.lte("budget_min", budget_max);
+    }
+
+    // 專案模式篩選
+    if (project_mode) {
+      query = query.eq("project_mode", project_mode);
     }
 
     // 專案類型篩選

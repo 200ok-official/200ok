@@ -61,21 +61,20 @@ export const Step4Features: React.FC<Props> = ({ data, updateData }) => {
       {/* 功能列表 */}
       {data.features && data.features.length > 0 && (
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-[#20263e] mb-3">
+          <p className="text-sm font-semibold text-[#20263e]">
             已新增的功能：
           </p>
-          <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
             {data.features.map((feature: string, index: number) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-3 bg-white rounded-lg border border-[#c5ae8c]"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#c5ae8c] bg-white text-xs md:text-sm text-[#20263e]"
               >
-                <span className="text-[#20263e]">
-                  {index + 1}. {feature}
-                </span>
+                <span>{feature}</span>
                 <button
                   onClick={() => handleRemoveFeature(index)}
-                  className="text-red-500 hover:text-red-700 px-2"
+                  className="text-red-500 hover:text-red-700 text-xs"
+                  aria-label="移除功能"
                 >
                   ✕
                 </button>
@@ -86,20 +85,27 @@ export const Step4Features: React.FC<Props> = ({ data, updateData }) => {
       )}
 
       {/* 範例提示 */}
-      <div className="mt-6 p-4 bg-[#f5f3ed] rounded-lg">
+      <div className="mt-4 p-4 bg-[#f5f3ed] rounded-lg">
         <p className="text-sm font-semibold text-[#20263e] mb-2">
           功能範例參考：
         </p>
-        <ul className="text-sm text-[#c5ae8c] space-y-1 list-disc list-inside">
-          <li>會員註冊登入</li>
-          <li>瀏覽商品 / 服務</li>
-          <li>加入購物車</li>
-          <li>線上付款</li>
-          <li>預約時間</li>
-          <li>上傳檔案 / 圖片</li>
-          <li>留言 / 評論</li>
-          <li>查看歷史紀錄</li>
-        </ul>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs md:text-sm text-[#c5ae8c]">
+          {[
+            "會員註冊登入",
+            "瀏覽商品 / 服務",
+            "加入購物車",
+            "線上付款",
+            "預約時間",
+            "上傳檔案 / 圖片",
+            "留言 / 評論",
+            "查看歷史紀錄",
+          ].map((item, idx) => (
+            <div key={idx} className="flex items-start gap-1.5">
+              <span className="mt-0.5 text-[10px]">•</span>
+              <span>{item}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* 小提示 */}

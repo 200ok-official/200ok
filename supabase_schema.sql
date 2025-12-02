@@ -5,6 +5,7 @@
 
 CREATE TYPE user_role AS ENUM ('freelancer', 'client', 'admin');
 CREATE TYPE project_status AS ENUM ('draft', 'open', 'in_progress', 'completed', 'closed', 'cancelled');
+CREATE TYPE project_mode AS ENUM ('new_development', 'maintenance_modification');
 CREATE TYPE bid_status AS ENUM ('pending', 'accepted', 'rejected');
 CREATE TYPE payment_status AS ENUM ('pending', 'completed', 'refunded', 'disputed');
 CREATE TYPE notification_type AS ENUM ('bid_received', 'bid_accepted', 'bid_rejected', 'message', 'project_status_change', 'review_reminder', 'payment_received', 'tag_notification');
@@ -45,27 +46,93 @@ CREATE TABLE refresh_tokens (
 CREATE TABLE projects (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  
+  -- 基本資訊（必填）
   title VARCHAR(150) NOT NULL,
   description TEXT NOT NULL,
-  ai_summary TEXT,
+  project_mode project_mode NOT NULL DEFAULT 'new_development',
   project_type VARCHAR(50),
+  
+  -- AI 生成的摘要
+  ai_summary TEXT,
+  
+  -- 預算與時程
   budget_min DECIMAL(10,2) NOT NULL,
   budget_max DECIMAL(10,2) NOT NULL,
   budget_estimate_only BOOLEAN DEFAULT false,
   start_date TIMESTAMP,
   deadline TIMESTAMP,
   deadline_flexible BOOLEAN DEFAULT false,
-  required_skills TEXT[],
-  project_brief JSONB,
-  reference_links TEXT[],
-  design_style TEXT,
   payment_method VARCHAR(50),
   payment_schedule JSONB,
-  deliverables TEXT[],
-  communication_preference TEXT[],
+  
+  -- 技能需求
+  required_skills TEXT[],
+  
+  -- === 全新開發專案獨立欄位 ===
+  -- Step 2: 使用場景
+  new_usage_scenario TEXT,
+  
+  -- Step 3: 目標
+  new_goals TEXT,
+  
+  -- Step 4: 功能需求
+  new_features TEXT[],
+  
+  -- Step 5: 交付項目
+  new_outputs TEXT[],
+  new_outputs_other TEXT,
+  
+  -- Step 6: 參考資料
+  new_design_style TEXT[],
+  
+  -- Step 7: 整合需求
+  new_integrations TEXT[],
+  new_integrations_other TEXT,
+  
+  -- Step 9: 交付物與溝通
+  new_deliverables TEXT[],
+  new_communication_preference TEXT[],
+  
+  -- Step 10: 其他
+  new_special_requirements TEXT,
+  new_concerns TEXT[],
+  
+  -- === 修改維護專案獨立欄位 ===
+  -- Step 2: 當前系統資訊
+  maint_system_name TEXT,                    -- 系統名稱
+  maint_system_purpose TEXT,                 -- 系統用途
+  maint_current_users_count VARCHAR(50),     -- 使用人數範圍
+  maint_system_age VARCHAR(50),              -- 系統使用時間
+  
+  -- Step 3: 問題與需求
+  maint_current_problems TEXT,               -- 目前遇到的問題
+  maint_desired_improvements TEXT,           -- 希望改善的地方
+  maint_new_features TEXT,                   -- 希望新增的功能
+  
+  -- Step 4: 技術資訊
+  maint_known_tech_stack TEXT[],             -- 已知的技術棧
+  maint_has_source_code BOOLEAN,             -- 是否有原始碼
+  maint_has_documentation BOOLEAN,           -- 是否有文件
+  maint_can_provide_access BOOLEAN,          -- 是否可提供存取
+  maint_technical_contact TEXT,              -- 技術聯絡人資訊
+  
+  -- Step 5: 預算時程（與全新開發共用上方欄位）
+  
+  -- Step 6: 交付期望
+  maint_expected_outcomes TEXT,              -- 預期成果
+  maint_success_criteria TEXT,               -- 成功標準
+  maint_additional_notes TEXT,               -- 補充說明
+  
+  -- 共用欄位
+  reference_links TEXT[],
   special_requirements TEXT,
+  
+  -- 狀態
   status project_status DEFAULT 'draft',
   accepted_bid_id UUID UNIQUE,
+  
+  -- 時間戳記
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
