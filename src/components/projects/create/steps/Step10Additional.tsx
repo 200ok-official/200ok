@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getProjectTypeHints } from "../config/projectTypeHints";
 
 interface Props {
   data: any;
@@ -18,6 +19,8 @@ const CONCERN_OPTIONS = [
 ];
 
 export const Step10Additional: React.FC<Props> = ({ data, updateData }) => {
+  const hints = getProjectTypeHints(data.projectType);
+  
   const handleConcernToggle = (value: string) => {
     const concerns = data.concerns || [];
     if (concerns.includes(value)) {

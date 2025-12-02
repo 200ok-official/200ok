@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { getProjectTypeHints } from "../config/projectTypeHints";
 
 interface Props {
   data: any;
@@ -9,6 +10,8 @@ interface Props {
 }
 
 export const Step4Features: React.FC<Props> = ({ data, updateData }) => {
+  const hints = getProjectTypeHints(data.projectType);
+  const featureExamples = hints.features.examples;
   const [newFeature, setNewFeature] = useState("");
 
   const handleAddFeature = () => {
@@ -50,7 +53,7 @@ export const Step4Features: React.FC<Props> = ({ data, updateData }) => {
           value={newFeature}
           onChange={(e) => setNewFeature(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="例如：瀏覽商品、上傳作品、線上報名..."
+          placeholder={hints.features.placeholder}
           className="flex-1 px-4 py-3 rounded-lg border border-[#c5ae8c] focus:border-[#20263e] focus:outline-none focus:ring-2 focus:ring-[#20263e] focus:ring-opacity-20"
         />
         <Button onClick={handleAddFeature} disabled={!newFeature.trim()}>
@@ -90,16 +93,7 @@ export const Step4Features: React.FC<Props> = ({ data, updateData }) => {
           功能範例參考：
         </p>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs md:text-sm text-[#c5ae8c]">
-          {[
-            "會員註冊登入",
-            "瀏覽商品 / 服務",
-            "加入購物車",
-            "線上付款",
-            "預約時間",
-            "上傳檔案 / 圖片",
-            "留言 / 評論",
-            "查看歷史紀錄",
-          ].map((item, idx) => (
+          {featureExamples.map((item, idx) => (
             <div key={idx} className="flex items-start gap-1.5">
               <span className="mt-0.5 text-[10px]">•</span>
               <span>{item}</span>
@@ -111,7 +105,7 @@ export const Step4Features: React.FC<Props> = ({ data, updateData }) => {
       {/* 小提示 */}
       <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <p className="text-sm text-blue-800">
-          <strong>💡 小提示：</strong> 每項功能用一句話簡單描述即可，不需要太技術性的說明。
+          <strong>💡 小提示：</strong> {hints.features.hint}
         </p>
       </div>
     </div>

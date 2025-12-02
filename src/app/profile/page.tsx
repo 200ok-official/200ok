@@ -175,6 +175,7 @@ export default function ProfilePage() {
         // 如果已有此角色，移除（但至少保留一個角色）
         if (currentRoles.length === 1) {
           setError("您至少需要保留一個身份");
+          setTimeout(() => setError(""), 3000);
           return;
         }
         newRoles = currentRoles.filter((r) => r !== role);
@@ -182,6 +183,11 @@ export default function ProfilePage() {
         // 新增角色
         newRoles = [...currentRoles, role];
       }
+
+      // 立即更新本地狀態以提供即時反饋
+      setProfile((prev) => prev ? { ...prev, roles: newRoles } : null);
+      setError("");
+      setSuccess("");
 
       const response = await fetch("/api/v1/users/me", {
         method: "PUT",
@@ -193,13 +199,16 @@ export default function ProfilePage() {
       });
 
       if (!response.ok) {
+        // 如果失敗，恢復原狀態
+        setProfile((prev) => prev ? { ...prev, roles: currentRoles } : null);
         throw new Error("更新身份失敗");
       }
 
-      await fetchProfile();
-      setSuccess("身份已更新！");
+      setSuccess(`✓ 身份已更新！目前選擇：${newRoles.map(r => r === 'freelancer' ? '接案工程師' : '發案者').join('、')}`);
+      setTimeout(() => setSuccess(""), 3000);
     } catch (error: any) {
       setError(error.message || "更新身份失敗");
+      setTimeout(() => setError(""), 3000);
     }
   };
 

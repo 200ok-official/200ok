@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { getProjectTypeHints } from "../config/projectTypeHints";
 
 interface Props {
   data: any;
@@ -20,6 +21,7 @@ const DESIGN_STYLES = [
 ];
 
 export const Step6Reference: React.FC<Props> = ({ data, updateData }) => {
+  const hints = getProjectTypeHints(data.projectType);
   const [newLink, setNewLink] = useState("");
 
   const handleAddLink = () => {
@@ -132,7 +134,7 @@ export const Step6Reference: React.FC<Props> = ({ data, updateData }) => {
       {/* 小提示 */}
       <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <p className="text-sm text-blue-800">
-          <strong>💡 小提示：</strong> 提供參考案例能幫助接案者更準確理解您的期望，但這不是必填項目。
+          <strong>💡 小提示：</strong> {hints.reference.hint}
         </p>
       </div>
     </div>

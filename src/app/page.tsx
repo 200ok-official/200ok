@@ -45,23 +45,35 @@ export default function HomePage() {
     setLoading(true);
     try {
       // 獲取最新案件
-      const projectsResponse = await fetch("/api/v1/projects?limit=5&status=open");
-      if (projectsResponse.ok) {
-        const projectsData = await projectsResponse.json();
-        // API 回應格式: { success: true, data: { projects: [...], pagination: {...} } }
-        setRecentProjects(projectsData.data?.projects || []);
-      } else {
-        console.error("Failed to fetch projects:", projectsResponse.status);
+      try {
+        const projectsResponse = await fetch("/api/v1/projects?limit=5&status=open");
+        if (projectsResponse.ok) {
+          const projectsData = await projectsResponse.json();
+          // API 回應格式: { success: true, data: { projects: [...], pagination: {...} } }
+          setRecentProjects(projectsData.data?.projects || []);
+        } else {
+          console.error("Failed to fetch projects:", projectsResponse.status);
+          setRecentProjects([]); // 設定為空陣列，讓頁面繼續顯示
+        }
+      } catch (projectError) {
+        console.error("Error fetching projects:", projectError);
+        setRecentProjects([]); // 設定為空陣列，讓頁面繼續顯示
       }
 
       // 獲取推薦接案工程師
-      const freelancersResponse = await fetch("/api/v1/users/search?limit=5");
-      if (freelancersResponse.ok) {
-        const freelancersData = await freelancersResponse.json();
-        // API 回應格式: { success: true, data: [...], pagination: {...} }
-        setRecommendedFreelancers(freelancersData.data || []);
-      } else {
-        console.error("Failed to fetch freelancers:", freelancersResponse.status);
+      try {
+        const freelancersResponse = await fetch("/api/v1/users/search?limit=5");
+        if (freelancersResponse.ok) {
+          const freelancersData = await freelancersResponse.json();
+          // API 回應格式: { success: true, data: [...], pagination: {...} }
+          setRecommendedFreelancers(freelancersData.data || []);
+        } else {
+          console.error("Failed to fetch freelancers:", freelancersResponse.status);
+          setRecommendedFreelancers([]); // 設定為空陣列，讓頁面繼續顯示
+        }
+      } catch (freelancerError) {
+        console.error("Error fetching freelancers:", freelancerError);
+        setRecommendedFreelancers([]); // 設定為空陣列，讓頁面繼續顯示
       }
     } catch (error) {
       console.error("Failed to fetch home data:", error);

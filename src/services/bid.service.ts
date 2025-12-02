@@ -1,4 +1,5 @@
 import { BaseService } from "./base.service";
+import { ConversationService } from "./conversation.service";
 import {
   NotFoundError,
   BadRequestError,
@@ -9,8 +10,9 @@ export type BidStatus = 'pending' | 'accepted' | 'rejected';
 export type ProjectStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'closed' | 'cancelled';
 
 export interface CreateBidData {
-  proposal: string;
-  bid_amount: number;
+  proposal_content: string;
+  proposed_amount: number;
+  estimated_days: number;
 }
 
 export interface UpdateBidData {
@@ -19,8 +21,15 @@ export interface UpdateBidData {
 }
 
 export class BidService extends BaseService {
+  private conversationService: ConversationService;
+
+  constructor() {
+    super();
+    this.conversationService = new ConversationService();
+  }
+
   /**
-   * 建立投標
+   * 建立投標（含付費對話創建）
    */
   async createBid(
     projectId: string,
@@ -62,8 +71,8 @@ export class BidService extends BaseService {
     // 驗證報價是否在預算範圍內（如果不是「先估型」）
     if (!(project as any).budget_estimate_only) {
       if (
-        data.bid_amount < (project as any).budget_min ||
-        data.bid_amount > (project as any).budget_max
+        data.proposed_amount < (project as any).budget_min ||
+        data.proposed_amount > (project as any).budget_max
       ) {
         throw new BadRequestError(
           `報價需在預算範圍內：$${(project as any).budget_min} - $${(project as any).budget_max}`
@@ -77,8 +86,9 @@ export class BidService extends BaseService {
       .insert({
         project_id: projectId,
         freelancer_id: freelancerId,
-        proposal: data.proposal,
-        bid_amount: data.bid_amount,
+        proposal: data.proposal_content,
+        bid_amount: data.proposed_amount,
+        estimated_days: data.estimated_days,
       })
       .select(
         `
@@ -93,17 +103,35 @@ export class BidService extends BaseService {
       throw new BadRequestError(`投標失敗: ${error?.message}`);
     }
 
+    // 創建提案對話（自動扣款 100 代幣）
+    const conversation = await this.conversationService.createProposalConversation(
+      freelancerId,
+      (project as any).client_id,
+      projectId,
+      (bid as any).id
+    );
+
+    // 發送初始提案訊息
+    await this.conversationService.sendMessage(
+      conversation.id,
+      freelancerId,
+      data.proposal_content
+    );
+
     // 建立通知給發案者
     await this.db.from("notifications").insert({
       user_id: (project as any).client_id,
       type: "bid_received",
-      title: "收到新投標",
-      content: `${(bid as any).freelancer.name} 對您的案件「${(project as any).title}」進行了投標`,
+      title: "收到新提案",
+      content: `${(bid as any).freelancer.name} 對您的案件「${(project as any).title}」提交了提案`,
       related_project_id: projectId,
       related_bid_id: (bid as any).id,
     });
 
-    return bid;
+    return {
+      ...bid,
+      conversation_id: conversation.id,
+    };
   }
 
   /**

@@ -59,10 +59,15 @@ export class ValidationError extends ApiError {
  * 統一錯誤處理函式
  */
 export function handleError(error: unknown) {
-  console.error("API Error:", error);
-
   // API Error
   if (error instanceof ApiError) {
+    // 對於 401 和 403 等預期的錯誤，只記錄簡單訊息，不印 stack trace
+    if (error.statusCode === 401 || error.statusCode === 403) {
+      // 靜默處理，不印到 console
+    } else {
+      console.error("API Error:", error);
+    }
+    
     return NextResponse.json(
       {
         success: false,
@@ -72,6 +77,9 @@ export function handleError(error: unknown) {
       { status: error.statusCode }
     );
   }
+  
+  // 其他錯誤才印出完整資訊
+  console.error("API Error:", error);
 
   // Database Errors (Supabase)
   if (error && typeof error === "object" && "code" in error) {

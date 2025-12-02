@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -9,6 +10,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { StarRating } from "@/components/ui/StarRating";
+import { confirmPayment, paymentPresets } from "@/utils/paymentConfirm";
 
 interface User {
   id: string;
@@ -56,6 +58,8 @@ interface UserStats {
 
 export default function UserProfilePage() {
   const params = useParams();
+  const router = useRouter();
+  const { data: session, status: sessionStatus } = useSession();
   const userId = params.id as string;
 
   const [user, setUser] = useState<User | null>(null);
@@ -63,6 +67,28 @@ export default function UserProfilePage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [unlocking, setUnlocking] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [existingConversation, setExistingConversation] = useState<any>(null);
+
+  // 檢查登入狀態（支援 NextAuth 和 localStorage）
+  useEffect(() => {
+    // 優先使用 NextAuth session
+    if (session?.user) {
+      setCurrentUserId((session.user as any).id);
+    } else {
+      // 回退到 localStorage
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          setCurrentUserId(parsedUser.id);
+        } catch (e) {
+          console.error('Failed to parse user data:', e);
+        }
+      }
+    }
+  }, [session]);
 
   useEffect(() => {
     if (userId) {
@@ -76,6 +102,34 @@ export default function UserProfilePage() {
       setLoading(false);
     }
   }, [userId]);
+
+  // 檢查是否已經有連接存在
+  const checkExistingConversation = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token || !currentUserId) return;
+
+      // 使用新的 API 檢查連接狀態
+      const response = await fetch(`/api/v1/connections/check?target_user_id=${userId}&type=direct`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const { data } = await response.json();
+        setExistingConversation(data);
+      }
+    } catch (error) {
+      console.error('Failed to check existing conversation:', error);
+    }
+  }, [userId, currentUserId]);
+
+  useEffect(() => {
+    if (currentUserId && userId && currentUserId !== userId) {
+      checkExistingConversation();
+    }
+  }, [currentUserId, userId, checkExistingConversation]);
 
   const fetchUserData = async () => {
     try {
@@ -183,6 +237,56 @@ export default function UserProfilePage() {
   const isFreelancer = user.roles.includes("freelancer");
   const isClient = user.roles.includes("client");
   const displayRating = user.rating || stats?.rating || 0;
+  const isOwnProfile = currentUserId === userId;
+
+  const handleUnlockContact = async () => {
+    if (!currentUserId) {
+      // 儲存當前頁面，登入後返回
+      localStorage.setItem('returnUrl', window.location.pathname);
+      router.push('/login');
+      return;
+    }
+
+    const confirmed = await confirmPayment(
+      paymentPresets.directContact(user.name)
+    );
+
+    if (!confirmed) return;
+
+    setUnlocking(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        alert('❌ 請先登入');
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch('/api/v1/conversations/direct', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ recipient_id: userId }),
+      });
+
+      if (response.ok) {
+        const { data } = await response.json();
+        alert('✅ 已解鎖聯絡方式！已扣除 200 代幣');
+        // 重新檢查連接狀態
+        await checkExistingConversation();
+        router.push(`/conversations/${data.id}`);
+      } else {
+        const error = await response.json();
+        alert(`❌ 解鎖失敗：${error.error || '未知錯誤'}`);
+      }
+    } catch (error: any) {
+      alert(`❌ 解鎖失敗：${error.message || '請稍後再試'}`);
+    } finally {
+      setUnlocking(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -243,6 +347,53 @@ export default function UserProfilePage() {
                     )}
                   </div>
                 </div>
+
+                {/* 聯絡按鈕（非本人） */}
+                {!isOwnProfile && currentUserId && (
+                  <div className="mb-4">
+                    {existingConversation?.status === 'connected' && existingConversation?.conversation_id ? (
+                      <Button
+                        onClick={() => router.push(`/conversations/${existingConversation.conversation_id}`)}
+                        variant="primary"
+                        className="w-full md:w-auto"
+                      >
+                        💬 開始對話
+                      </Button>
+                    ) : existingConversation?.status === 'pending' ? (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <p className="text-sm text-yellow-800">
+                          ⏳ 等待對方回應中...
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <Button
+                          onClick={handleUnlockContact}
+                          disabled={unlocking}
+                          variant="primary"
+                          className="w-full md:w-auto"
+                        >
+                          {unlocking ? '解鎖中...' : '🔓 解鎖聯絡方式 (200 代幣)'}
+                        </Button>
+                        <p className="text-xs text-gray-500 mt-2">
+                          解鎖後可查看聯絡資訊並開通站內文字通訊
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
+                
+                {!isOwnProfile && !currentUserId && (
+                  <div className="mb-4">
+                    <Button
+                      onClick={() => router.push('/login')}
+                      variant="secondary"
+                      className="w-full md:w-auto"
+                    >
+                      登入以聯絡此使用者
+                    </Button>
+                  </div>
+                )}
 
                 {/* 個人介紹 */}
                 {user.bio && (

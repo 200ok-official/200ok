@@ -1,24 +1,16 @@
 "use client";
 
 import React from "react";
+import { getProjectTypeHints } from "../config/projectTypeHints";
 
 interface Props {
   data: any;
   updateData: (data: any) => void;
 }
 
-const COMMON_GOALS = [
-  "讓顧客更快預約 / 查詢資訊",
-  "減少重複手動作業",
-  "提升銷售轉換率",
-  "自動統計數據報表",
-  "提升品牌形象",
-  "降低營運成本",
-  "改善客戶體驗",
-  "提高工作效率",
-];
-
 export const Step3Goals: React.FC<Props> = ({ data, updateData }) => {
+  const hints = getProjectTypeHints(data.projectType);
+  const commonGoals = hints.goals.commonGoals;
   const handleGoalToggle = (goal: string) => {
     const currentGoals: string = data.goals || "";
     const parts = currentGoals
@@ -56,7 +48,7 @@ export const Step3Goals: React.FC<Props> = ({ data, updateData }) => {
           常見目標（點擊選擇）：
         </p>
         <div className="flex flex-wrap gap-2">
-          {COMMON_GOALS.map((goal, index) => (
+          {commonGoals.map((goal, index) => (
             <button
               key={index}
               onClick={() => handleGoalToggle(goal)}
@@ -80,7 +72,7 @@ export const Step3Goals: React.FC<Props> = ({ data, updateData }) => {
         <textarea
           value={data.goals || ""}
           onChange={(e) => updateData({ goals: e.target.value })}
-          placeholder="請以「、」分開多個目標，例如：提升預約效率、減少人工整理報表、改善手機版體驗"
+          placeholder={hints.goals.placeholder}
           className="w-full px-3 py-2 rounded-lg border border-[#c5ae8c] focus:border-[#20263e] focus:outline-none focus:ring-2 focus:ring-[#20263e] focus:ring-opacity-20 text-sm min-h-[72px]"
           rows={3}
         />
@@ -89,7 +81,7 @@ export const Step3Goals: React.FC<Props> = ({ data, updateData }) => {
       {/* 小提示 */}
       <div className="mt-8 p-4 bg-green-50 border border-green-200 rounded-lg">
         <p className="text-sm text-green-800">
-          <strong>✅ 小提示：</strong> AI 會根據您的目標自動生成專案摘要，幫助接案者快速理解需求。
+          <strong>✅ 小提示：</strong> {hints.goals.hint}
         </p>
       </div>
     </div>

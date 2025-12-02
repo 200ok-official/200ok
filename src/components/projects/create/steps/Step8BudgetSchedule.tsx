@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getProjectTypeHints } from "../config/projectTypeHints";
 
 interface Props {
   data: any;
@@ -25,6 +26,8 @@ const PAYMENT_METHODS = [
 ];
 
 export const Step8BudgetSchedule: React.FC<Props> = ({ data, updateData }) => {
+  const hints = getProjectTypeHints(data.projectType);
+  
   const formatCurrency = (value: number, isMin: boolean = false, isMax: boolean = false) => {
     let formatted = "";
     if (value >= 1000) {
@@ -323,7 +326,7 @@ export const Step8BudgetSchedule: React.FC<Props> = ({ data, updateData }) => {
       {/* 小提示 */}
       <div className="mt-8 p-4 bg-green-50 border border-green-200 rounded-lg">
         <p className="text-sm text-green-800">
-          <strong>💰 建議：</strong> 建議採用 3331 分期付款模式，可降低雙方風險並確保專案品質。
+          <strong>💰 建議：</strong> {hints.budgetSchedule.hint}
         </p>
       </div>
     </div>

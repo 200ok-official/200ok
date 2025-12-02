@@ -10,6 +10,8 @@ export interface UpdateUserData {
   skills?: string[];
   avatar_url?: string;
   portfolio_links?: string[];
+  roles?: UserRole[];
+  phone?: string;
 }
 
 export interface UpdatePasswordData {
@@ -105,10 +107,12 @@ export class UserService extends BaseService {
       .from("users")
       .update({
         ...(data.name && { name: data.name }),
+        ...(data.phone !== undefined && { phone: data.phone }),
         ...(data.bio !== undefined && { bio: data.bio }),
         ...(data.skills && { skills: data.skills }),
         ...(data.avatar_url && { avatar_url: data.avatar_url }),
         ...(data.portfolio_links && { portfolio_links: data.portfolio_links }),
+        ...(data.roles && { roles: data.roles }),
         updated_at: new Date().toISOString(),
       })
       .eq("id", userId)
@@ -117,6 +121,7 @@ export class UserService extends BaseService {
         id,
         name,
         email,
+        phone,
         roles,
         bio,
         skills,

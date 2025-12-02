@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import ProjectDetailClient from "@/components/projects/ProjectDetailClient";
 
 async function getProject(id: string, userId?: string) {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
@@ -399,15 +400,18 @@ export default async function ProjectDetailPage({
                 </div>
               </div>
 
-              {!isOwner ? (
-                <Button className="w-full py-6 text-lg shadow-md hover:shadow-lg transition-all">
-                  我要投標
-                </Button>
-              ) : (
+              {isOwner ? (
                 <div className="bg-[#f0f9ff] p-4 rounded-lg text-center">
                   <p className="text-blue-800 font-medium">這是您發布的案件</p>
                   <p className="text-sm text-blue-600 mt-1">目前有 {project._count?.bids || 0} 個投標</p>
                 </div>
+              ) : (
+                <ProjectDetailClient 
+                  projectId={project.id} 
+                  projectTitle={project.title}
+                  isOwner={false} 
+                  userId={userId} 
+                />
               )}
             </Card>
 

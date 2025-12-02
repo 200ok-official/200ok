@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getProjectTypeHints } from "../config/projectTypeHints";
 
 interface Props {
   data: any;
@@ -17,6 +18,12 @@ const OUTPUT_OPTIONS = [
 ];
 
 export const Step5Outputs: React.FC<Props> = ({ data, updateData }) => {
+  const hints = getProjectTypeHints(data.projectType);
+  // 如果有類型特定的選項，優先使用；否則使用預設選項
+  const outputOptions = hints.outputs.options && hints.outputs.options.length > 0 
+    ? hints.outputs.options 
+    : OUTPUT_OPTIONS;
+  
   const handleOutputToggle = (value: string) => {
     const outputs = data.outputs || [];
     if (outputs.includes(value)) {
@@ -42,7 +49,7 @@ export const Step5Outputs: React.FC<Props> = ({ data, updateData }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {OUTPUT_OPTIONS.map((option) => (
+        {outputOptions.map((option) => (
           <button
             key={option.value}
             onClick={() => handleOutputToggle(option.value)}
@@ -86,7 +93,7 @@ export const Step5Outputs: React.FC<Props> = ({ data, updateData }) => {
       {/* 小提示 */}
       <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <p className="text-sm text-blue-800">
-          <strong>💡 小提示：</strong> 這些功能會影響專案的複雜度和報價，建議依實際需求選擇。
+          <strong>💡 小提示：</strong> {hints.outputs.hint}
         </p>
       </div>
     </div>

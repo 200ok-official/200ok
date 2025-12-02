@@ -41,8 +41,15 @@ export default function LoginPage() {
       localStorage.setItem("refresh_token", data.data.refresh_token);
       localStorage.setItem("user", JSON.stringify(data.data.user));
 
-      // 導向首頁或儀表板
-      router.push("/");
+      // 檢查是否有返回 URL
+      const returnUrl = localStorage.getItem("returnUrl");
+      if (returnUrl) {
+        localStorage.removeItem("returnUrl");
+        router.push(returnUrl);
+      } else {
+        // 導向首頁或儀表板
+        router.push("/");
+      }
       router.refresh();
     } catch (err: any) {
       setError(err.message || "登入失敗，請稍後再試");

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getProjectTypeHints } from "../config/projectTypeHints";
 
 interface Props {
   data: any;
@@ -43,6 +44,14 @@ const TECH_OPTIONS = [
 ];
 
 export const Step7Integrations: React.FC<Props> = ({ data, updateData }) => {
+  const hints = getProjectTypeHints(data.projectType);
+  // 如果有類型特定的優先選項，將它們放在前面
+  const priorityOptions = hints.integrations.priorityOptions || [];
+  const otherOptions = INTEGRATION_OPTIONS.filter(
+    opt => !priorityOptions.some(po => po.value === opt.value)
+  );
+  const displayOptions = [...priorityOptions, ...otherOptions];
+  
   const handleIntegrationToggle = (value: string) => {
     const integrations = data.integrations || [];
     
@@ -90,7 +99,7 @@ export const Step7Integrations: React.FC<Props> = ({ data, updateData }) => {
           🔌 需要整合哪些外部工具？
         </label>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-          {INTEGRATION_OPTIONS.map((option) => (
+          {displayOptions.map((option) => (
             <button
               key={option.value}
               onClick={() => handleIntegrationToggle(option.value)}
@@ -168,7 +177,7 @@ export const Step7Integrations: React.FC<Props> = ({ data, updateData }) => {
       <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
         <span className="text-lg">💡</span>
         <p className="text-xs text-blue-800 pt-1">
-          <strong>技術建議：</strong> 如果您不確定該選什麼技術，建議留空。專業的接案者會根據您的需求提供最合適的技術方案。
+          <strong>技術建議：</strong> {hints.integrations.hint}
         </p>
       </div>
     </div>

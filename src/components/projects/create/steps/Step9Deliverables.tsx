@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getProjectTypeHints } from "../config/projectTypeHints";
 
 interface Props {
   data: any;
@@ -26,6 +27,14 @@ const COMMUNICATION_OPTIONS = [
 ];
 
 export const Step9Deliverables: React.FC<Props> = ({ data, updateData }) => {
+  const hints = getProjectTypeHints(data.projectType);
+  // 如果有類型特定的優先選項，將它們放在前面
+  const priorityOptions = hints.deliverables.priorityOptions || [];
+  const otherOptions = DELIVERABLE_OPTIONS.filter(
+    opt => !priorityOptions.some(po => po.value === opt.value)
+  );
+  const displayOptions = [...priorityOptions, ...otherOptions];
+  
   const handleDeliverableToggle = (value: string) => {
     const deliverables = data.deliverables || [];
     if (deliverables.includes(value)) {
@@ -70,7 +79,7 @@ export const Step9Deliverables: React.FC<Props> = ({ data, updateData }) => {
         </label>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {DELIVERABLE_OPTIONS.map((option) => (
+          {displayOptions.map((option) => (
             <button
               key={option.value}
               onClick={() => handleDeliverableToggle(option.value)}
@@ -132,7 +141,7 @@ export const Step9Deliverables: React.FC<Props> = ({ data, updateData }) => {
       {/* 小提示 */}
       <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <p className="text-sm text-blue-800">
-          <strong>💡 小提示：</strong> 清楚說明交付物和溝通方式，有助於避免後續爭議。
+          <strong>💡 小提示：</strong> {hints.deliverables.hint}
         </p>
       </div>
     </div>

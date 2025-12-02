@@ -29,7 +29,7 @@ const PROJECT_TYPES = [
   { value: "website", label: "官方形象網站", icon: "🏢", desc: "公司介紹、聯絡表單" },
   { value: "ecommerce", label: "電商平台", icon: "🛒", desc: "商品展示、購物車、金流" },
   { value: "erp_crm", label: "ERP / CRM 系統", icon: "🧾", desc: "內部管理用" },
-  { value: "chatbot", label: "LineBot / Chatbot", icon: "💬", desc: "自動客服、行銷工具" },
+  { value: "chatbot", label: "Line LIFF / Line 工具", icon: "💬", desc: "Line 官方帳號、LIFF 應用、Line 整合工具" },
   { value: "mobile_app", label: "手機 App", icon: "📱", desc: "會員系統、預約系統" },
   { value: "game", label: "手機遊戲 / 網頁遊戲", icon: "🎮", desc: "休閒或競技遊戲" },
   { value: "other", label: "其他", icon: "🧩", desc: "需進一步說明" },

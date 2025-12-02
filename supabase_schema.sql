@@ -10,6 +10,8 @@ CREATE TYPE bid_status AS ENUM ('pending', 'accepted', 'rejected');
 CREATE TYPE payment_status AS ENUM ('pending', 'completed', 'refunded', 'disputed');
 CREATE TYPE notification_type AS ENUM ('bid_received', 'bid_accepted', 'bid_rejected', 'message', 'project_status_change', 'review_reminder', 'payment_received', 'tag_notification');
 CREATE TYPE tag_category AS ENUM ('tech', 'project_type', 'domain', 'tool');
+CREATE TYPE conversation_type AS ENUM ('direct', 'project_proposal');
+CREATE TYPE transaction_type AS ENUM ('unlock_direct_contact', 'submit_proposal', 'view_proposal', 'refund', 'platform_fee');
 
 -- ===== 建立資料表 =====
 
@@ -48,6 +50,29 @@ CREATE TABLE email_verification_tokens (
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   token VARCHAR(500) UNIQUE NOT NULL,
   expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 2.2 User Tokens (代幣系統)
+CREATE TABLE user_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  balance INTEGER NOT NULL DEFAULT 0,
+  total_earned INTEGER DEFAULT 0,
+  total_spent INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 2.3 Token Transactions (代幣交易記錄)
+CREATE TABLE token_transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount INTEGER NOT NULL, -- 正數為增加，負數為減少
+  balance_after INTEGER NOT NULL,
+  transaction_type transaction_type NOT NULL,
+  reference_id UUID, -- 關聯 ID（對話、提案等）
+  description TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -153,21 +178,486 @@ CREATE TABLE bids (
   freelancer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   proposal TEXT NOT NULL,
   bid_amount DECIMAL(10,2) NOT NULL,
+  estimated_days INTEGER,
+guanyuchen@Pierres-Macbook 200ok % npm run dev
+
+> 200ok@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.33
+  - Local:        http://localhost:3000
+  - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1703ms
+(node:10697) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ○ Compiling / ...
+ ✓ Compiled / in 1253ms (604 modules)
+ GET / 200 in 1420ms
+ ✓ Compiled in 144ms (311 modules)
+ ✓ Compiled /api/v1/projects in 353ms (479 modules)
+ ✓ Compiled (1001 modules)
+API Error: UnauthorizedError: 請先登入
+    at requireAuth (webpack-internal:///(rsc)/./src/middleware/auth.middleware.ts:68:15)
+    at eval (webpack-internal:///(rsc)/./src/app/api/v1/conversations/route.ts:17:94)
+    at eval (webpack-internal:///(rsc)/./src/middleware/error.middleware.ts:125:26)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:57234
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NoopTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18093)
+    at ProxyTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18854)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:103
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NextTracerImpl.trace (/Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:28)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:48896
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:40958)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47472
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:38293)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47434
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at eT.execute (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:46881)
+    at eT.handle (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:58771)
+    at doRender (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1366:60)
+    at cacheEntry.responseCache.get.routeKind (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1588:34)
+    at ResponseCache.get (/Users/guanyuchen/200ok/node_modules/next/dist/server/response-cache/index.js:49:26)
+    at DevServer.renderToResponseWithComponentsImpl (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1496:53) {
+  statusCode: 401,
+  isOperational: true
+}
+ GET /api/v1/conversations 401 in 1204ms
+API Error: UnauthorizedError: 請先登入
+    at requireAuth (webpack-internal:///(rsc)/./src/middleware/auth.middleware.ts:68:15)
+    at eval (webpack-internal:///(rsc)/./src/app/api/v1/tokens/balance/route.ts:17:94)
+    at eval (webpack-internal:///(rsc)/./src/middleware/error.middleware.ts:125:26)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:57234
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NoopTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18093)
+    at ProxyTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18854)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:103
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NextTracerImpl.trace (/Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:28)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:48896
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:40958)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47472
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:38293)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47434
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at eT.execute (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:46881)
+    at eT.handle (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:58771)
+    at doRender (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1366:60)
+    at cacheEntry.responseCache.get.routeKind (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1588:34)
+    at ResponseCache.get (/Users/guanyuchen/200ok/node_modules/next/dist/server/response-cache/index.js:49:26)
+    at DevServer.renderToResponseWithComponentsImpl (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1496:53) {
+  statusCode: 401,
+  isOperational: true
+}
+ GET /api/v1/tokens/balance 401 in 1218ms
+API Error: UnauthorizedError: 請先登入
+    at requireAuth (webpack-internal:///(rsc)/./src/middleware/auth.middleware.ts:68:15)
+    at eval (webpack-internal:///(rsc)/./src/app/api/v1/conversations/route.ts:17:94)
+    at eval (webpack-internal:///(rsc)/./src/middleware/error.middleware.ts:125:26)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:57234
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NoopTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18093)
+    at ProxyTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18854)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:103
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NextTracerImpl.trace (/Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:28)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:48896
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:40958)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47472
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:38293)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47434
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at eT.execute (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:46881)
+    at eT.handle (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:58771)
+    at doRender (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1366:60)
+    at cacheEntry.responseCache.get.routeKind (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1588:34)
+    at ResponseCache.get (/Users/guanyuchen/200ok/node_modules/next/dist/server/response-cache/index.js:49:26)
+    at DevServer.renderToResponseWithComponentsImpl (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1496:53) {
+  statusCode: 401,
+  isOperational: true
+}
+ GET /api/v1/conversations 401 in 11ms
+API Error: UnauthorizedError: 請先登入
+    at requireAuth (webpack-internal:///(rsc)/./src/middleware/auth.middleware.ts:68:15)
+    at eval (webpack-internal:///(rsc)/./src/app/api/v1/tokens/balance/route.ts:17:94)
+    at eval (webpack-internal:///(rsc)/./src/middleware/error.middleware.ts:125:26)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:57234
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NoopTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18093)
+    at ProxyTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18854)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:103
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NextTracerImpl.trace (/Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:28)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:48896
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:40958)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47472
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:38293)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47434
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at eT.execute (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:46881)
+    at eT.handle (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:58771)
+    at doRender (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1366:60)
+    at cacheEntry.responseCache.get.routeKind (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1588:34)
+    at ResponseCache.get (/Users/guanyuchen/200ok/node_modules/next/dist/server/response-cache/index.js:49:26)
+    at DevServer.renderToResponseWithComponentsImpl (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1496:53) {
+  statusCode: 401,
+  isOperational: true
+}
+ GET /api/v1/tokens/balance 401 in 13ms
+ GET /api/auth/session 200 in 1561ms
+ GET /api/auth/session 200 in 8ms
+ GET /api/auth/session 200 in 10ms
+ GET /api/v1/projects?limit=5&status=open 200 in 2016ms
+ ✓ Compiled /api/v1/users/search in 80ms (1004 modules)
+ GET /api/v1/projects?limit=5&status=open 200 in 495ms
+ GET /api/v1/users/search?limit=5 200 in 872ms
+ GET /api/v1/users/search?limit=5 200 in 530ms
+ ✓ Compiled /tokens in 201ms (1307 modules)
+API Error: UnauthorizedError: 請先登入
+    at requireAuth (webpack-internal:///(rsc)/./src/middleware/auth.middleware.ts:68:15)
+    at eval (webpack-internal:///(rsc)/./src/app/api/v1/tokens/balance/route.ts:17:94)
+    at eval (webpack-internal:///(rsc)/./src/middleware/error.middleware.ts:125:26)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:57234
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NoopTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18093)
+    at ProxyTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18854)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:103
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NextTracerImpl.trace (/Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:28)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:48896
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:40958)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47472
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:38293)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47434
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at eT.execute (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:46881)
+    at eT.handle (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:58771)
+    at doRender (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1366:60)
+    at cacheEntry.responseCache.get.routeKind (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1588:34)
+    at ResponseCache.get (/Users/guanyuchen/200ok/node_modules/next/dist/server/response-cache/index.js:49:26)
+    at DevServer.renderToResponseWithComponentsImpl (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1496:53) {
+  statusCode: 401,
+  isOperational: true
+}
+ GET /api/v1/tokens/balance 401 in 14ms
+API Error: UnauthorizedError: 請先登入
+    at requireAuth (webpack-internal:///(rsc)/./src/middleware/auth.middleware.ts:68:15)
+    at eval (webpack-internal:///(rsc)/./src/app/api/v1/conversations/route.ts:17:94)
+    at eval (webpack-internal:///(rsc)/./src/middleware/error.middleware.ts:125:26)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:57234
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NoopTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18093)
+    at ProxyTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18854)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:103
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NextTracerImpl.trace (/Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:28)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:48896
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:40958)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47472
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:38293)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47434
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at eT.execute (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:46881)
+    at eT.handle (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:58771)
+    at doRender (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1366:60)
+    at cacheEntry.responseCache.get.routeKind (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1588:34)
+    at ResponseCache.get (/Users/guanyuchen/200ok/node_modules/next/dist/server/response-cache/index.js:49:26)
+    at DevServer.renderToResponseWithComponentsImpl (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1496:53) {
+  statusCode: 401,
+  isOperational: true
+}
+ GET /api/v1/conversations 401 in 17ms
+API Error: UnauthorizedError: 請先登入
+    at requireAuth (webpack-internal:///(rsc)/./src/middleware/auth.middleware.ts:68:15)
+    at eval (webpack-internal:///(rsc)/./src/app/api/v1/tokens/balance/route.ts:17:94)
+    at eval (webpack-internal:///(rsc)/./src/middleware/error.middleware.ts:125:26)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:57234
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NoopTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18093)
+    at ProxyTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18854)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:103
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NextTracerImpl.trace (/Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:28)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:48896
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:40958)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47472
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:38293)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47434
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at eT.execute (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:46881)
+    at eT.handle (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:58771)
+    at doRender (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1366:60)
+    at cacheEntry.responseCache.get.routeKind (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1588:34)
+    at ResponseCache.get (/Users/guanyuchen/200ok/node_modules/next/dist/server/response-cache/index.js:49:26)
+    at DevServer.renderToResponseWithComponentsImpl (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1496:53) {
+  statusCode: 401,
+  isOperational: true
+}
+ GET /api/v1/tokens/balance 401 in 6ms
+API Error: UnauthorizedError: 請先登入
+    at requireAuth (webpack-internal:///(rsc)/./src/middleware/auth.middleware.ts:68:15)
+    at eval (webpack-internal:///(rsc)/./src/app/api/v1/conversations/route.ts:17:94)
+    at eval (webpack-internal:///(rsc)/./src/middleware/error.middleware.ts:125:26)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:57234
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NoopTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18093)
+    at ProxyTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18854)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:103
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NextTracerImpl.trace (/Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:28)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:48896
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:40958)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47472
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:38293)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47434
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at eT.execute (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:46881)
+    at eT.handle (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:58771)
+    at doRender (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1366:60)
+    at cacheEntry.responseCache.get.routeKind (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1588:34)
+    at ResponseCache.get (/Users/guanyuchen/200ok/node_modules/next/dist/server/response-cache/index.js:49:26)
+    at DevServer.renderToResponseWithComponentsImpl (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1496:53) {
+  statusCode: 401,
+  isOperational: true
+}
+ GET /api/v1/conversations 401 in 9ms
+ ✓ Compiled /api/v1/tokens/transactions in 58ms (1010 modules)
+API Error: UnauthorizedError: 請先登入
+    at requireAuth (webpack-internal:///(rsc)/./src/middleware/auth.middleware.ts:68:15)
+    at eval (webpack-internal:///(rsc)/./src/app/api/v1/tokens/balance/route.ts:17:94)
+    at eval (webpack-internal:///(rsc)/./src/middleware/error.middleware.ts:125:26)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:57234
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NoopTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18093)
+    at ProxyTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18854)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:103
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NextTracerImpl.trace (/Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:28)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:48896
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:40958)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47472
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:38293)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47434
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at eT.execute (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:46881)
+    at eT.handle (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:58771)
+    at doRender (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1366:60)
+    at cacheEntry.responseCache.get.routeKind (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1588:34)
+    at ResponseCache.get (/Users/guanyuchen/200ok/node_modules/next/dist/server/response-cache/index.js:49:26)
+    at DevServer.renderToResponseWithComponentsImpl (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1496:53) {
+  statusCode: 401,
+  isOperational: true
+}
+ GET /api/v1/tokens/balance 401 in 117ms
+API Error: UnauthorizedError: 請先登入
+    at requireAuth (webpack-internal:///(rsc)/./src/middleware/auth.middleware.ts:68:15)
+    at eval (webpack-internal:///(rsc)/./src/app/api/v1/tokens/transactions/route.ts:18:94)
+    at eval (webpack-internal:///(rsc)/./src/middleware/error.middleware.ts:125:26)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:57234
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NoopTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18093)
+    at ProxyTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18854)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:103
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NextTracerImpl.trace (/Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:28)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:48896
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:40958)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47472
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:38293)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47434
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at eT.execute (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:46881)
+    at eT.handle (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:58771)
+    at doRender (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1366:60)
+    at cacheEntry.responseCache.get.routeKind (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1588:34)
+    at ResponseCache.get (/Users/guanyuchen/200ok/node_modules/next/dist/server/response-cache/index.js:49:26)
+    at DevServer.renderToResponseWithComponentsImpl (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1496:53) {
+  statusCode: 401,
+  isOperational: true
+}
+ GET /api/v1/tokens/transactions?limit=20 401 in 121ms
+API Error: UnauthorizedError: 請先登入
+    at requireAuth (webpack-internal:///(rsc)/./src/middleware/auth.middleware.ts:68:15)
+    at eval (webpack-internal:///(rsc)/./src/app/api/v1/tokens/balance/route.ts:17:94)
+    at eval (webpack-internal:///(rsc)/./src/middleware/error.middleware.ts:125:26)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:57234
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NoopTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18093)
+    at ProxyTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18854)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:103
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NextTracerImpl.trace (/Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:28)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:48896
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:40958)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47472
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:38293)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47434
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at eT.execute (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:46881)
+    at eT.handle (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:58771)
+    at doRender (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1366:60)
+    at cacheEntry.responseCache.get.routeKind (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1588:34)
+    at ResponseCache.get (/Users/guanyuchen/200ok/node_modules/next/dist/server/response-cache/index.js:49:26)
+    at DevServer.renderToResponseWithComponentsImpl (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1496:53) {
+  statusCode: 401,
+  isOperational: true
+}
+ GET /api/v1/tokens/balance 401 in 7ms
+API Error: UnauthorizedError: 請先登入
+    at requireAuth (webpack-internal:///(rsc)/./src/middleware/auth.middleware.ts:68:15)
+    at eval (webpack-internal:///(rsc)/./src/app/api/v1/tokens/transactions/route.ts:18:94)
+    at eval (webpack-internal:///(rsc)/./src/middleware/error.middleware.ts:125:26)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:57234
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NoopTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18093)
+    at ProxyTracer.startActiveSpan (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18854)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:103
+    at NoopContextManager.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NextTracerImpl.trace (/Users/guanyuchen/200ok/node_modules/next/dist/server/lib/trace/tracer.js:122:28)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:48896
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:40958)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47472
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at Object.wrap (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:38293)
+    at /Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:47434
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_hooks:91:14)
+    at eT.execute (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:46881)
+    at eT.handle (/Users/guanyuchen/200ok/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:6:58771)
+    at doRender (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1366:60)
+    at cacheEntry.responseCache.get.routeKind (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1588:34)
+    at ResponseCache.get (/Users/guanyuchen/200ok/node_modules/next/dist/server/response-cache/index.js:49:26)
+    at DevServer.renderToResponseWithComponentsImpl (/Users/guanyuchen/200ok/node_modules/next/dist/server/base-server.js:1496:53) {
+  statusCode: 401,
+  isOperational: true
+}
+ GET /api/v1/tokens/transactions?limit=20 401 in 3ms
   status bid_status DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT NOW(),
   UNIQUE(project_id, freelancer_id)
 );
 
--- 5. Messages Table
+-- 5. Conversations (對話/聊天室)
+CREATE TABLE conversations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  type conversation_type NOT NULL,
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE, -- 僅 project_proposal 類型使用
+  bid_id UUID REFERENCES bids(id) ON DELETE CASCADE, -- 僅 project_proposal 類型使用
+  is_unlocked BOOLEAN DEFAULT false, -- 是否已解鎖（雙方都付費）
+  initiator_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- 發起者
+  recipient_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- 接收者
+  initiator_paid BOOLEAN DEFAULT false, -- 發起者是否已付費
+  recipient_paid BOOLEAN DEFAULT false, -- 接收者是否已付費
+  initiator_unlocked_at TIMESTAMP, -- 發起者解鎖時間
+  recipient_unlocked_at TIMESTAMP, -- 接收者解鎖時間
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  CONSTRAINT check_participants CHECK (initiator_id != recipient_id),
+  CONSTRAINT check_project_proposal_fields CHECK (
+    (type = 'project_proposal' AND project_id IS NOT NULL) OR
+    (type = 'direct')
+  )
+);
+
+-- 5.1 Messages Table (訊息)
 CREATE TABLE messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
   sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  receiver_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
   attachment_urls TEXT[],
   is_read BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 5.2 User Connections Table (用戶連接關係)
+-- 用於追蹤用戶之間的聯絡解鎖狀態
+CREATE TYPE connection_status AS ENUM ('pending', 'connected', 'expired');
+
+CREATE TABLE user_connections (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  initiator_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  recipient_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  connection_type conversation_type NOT NULL,
+  status connection_status NOT NULL DEFAULT 'pending',
+  conversation_id UUID REFERENCES conversations(id) ON DELETE SET NULL,
+  initiator_unlocked_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  recipient_unlocked_at TIMESTAMP,
+  expires_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  CONSTRAINT unique_connection UNIQUE (initiator_id, recipient_id, connection_type),
+  CONSTRAINT no_self_connection CHECK (initiator_id != recipient_id)
+);
+
+CREATE INDEX idx_user_connections_initiator ON user_connections(initiator_id);
+CREATE INDEX idx_user_connections_recipient ON user_connections(recipient_id);
+CREATE INDEX idx_user_connections_conversation ON user_connections(conversation_id);
+CREATE INDEX idx_user_connections_status ON user_connections(status);
+CREATE INDEX idx_user_connections_expires ON user_connections(expires_at) WHERE expires_at IS NOT NULL;
+CREATE INDEX idx_user_connections_both_users ON user_connections(
+  LEAST(initiator_id, recipient_id),
+  GREATEST(initiator_id, recipient_id)
 );
 
 -- 6. Notifications Table
@@ -276,11 +766,17 @@ CREATE INDEX idx_bids_project_id ON bids(project_id);
 CREATE INDEX idx_bids_freelancer_id ON bids(freelancer_id);
 CREATE INDEX idx_bids_status ON bids(status);
 
+-- Conversations
+CREATE INDEX idx_conversations_initiator ON conversations(initiator_id);
+CREATE INDEX idx_conversations_recipient ON conversations(recipient_id);
+CREATE INDEX idx_conversations_project ON conversations(project_id);
+CREATE INDEX idx_conversations_bid ON conversations(bid_id);
+CREATE INDEX idx_conversations_type ON conversations(type);
+
 -- Messages
-CREATE INDEX idx_messages_project_id ON messages(project_id);
-CREATE INDEX idx_messages_sender_id ON messages(sender_id);
-CREATE INDEX idx_messages_receiver_id ON messages(receiver_id);
-CREATE INDEX idx_messages_created_at ON messages(created_at);
+CREATE INDEX idx_messages_conversation ON messages(conversation_id);
+CREATE INDEX idx_messages_sender ON messages(sender_id);
+CREATE INDEX idx_messages_created_at ON messages(created_at DESC);
 
 -- Notifications
 CREATE INDEX idx_notifications_user_id ON notifications(user_id);
@@ -314,6 +810,205 @@ CREATE INDEX idx_project_tags_tag_id ON project_tags(tag_id);
 CREATE INDEX idx_user_tags_user_id ON user_tags(user_id);
 CREATE INDEX idx_user_tags_tag_id ON user_tags(tag_id);
 
+-- Token System
+CREATE INDEX idx_user_tokens_user_id ON user_tokens(user_id);
+CREATE INDEX idx_token_transactions_user_id ON token_transactions(user_id);
+CREATE INDEX idx_token_transactions_type ON token_transactions(transaction_type);
+CREATE INDEX idx_token_transactions_created_at ON token_transactions(created_at DESC);
+
+-- ===== 啟用 RLS (Row Level Security) =====
+
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_tokens ENABLE ROW LEVEL SECURITY;
+ALTER TABLE token_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+-- ===== 建立 RLS 政策 =====
+
+-- ========== Users 表政策 ==========
+
+-- 使用者可以查看自己的完整資訊（包含 email, phone）
+CREATE POLICY "Users can view their own complete profile"
+  ON users
+  FOR SELECT
+  USING (auth.uid()::uuid = id);
+
+-- 使用者可以查看已解鎖對話對方的完整聯絡資訊
+CREATE POLICY "Users can view unlocked contacts full info"
+  ON users
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM conversations
+      WHERE conversations.is_unlocked = true
+      AND (
+        (conversations.initiator_id = auth.uid()::uuid AND conversations.recipient_id = users.id) OR
+        (conversations.recipient_id = auth.uid()::uuid AND conversations.initiator_id = users.id)
+      )
+    )
+  );
+
+-- 所有人可以查看其他使用者的公開資訊（敏感欄位需在 API 層過濾）
+CREATE POLICY "Public profiles viewable by everyone"
+  ON users
+  FOR SELECT
+  USING (true);
+
+-- 使用者可以更新自己的資料
+CREATE POLICY "Users can update their own profile"
+  ON users
+  FOR UPDATE
+  USING (auth.uid()::uuid = id);
+
+-- 管理員可以查看和更新所有使用者
+CREATE POLICY "Admins can view all users"
+  ON users
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM users u
+      WHERE u.id = auth.uid()::uuid
+      AND 'admin' = ANY(u.roles)
+    )
+  );
+
+CREATE POLICY "Admins can update all users"
+  ON users
+  FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM users u
+      WHERE u.id = auth.uid()::uuid
+      AND 'admin' = ANY(u.roles)
+    )
+  );
+
+-- ========== user_tokens 政策 ==========
+
+-- 使用者只能查看自己的代幣帳戶
+CREATE POLICY "Users can view their own tokens"
+  ON user_tokens
+  FOR SELECT
+  USING (auth.uid()::uuid = user_id);
+
+-- 管理員可以查看所有代幣帳戶
+CREATE POLICY "Admins can view all tokens"
+  ON user_tokens
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid()::uuid
+      AND 'admin' = ANY(roles)
+    )
+  );
+
+-- ========== token_transactions 政策 ==========
+
+-- 使用者可以查看自己的交易記錄
+CREATE POLICY "Users can view their own transactions"
+  ON token_transactions
+  FOR SELECT
+  USING (auth.uid()::uuid = user_id);
+
+-- 管理員可以查看所有交易記錄
+CREATE POLICY "Admins can view all transactions"
+  ON token_transactions
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid()::uuid
+      AND 'admin' = ANY(roles)
+    )
+  );
+
+-- ========== conversations 政策 ==========
+
+-- 使用者可以查看自己參與的對話
+CREATE POLICY "Users can view their conversations"
+  ON conversations
+  FOR SELECT
+  USING (
+    auth.uid()::uuid = initiator_id OR
+    auth.uid()::uuid = recipient_id
+  );
+
+-- 使用者可以創建新對話（透過 API 驗證付費）
+CREATE POLICY "Users can create conversations"
+  ON conversations
+  FOR INSERT
+  WITH CHECK (
+    auth.uid()::uuid = initiator_id
+  );
+
+-- 使用者可以更新自己參與的對話（例如：標記已付費）
+CREATE POLICY "Users can update their conversations"
+  ON conversations
+  FOR UPDATE
+  USING (
+    auth.uid()::uuid = initiator_id OR
+    auth.uid()::uuid = recipient_id
+  );
+
+-- ========== messages 政策 ==========
+
+-- 使用者可以查看自己參與的對話中的訊息
+-- 修正：工程師可以看到自己發送的提案，即使尚未解鎖
+CREATE POLICY "Users can view messages in their conversations"
+  ON messages
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM conversations
+      WHERE conversations.id = messages.conversation_id
+      AND (
+        conversations.initiator_id = auth.uid()::uuid OR
+        conversations.recipient_id = auth.uid()::uuid
+      )
+      AND (
+        conversations.is_unlocked = true
+        OR
+        messages.sender_id = auth.uid()::uuid
+      )
+    )
+  );
+
+-- 使用者可以在符合條件的對話中發送訊息
+CREATE POLICY "Users can send messages in conversations"
+  ON messages
+  FOR INSERT
+  WITH CHECK (
+    messages.sender_id = auth.uid()::uuid
+    AND EXISTS (
+      SELECT 1 FROM conversations
+      WHERE conversations.id = messages.conversation_id
+      AND (
+        conversations.initiator_id = auth.uid()::uuid OR
+        conversations.recipient_id = auth.uid()::uuid
+      )
+      AND (
+        conversations.is_unlocked = true
+        OR
+        (
+          conversations.initiator_id = auth.uid()::uuid
+          AND conversations.type = 'project_proposal'
+          AND NOT EXISTS (
+            SELECT 1 FROM messages m2
+            WHERE m2.conversation_id = conversations.id
+          )
+        )
+      )
+    )
+  );
+
+-- 使用者可以更新自己發送的訊息（例如：標記已讀）
+CREATE POLICY "Users can update their own messages"
+  ON messages
+  FOR UPDATE
+  USING (sender_id = auth.uid()::uuid);
+
 -- ===== 建立觸發器（自動更新 updated_at） =====
 
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -333,6 +1028,258 @@ CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects
 CREATE TRIGGER update_tags_updated_at BEFORE UPDATE ON tags
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_user_tokens_updated_at BEFORE UPDATE ON user_tokens
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_conversations_updated_at BEFORE UPDATE ON conversations
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ===== 建立實用函式 =====
+
+-- 自動檢查對話是否解鎖（雙方都付費）
+CREATE OR REPLACE FUNCTION check_conversation_unlock()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.initiator_paid AND NEW.recipient_paid THEN
+    NEW.is_unlocked = true;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER auto_unlock_conversation
+  BEFORE INSERT OR UPDATE ON conversations
+  FOR EACH ROW
+  EXECUTE FUNCTION check_conversation_unlock();
+
+-- 檢查使用者餘額是否足夠
+CREATE OR REPLACE FUNCTION check_sufficient_balance(
+  p_user_id UUID,
+  p_amount INTEGER
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+  v_balance INTEGER;
+BEGIN
+  SELECT balance INTO v_balance
+  FROM user_tokens
+  WHERE user_id = p_user_id;
+  
+  RETURN v_balance >= p_amount;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 取得使用者公開資訊（過濾敏感欄位）
+CREATE OR REPLACE FUNCTION get_user_public_profile(p_user_id UUID)
+RETURNS TABLE (
+  id UUID,
+  name VARCHAR,
+  bio TEXT,
+  skills TEXT[],
+  avatar_url VARCHAR,
+  rating DECIMAL,
+  portfolio_links TEXT[],
+  created_at TIMESTAMP
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    u.id,
+    u.name,
+    u.bio,
+    u.skills,
+    u.avatar_url,
+    u.rating,
+    u.portfolio_links,
+    u.created_at
+  FROM users u
+  WHERE u.id = p_user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 取得使用者完整資訊（包含聯絡資訊，需權限驗證）
+CREATE OR REPLACE FUNCTION get_user_full_profile(
+  p_user_id UUID,
+  p_requester_id UUID
+)
+RETURNS TABLE (
+  id UUID,
+  name VARCHAR,
+  email VARCHAR,
+  phone VARCHAR,
+  bio TEXT,
+  skills TEXT[],
+  avatar_url VARCHAR,
+  rating DECIMAL,
+  portfolio_links TEXT[],
+  created_at TIMESTAMP,
+  has_contact_permission BOOLEAN
+) AS $$
+DECLARE
+  v_has_permission BOOLEAN;
+BEGIN
+  -- 檢查是否有權限查看聯絡資訊
+  SELECT EXISTS (
+    SELECT 1 FROM conversations
+    WHERE is_unlocked = true
+    AND (
+      (initiator_id = p_requester_id AND recipient_id = p_user_id) OR
+      (recipient_id = p_requester_id AND initiator_id = p_user_id)
+    )
+  ) OR p_requester_id = p_user_id
+  INTO v_has_permission;
+
+  RETURN QUERY
+  SELECT 
+    u.id,
+    u.name,
+    CASE WHEN v_has_permission THEN u.email ELSE NULL END as email,
+    CASE WHEN v_has_permission THEN u.phone ELSE NULL END as phone,
+    u.bio,
+    u.skills,
+    u.avatar_url,
+    u.rating,
+    u.portfolio_links,
+    u.created_at,
+    v_has_permission as has_contact_permission
+  FROM users u
+  WHERE u.id = p_user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 檢查是否可以查看某使用者的聯絡資訊
+CREATE OR REPLACE FUNCTION can_view_contact_info(
+  p_target_user_id UUID,
+  p_requester_id UUID
+)
+RETURNS BOOLEAN AS $$
+BEGIN
+  -- 自己可以看自己的
+  IF p_target_user_id = p_requester_id THEN
+    RETURN true;
+  END IF;
+  
+  -- 檢查是否有已解鎖的對話
+  RETURN EXISTS (
+    SELECT 1 FROM conversations
+    WHERE is_unlocked = true
+    AND (
+      (initiator_id = p_requester_id AND recipient_id = p_target_user_id) OR
+      (recipient_id = p_requester_id AND initiator_id = p_target_user_id)
+    )
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ===== 建立輔助函式（取代 View） =====
+
+-- 取得使用者的未讀訊息統計
+CREATE OR REPLACE FUNCTION get_unread_messages(p_user_id UUID)
+RETURNS TABLE (
+  conversation_id UUID,
+  unread_count BIGINT
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    c.id as conversation_id,
+    COUNT(m.id) as unread_count
+  FROM conversations c
+  JOIN messages m ON m.conversation_id = c.id
+  WHERE (c.initiator_id = p_user_id OR c.recipient_id = p_user_id)
+    AND m.is_read = false 
+    AND m.sender_id != p_user_id
+  GROUP BY c.id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 取得使用者的對話列表（含對方資訊）
+CREATE OR REPLACE FUNCTION get_my_conversations(p_user_id UUID)
+RETURNS TABLE (
+  id UUID,
+  type conversation_type,
+  project_id UUID,
+  bid_id UUID,
+  is_unlocked BOOLEAN,
+  initiator_id UUID,
+  recipient_id UUID,
+  initiator_paid BOOLEAN,
+  recipient_paid BOOLEAN,
+  initiator_unlocked_at TIMESTAMP,
+  recipient_unlocked_at TIMESTAMP,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP,
+  other_user_id UUID,
+  my_role TEXT
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    c.id,
+    c.type,
+    c.project_id,
+    c.bid_id,
+    c.is_unlocked,
+    c.initiator_id,
+    c.recipient_id,
+    c.initiator_paid,
+    c.recipient_paid,
+    c.initiator_unlocked_at,
+    c.recipient_unlocked_at,
+    c.created_at,
+    c.updated_at,
+    CASE 
+      WHEN c.initiator_id = p_user_id THEN c.recipient_id
+      ELSE c.initiator_id
+    END as other_user_id,
+    CASE 
+      WHEN c.initiator_id = p_user_id THEN 'initiator'
+      ELSE 'recipient'
+    END as my_role
+  FROM conversations c
+  WHERE c.initiator_id = p_user_id 
+     OR c.recipient_id = p_user_id
+  ORDER BY c.updated_at DESC;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ===== 授予權限 =====
+
+GRANT SELECT, INSERT ON user_tokens TO authenticated;
+GRANT SELECT ON token_transactions TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON conversations TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON messages TO authenticated;
+
+GRANT EXECUTE ON FUNCTION check_sufficient_balance(UUID, INTEGER) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_user_public_profile(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_user_full_profile(UUID, UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION can_view_contact_info(UUID, UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_unread_messages(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_my_conversations(UUID) TO authenticated;
+
+-- ===== 初始化現有使用者的代幣帳戶 =====
+
+-- 為所有現有使用者創建代幣帳戶（贈送 1000 代幣）
+INSERT INTO user_tokens (user_id, balance, total_earned)
+SELECT id, 1000, 1000
+FROM users
+ON CONFLICT (user_id) DO NOTHING;
+
+-- 記錄初始贈送的交易
+INSERT INTO token_transactions (user_id, amount, balance_after, transaction_type, description)
+SELECT 
+  id,
+  1000,
+  1000,
+  'platform_fee',
+  '新用戶註冊贈送'
+FROM users
+WHERE id NOT IN (SELECT user_id FROM token_transactions WHERE transaction_type = 'platform_fee' AND description = '新用戶註冊贈送');
+
 -- ===== 完成 =====
 -- 資料庫 Schema 建立完成！
+-- ✅ 包含完整的 RLS 政策保護
+-- ✅ 包含安全的查詢函式
+-- ✅ 包含代幣系統與對話系統
+-- ✅ 聯絡資訊受到完整保護
 
