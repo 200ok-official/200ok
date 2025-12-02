@@ -7,8 +7,9 @@ import { validateBody } from "@/middleware/validation.middleware";
 import { successResponse, createdResponse } from "@/lib/response";
 
 const createBidSchema = z.object({
-  proposal: z.string().min(50, "提案內容至少需要 50 個字元"),
-  bid_amount: z.number().min(0, "報價不能為負數"),
+  proposal_content: z.string().min(50, "提案內容至少需要 50 個字元"),
+  proposed_amount: z.number().min(0, "報價不能為負數"),
+  estimated_days: z.number().min(1, "預估天數至少為 1 天"),
 });
 
 /**
