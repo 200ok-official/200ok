@@ -6,7 +6,8 @@ export type TransactionType =
   | 'submit_proposal'
   | 'view_proposal'
   | 'refund'
-  | 'platform_fee';
+  | 'platform_fee'
+  | 'purchase';
 
 export interface TokenBalance {
   balance: number;

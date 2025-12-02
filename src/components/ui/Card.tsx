@@ -6,6 +6,7 @@ interface CardProps {
   className?: string;
   padding?: "none" | "sm" | "md" | "lg";
   onClick?: () => void;
+  style?: React.CSSProperties;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -13,6 +14,7 @@ export const Card: React.FC<CardProps> = ({
   className,
   padding = "md",
   onClick,
+  style,
 }) => {
   const paddingStyles = {
     none: "",
@@ -30,6 +32,7 @@ export const Card: React.FC<CardProps> = ({
         className
       )}
       onClick={onClick}
+      style={style}
     >
       {children}
     </div>

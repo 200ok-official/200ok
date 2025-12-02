@@ -256,7 +256,7 @@ export default function ConversationPage() {
   const canSend = conversation.is_unlocked || (conversation.type === 'project_proposal' && isInitiator && messages.length === 0);
 
   function getOtherUser() {
-    return isInitiator ? conversation.recipient : conversation.initiator;
+    return isInitiator ? conversation!.recipient : conversation!.initiator;
   }
 
   return (

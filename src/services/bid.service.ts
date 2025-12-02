@@ -113,7 +113,7 @@ export class BidService extends BaseService {
 
     // 發送初始提案訊息
     await this.conversationService.sendMessage(
-      conversation.id,
+      conversation.conversation_id,
       freelancerId,
       data.proposal_content
     );
@@ -130,7 +130,7 @@ export class BidService extends BaseService {
 
     return {
       ...bid,
-      conversation_id: conversation.id,
+      conversation_id: conversation.conversation_id,
     };
   }
 
