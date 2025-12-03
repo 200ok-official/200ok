@@ -823,6 +823,10 @@ ALTER TABLE user_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE token_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bids ENABLE ROW LEVEL SECURITY;
+ALTER TABLE saved_projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_tags ENABLE ROW LEVEL SECURITY;
 
 -- ===== 建立 RLS 政策 =====
 
@@ -1008,6 +1012,147 @@ CREATE POLICY "Users can update their own messages"
   ON messages
   FOR UPDATE
   USING (sender_id = auth.uid()::uuid);
+
+-- ========== Projects 表政策 ==========
+
+-- 所有人（包括未登入用戶）可以查看 open 和 in_progress 狀態的案件
+CREATE POLICY "Anyone can view open projects"
+  ON projects
+  FOR SELECT
+  USING (status IN ('open', 'in_progress'));
+
+-- 使用者可以查看自己的所有案件（包括 draft）
+CREATE POLICY "Project owners can view their own projects"
+  ON projects
+  FOR SELECT
+  USING (auth.uid()::uuid = client_id);
+
+-- 管理員可以查看所有案件
+CREATE POLICY "Admins can view all projects"
+  ON projects
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid()::uuid
+      AND 'admin' = ANY(roles)
+    )
+  );
+
+-- 已登入使用者可以建立案件
+CREATE POLICY "Authenticated users can create projects"
+  ON projects
+  FOR INSERT
+  WITH CHECK (auth.uid()::uuid = client_id);
+
+-- 案件擁有者可以更新自己的案件
+CREATE POLICY "Project owners can update their own projects"
+  ON projects
+  FOR UPDATE
+  USING (auth.uid()::uuid = client_id);
+
+-- 案件擁有者可以刪除自己的草稿案件
+CREATE POLICY "Project owners can delete their own draft projects"
+  ON projects
+  FOR DELETE
+  USING (
+    auth.uid()::uuid = client_id
+    AND status = 'draft'
+  );
+
+-- ========== Bids 表政策 ==========
+
+-- 案件擁有者可以查看自己案件的所有投標
+CREATE POLICY "Project owners can view bids on their projects"
+  ON bids
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM projects
+      WHERE projects.id = bids.project_id
+      AND projects.client_id = auth.uid()::uuid
+    )
+  );
+
+-- 投標者可以查看自己的投標
+CREATE POLICY "Bid owners can view their own bids"
+  ON bids
+  FOR SELECT
+  USING (auth.uid()::uuid = freelancer_id);
+
+-- 已登入使用者可以建立投標
+CREATE POLICY "Authenticated users can create bids"
+  ON bids
+  FOR INSERT
+  WITH CHECK (
+    auth.uid()::uuid = freelancer_id
+    AND EXISTS (
+      SELECT 1 FROM projects
+      WHERE projects.id = bids.project_id
+      AND projects.status = 'open'
+    )
+  );
+
+-- 投標者可以更新自己的投標（在 pending 狀態下）
+CREATE POLICY "Bid owners can update their own pending bids"
+  ON bids
+  FOR UPDATE
+  USING (
+    auth.uid()::uuid = freelancer_id
+    AND status = 'pending'
+  );
+
+-- 案件擁有者可以更新投標狀態（接受/拒絕）
+CREATE POLICY "Project owners can update bid status"
+  ON bids
+  FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM projects
+      WHERE projects.id = bids.project_id
+      AND projects.client_id = auth.uid()::uuid
+    )
+  );
+
+-- ========== Saved Projects 表政策 ==========
+
+-- 使用者可以查看自己的收藏
+CREATE POLICY "Users can view their own saved projects"
+  ON saved_projects
+  FOR SELECT
+  USING (auth.uid()::uuid = user_id);
+
+-- 使用者可以收藏案件
+CREATE POLICY "Users can save projects"
+  ON saved_projects
+  FOR INSERT
+  WITH CHECK (auth.uid()::uuid = user_id);
+
+-- 使用者可以取消收藏
+CREATE POLICY "Users can unsave projects"
+  ON saved_projects
+  FOR DELETE
+  USING (auth.uid()::uuid = user_id);
+
+-- ========== Project Tags 表政策 ==========
+
+-- 所有人可以查看案件標籤
+CREATE POLICY "Anyone can view project tags"
+  ON project_tags
+  FOR SELECT
+  USING (true);
+
+-- 案件擁有者可以管理自己案件的標籤
+CREATE POLICY "Project owners can manage their project tags"
+  ON project_tags
+  FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM projects
+      WHERE projects.id = project_tags.project_id
+      AND projects.client_id = auth.uid()::uuid
+    )
+  );
 
 -- ===== 建立觸發器（自動更新 updated_at） =====
 
