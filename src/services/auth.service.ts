@@ -9,6 +9,7 @@ import {
   UnauthorizedError,
   ConflictError,
 } from "@/middleware/error.middleware";
+import { sendVerificationEmail as sendVerificationEmailFn } from "@/lib/email";
 
 // 型別定義
 export type UserRole = 'freelancer' | 'client' | 'admin';
@@ -74,9 +75,22 @@ export class AuthService extends BaseService {
       throw new BadRequestError(`註冊失敗: ${error?.message}`);
     }
 
-    // 發送驗證郵件（不阻塞註冊流程）
-    this.sendVerificationEmail(user.id, user.email, user.name).catch(error => {
-      console.error("[REGISTER_SEND_EMAIL_ERROR]", error);
+    // 發送驗證郵件（真正的異步，不阻塞註冊流程）
+    console.log(`[REGISTER] 準備異步發送驗證郵件到 ${user.email}...`);
+    
+    // 使用 setImmediate 確保在下一個 tick 執行，不阻塞當前響應
+    setImmediate(() => {
+      this.sendVerificationEmail(user.id, user.email, user.name)
+        .then(result => {
+          if (result.success) {
+            console.log(`[REGISTER] ✅ 驗證郵件發送成功: ${user.email}`);
+          } else {
+            console.error(`[REGISTER] ❌ 驗證郵件發送失敗: ${result.message}`);
+          }
+        })
+        .catch(error => {
+          console.error("[REGISTER_SEND_EMAIL_ERROR]", error);
+        });
     });
 
     // 生成 tokens
@@ -351,9 +365,8 @@ export class AuthService extends BaseService {
       // 生成驗證連結
       const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${token}`;
       
-      // 使用 Resend 發送驗證郵件
-      const { sendVerificationEmail } = await import("@/lib/email");
-      const emailResult = await sendVerificationEmail(email, name, verificationUrl);
+      // 使用 Resend 發送驗證郵件（已在頂部 import，不需動態載入）
+      const emailResult = await sendVerificationEmailFn(email, name, verificationUrl);
 
       if (!emailResult.success) {
         console.error("[SEND_VERIFICATION_EMAIL_ERROR]", emailResult.error);

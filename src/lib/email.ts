@@ -1,31 +1,72 @@
 import { Resend } from "resend";
 
-// 初始化 Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 interface SendEmailOptions {
   to: string;
   subject: string;
   html: string;
 }
 
+// 懶加載 Resend Client（避免冷啟動問題）
+let resendClient: Resend | null = null;
+
+export function getResendClient(): Resend {
+  if (!resendClient) {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      throw new Error("RESEND_API_KEY is not defined");
+    }
+    console.log("[EMAIL] 🔧 初始化 Resend Client...");
+    resendClient = new Resend(apiKey);
+  }
+  return resendClient;
+}
+
 /**
  * 發送郵件的通用函式
  */
-export async function sendEmail({ to, subject, html }: SendEmailOptions) {
-  try {
-    const data = await resend.emails.send({
-      from: process.env.EMAIL_FROM || "200 OK <noreply@200ok.com>",
-      to: [to],
-      subject,
-      html,
-    });
+/**
+ * 發送郵件的通用函式（帶重試機制）
+ */
+export async function sendEmail(
+  { to, subject, html }: SendEmailOptions,
+  retries = 2
+): Promise<{ success: boolean; data?: any; error?: string }> {
+  const fromAddress = process.env.EMAIL_FROM || "200 OK <noreply@200ok.com>";
+  
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      console.log(`[EMAIL] 🚀 正在發送郵件... (嘗試 ${attempt}/${retries})`);
+      console.log(`[EMAIL]    From: ${fromAddress}`);
+      console.log(`[EMAIL]    To: ${to}`);
+      console.log(`[EMAIL]    Subject: ${subject}`);
+      
+      const resend = getResendClient();
+      const data = await resend.emails.send({
+        from: fromAddress,
+        to: [to],
+        subject,
+        html,
+      });
 
-    return { success: true, data };
-  } catch (error: any) {
-    console.error("[SEND_EMAIL_ERROR]", error);
-    return { success: false, error: error.message };
+      console.log(`[EMAIL] ✅ 郵件發送成功！Email ID: ${data.id}`);
+      return { success: true, data };
+      
+    } catch (error: any) {
+      console.error(`[SEND_EMAIL_ERROR] ❌ 郵件發送失敗 (嘗試 ${attempt}/${retries}):`, error.message);
+      
+      // 如果是最後一次嘗試，返回錯誤
+      if (attempt === retries) {
+        console.error("[SEND_EMAIL_ERROR] 完整錯誤:", error);
+        return { success: false, error: error.message };
+      }
+      
+      // 否則等待後重試
+      console.log(`[EMAIL] ⏳ 等待 1 秒後重試...`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
   }
+  
+  return { success: false, error: "發送失敗" };
 }
 
 /**
