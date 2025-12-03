@@ -4,6 +4,8 @@ import { asyncHandler } from "@/middleware/error.middleware";
 import { requireAuth } from "@/middleware/auth.middleware";
 import { updatedResponse } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 接受投標（發案者）
  * POST /api/v1/bids/:id/accept

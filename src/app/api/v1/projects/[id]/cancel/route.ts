@@ -4,6 +4,8 @@ import { asyncHandler } from "@/middleware/error.middleware";
 import { requireAuth } from "@/middleware/auth.middleware";
 import { updatedResponse } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 取消案件
  * POST /api/v1/projects/:id/cancel

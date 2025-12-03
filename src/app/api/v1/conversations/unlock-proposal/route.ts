@@ -6,6 +6,8 @@ import { requireAuth } from "@/middleware/auth.middleware";
 import { validateBody } from "@/middleware/validation.middleware";
 import { successResponse } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 const unlockProposalSchema = z.object({
   conversation_id: z.string().uuid("無效的對話 ID"),
 });

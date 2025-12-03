@@ -6,6 +6,8 @@ import { requireAuth } from "@/middleware/auth.middleware";
 import { validateBody } from "@/middleware/validation.middleware";
 import { successResponse, createdResponse } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 const createBidSchema = z.object({
   proposal_content: z.string().min(50, "提案內容至少需要 50 個字元"),
   proposed_amount: z.number().min(0, "報價不能為負數"),

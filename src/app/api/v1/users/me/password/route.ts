@@ -7,6 +7,8 @@ import { validateBody } from "@/middleware/validation.middleware";
 import { successResponse } from "@/lib/response";
 import { validatePasswordStrength } from "@/utils/password";
 
+export const dynamic = 'force-dynamic';
+
 const updatePasswordSchema = z.object({
   current_password: z.string().min(1, "請輸入目前密碼"),
   new_password: z.string().min(8, "新密碼至少需要 8 個字元"),

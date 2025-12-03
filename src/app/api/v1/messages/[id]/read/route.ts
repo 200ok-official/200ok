@@ -4,6 +4,8 @@ import { asyncHandler } from "@/middleware/error.middleware";
 import { requireAuth } from "@/middleware/auth.middleware";
 import { updatedResponse } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 標記訊息為已讀
  * PUT /api/v1/messages/:id/read

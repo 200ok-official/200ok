@@ -5,6 +5,8 @@ import { asyncHandler, BadRequestError } from "@/middleware/error.middleware";
 import { requireAuth } from "@/middleware/auth.middleware";
 import { successResponse } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 上傳大頭照
  * POST /api/v1/users/me/avatar

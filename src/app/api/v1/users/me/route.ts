@@ -6,6 +6,8 @@ import { requireAuth } from "@/middleware/auth.middleware";
 import { validateBody } from "@/middleware/validation.middleware";
 import { successResponse, updatedResponse } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 const updateUserSchema = z.object({
   name: z.string().min(2, "姓名至少需要 2 個字元").max(100).optional(),
   phone: z.string().optional(),

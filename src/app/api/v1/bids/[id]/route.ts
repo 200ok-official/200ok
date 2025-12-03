@@ -10,6 +10,8 @@ import {
   deletedResponse,
 } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 const updateBidSchema = z.object({
   proposal: z.string().min(50, "提案內容至少需要 50 個字元").optional(),
   bid_amount: z.number().min(0, "報價不能為負數").optional(),

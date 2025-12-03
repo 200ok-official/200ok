@@ -6,6 +6,8 @@ import { requireAuth } from "@/middleware/auth.middleware";
 import { validateBody } from "@/middleware/validation.middleware";
 import { createdResponse } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 const createDirectConversationSchema = z.object({
   recipient_id: z.string().uuid("無效的使用者 ID"),
 });

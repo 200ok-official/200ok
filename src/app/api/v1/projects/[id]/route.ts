@@ -11,6 +11,8 @@ import {
 } from "@/lib/response";
 import { ProjectStatus } from "@/types";
 
+export const dynamic = 'force-dynamic';
+
 const updateProjectSchema = z.object({
   title: z.string().min(5, "標題至少需要 5 個字元").max(150).optional(),
   description: z.string().min(20, "描述至少需要 20 個字元").optional(),

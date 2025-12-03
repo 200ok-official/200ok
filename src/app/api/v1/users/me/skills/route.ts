@@ -6,6 +6,8 @@ import { requireAuth } from "@/middleware/auth.middleware";
 import { validateBody } from "@/middleware/validation.middleware";
 import { successResponse } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 const updateSkillsSchema = z.object({
   skills: z.array(z.string()).max(50, "技能標籤過多"),
 });

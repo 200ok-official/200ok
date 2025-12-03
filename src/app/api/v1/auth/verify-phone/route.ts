@@ -7,6 +7,8 @@ import { successResponse } from "@/lib/response";
 import { requireAuth } from "@/middleware/auth.middleware";
 import { strictRateLimit } from "@/middleware/ratelimit.middleware";
 
+export const dynamic = 'force-dynamic';
+
 const sendCodeSchema = z.object({
   phone: z.string().regex(/^09\d{8}$/, "請輸入有效的台灣手機號碼"),
 });

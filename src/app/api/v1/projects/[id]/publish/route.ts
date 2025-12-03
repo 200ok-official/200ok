@@ -4,6 +4,8 @@ import { asyncHandler } from "@/middleware/error.middleware";
 import { requireAuth } from "@/middleware/auth.middleware";
 import { updatedResponse } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 發布案件（從草稿變為 open）
  * POST /api/v1/projects/:id/publish

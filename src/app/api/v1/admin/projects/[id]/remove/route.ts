@@ -4,6 +4,8 @@ import { asyncHandler } from "@/middleware/error.middleware";
 import { requireAuth } from "@/middleware/auth.middleware";
 import { updatedResponse } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 下架違規案件（管理員專用）
  * POST /api/v1/admin/projects/:id/remove

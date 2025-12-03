@@ -6,6 +6,8 @@ import { requireAuth } from "@/middleware/auth.middleware";
 import { validateBody } from "@/middleware/validation.middleware";
 import { successResponse, createdResponse } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 const createProposalConversationSchema = z.object({
   type: z.literal("project_proposal"),
   project_id: z.string().uuid("無效的案件 ID"),

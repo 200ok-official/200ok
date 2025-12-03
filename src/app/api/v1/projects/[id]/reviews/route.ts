@@ -6,6 +6,8 @@ import { requireAuth } from "@/middleware/auth.middleware";
 import { validateBody } from "@/middleware/validation.middleware";
 import { successResponse, createdResponse } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 const createReviewSchema = z.object({
   rating: z.number().int().min(1).max(5, "評分必須在 1 到 5 之間"),
   comment: z.string().max(1000, "評論內容過長").optional(),
