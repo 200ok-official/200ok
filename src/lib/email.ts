@@ -41,14 +41,18 @@ export async function sendEmail(
       console.log(`[EMAIL]    Subject: ${subject}`);
       
       const resend = getResendClient();
-      const data = await resend.emails.send({
+      const { data, error } = await resend.emails.send({
         from: fromAddress,
         to: [to],
         subject,
         html,
       });
 
-      console.log(`[EMAIL] ✅ 郵件發送成功！Email ID: ${data.id}`);
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      console.log(`[EMAIL] ✅ 郵件發送成功！Email ID: ${data?.id}`);
       return { success: true, data };
       
     } catch (error: any) {
