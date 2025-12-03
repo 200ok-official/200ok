@@ -5,6 +5,8 @@ import { requireAuth } from "@/middleware/auth.middleware";
 import { successResponse } from "@/lib/response";
 import { BidStatus } from "@/types";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 取得我的投標（接案者）
  * GET /api/v1/bids/me

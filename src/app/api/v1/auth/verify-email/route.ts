@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { successResponse } from "@/lib/response";
 import { AuthService } from "@/services/auth.service";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/v1/auth/verify-email
  * 驗證用戶的電子郵件

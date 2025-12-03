@@ -5,6 +5,8 @@ import { requireAuth } from "@/middleware/auth.middleware";
 import { successResponse } from "@/lib/response";
 import { getPaginationParams } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/tokens/transactions
  * 取得使用者代幣交易記錄

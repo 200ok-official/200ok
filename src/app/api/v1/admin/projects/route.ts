@@ -5,6 +5,8 @@ import { requireAuth } from "@/middleware/auth.middleware";
 import { successResponse } from "@/lib/response";
 import { ProjectStatus } from "@/types";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 取得所有案件列表（管理員專用）
  * GET /api/v1/admin/projects

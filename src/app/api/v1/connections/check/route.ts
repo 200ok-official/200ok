@@ -4,6 +4,8 @@ import { asyncHandler } from "@/middleware/error.middleware";
 import { requireAuth } from "@/middleware/auth.middleware";
 import { successResponse } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 檢查與目標用戶的連接狀態
  * GET /api/v1/connections/check?target_user_id=xxx&type=direct

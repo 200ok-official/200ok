@@ -4,6 +4,8 @@ import { asyncHandler } from "@/middleware/error.middleware";
 import { requireAuth } from "@/middleware/auth.middleware";
 import { successResponse } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 取得我的案件（發案者）
  * GET /api/v1/projects/me

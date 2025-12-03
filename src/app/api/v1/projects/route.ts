@@ -7,6 +7,8 @@ import { validateBody } from "@/middleware/validation.middleware";
 import { successResponse, createdResponse } from "@/lib/response";
 import { ProjectStatus } from "@/types";
 
+export const dynamic = 'force-dynamic';
+
 // 基礎共用欄位
 const baseProjectSchema = z.object({
   title: z.string().min(3, "標題至少需要 3 個字元").max(150),

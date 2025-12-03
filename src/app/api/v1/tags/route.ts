@@ -3,6 +3,8 @@ import { asyncHandler } from "@/middleware/error.middleware";
 import { successResponse } from "@/lib/response";
 import { supabase } from "@/lib/supabase";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 取得標籤列表
  * GET /api/v1/tags?category=tech&limit=10

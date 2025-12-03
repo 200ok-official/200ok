@@ -6,6 +6,8 @@ import { requireAuth } from "@/middleware/auth.middleware";
 import { validateBody } from "@/middleware/validation.middleware";
 import { successResponse, createdResponse, getPaginationParams } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 const sendMessageSchema = z.object({
   content: z.string().min(1, "訊息內容不能為空").max(5000, "訊息內容過長"),
 });

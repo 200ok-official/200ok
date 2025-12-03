@@ -3,6 +3,9 @@ import { UserService } from "@/services/user.service";
 import { asyncHandler } from "@/middleware/error.middleware";
 import { paginatedResponse, getPaginationParams } from "@/lib/response";
 
+// 強制動態渲染（因為使用了 request.url）
+export const dynamic = 'force-dynamic';
+
 /**
  * 搜尋接案者
  * GET /api/v1/users/search?skills[]=React&skills[]=Node.js&minRating=4.0&page=1&limit=10

@@ -4,6 +4,8 @@ import { asyncHandler } from "@/middleware/error.middleware";
 import { requireAuth } from "@/middleware/auth.middleware";
 import { successResponse } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 取得最近活動（管理員專用）
  * GET /api/v1/admin/activity

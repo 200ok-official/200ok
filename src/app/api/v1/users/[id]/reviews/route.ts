@@ -3,6 +3,8 @@ import { UserService } from "@/services/user.service";
 import { asyncHandler } from "@/middleware/error.middleware";
 import { paginatedResponse, getPaginationParams } from "@/lib/response";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 取得使用者評價
  * GET /api/v1/users/:id/reviews
