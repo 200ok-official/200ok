@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { apiGet, apiPost, clearAuth, isAuthenticated } from "@/lib/api";
 
 export const Navbar: React.FC = () => {
   const router = useRouter();
@@ -15,65 +16,47 @@ export const Navbar: React.FC = () => {
 
   useEffect(() => {
     // 檢查是否已登入
-    const token = localStorage.getItem("access_token");
-    const userData = localStorage.getItem("user");
-    
-    if (token && userData) {
-      setIsLoggedIn(true);
-      try {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        // 取得代幣餘額和未讀訊息
-        fetchTokenBalance(token);
-        fetchUnreadCount(token);
-      } catch (e) {
-        console.error("Failed to parse user data", e);
+    if (isAuthenticated()) {
+      const userData = localStorage.getItem("user");
+      if (userData) {
+        setIsLoggedIn(true);
+        try {
+          const parsedUser = JSON.parse(userData);
+          setUser(parsedUser);
+          // 取得代幣餘額和未讀訊息
+          fetchTokenBalance();
+          fetchUnreadCount();
+        } catch (e) {
+          console.error("Failed to parse user data", e);
+        }
       }
     }
   }, []);
 
-  const fetchTokenBalance = async (token: string) => {
+  const fetchTokenBalance = async () => {
     try {
-      const response = await fetch('/api/v1/tokens/balance', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-        const { data } = await response.json();
-        setTokenBalance(data.balance);
-      } else if (response.status === 401) {
+      const { data } = await apiGet('/api/v1/tokens/balance');
+      setTokenBalance(data.balance);
+    } catch (error: any) {
+      // 靜默處理錯誤，不影響頁面顯示
+      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
         // Token 過期或無效，清除登入狀態
         console.warn('Token 無效或已過期，請重新登入');
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
+        clearAuth();
         setIsLoggedIn(false);
         setUser(null);
         setTokenBalance(null);
+      } else {
+        setTokenBalance(null);
       }
-    } catch (error) {
-      // 靜默處理錯誤，不影響頁面顯示
-      setTokenBalance(null);
     }
   };
 
-  const fetchUnreadCount = async (token: string) => {
+  const fetchUnreadCount = async () => {
     try {
-      const response = await fetch('/api/v1/conversations', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-        const { data } = await response.json();
-        // 計算未讀訊息（簡化版，實際應該從後端 API 取得）
-        // 這裡暫時設為 0，之後可以實作專門的未讀 API
-        setUnreadCount(0);
-      } else if (response.status === 401) {
-        // Token 過期或無效，不需要重複清除（fetchTokenBalance 已處理）
-        setUnreadCount(0);
-      }
+      // 使用專門的未讀訊息 API
+      const { data } = await apiGet('/api/v1/messages/unread-count');
+      setUnreadCount(data.count || 0);
     } catch (error) {
       // 靜默處理錯誤，不影響頁面顯示
       setUnreadCount(0);
@@ -85,21 +68,13 @@ export const Navbar: React.FC = () => {
       const refreshToken = localStorage.getItem("refresh_token");
       
       if (refreshToken) {
-        await fetch("/api/v1/auth/logout", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ refreshToken }),
-        });
+        await apiPost("/api/v1/auth/logout", { refresh_token: refreshToken });
       }
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
       // 清除本地儲存
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      localStorage.removeItem("user");
+      clearAuth();
       
       setIsLoggedIn(false);
       setUser(null);

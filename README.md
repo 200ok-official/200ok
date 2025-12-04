@@ -135,34 +135,43 @@ npm run type-check
 
 ## 📝 API 文件
 
-API 文件位於 `/api/docs`（開發中）
+詳細的 API 文檔請參考：
+- [API 完整列表](說明文件/API/API_LIST.md) - 所有 API 端點快速參考
+- [API 詳細文檔](說明文件/API/API_DOCS.md) - 完整的 API 使用說明
 
 主要 API 端點：
 
-- **認證**: `/api/auth/*`
-- **使用者**: `/api/users/*`
-- **案件**: `/api/projects/*`
-- **投標**: `/api/bids/*`
-- **訊息**: `/api/messages/*`
-- **通知**: `/api/notifications/*`
-- **評價**: `/api/reviews/*`
-- **標籤**: `/api/tags/*`
+- **認證**: `/api/v1/auth/*`
+- **使用者**: `/api/v1/users/*`
+- **案件**: `/api/v1/projects/*`
+- **投標**: `/api/v1/bids/*`
+- **訊息**: `/api/v1/messages/*`
+- **對話**: `/api/v1/conversations/*`
+- **代幣**: `/api/v1/tokens/*`
+- **標籤**: `/api/v1/tags/*`
+
+## 📚 說明文件
+
+完整的說明文件請參考：[說明文件索引](說明文件/README.md)
+
+主要分類：
+- 🔌 [API 文檔](說明文件/API/)
+- 🔐 [認證系統](說明文件/認證系統/)
+- 📧 [郵件與 Resend](說明文件/郵件與Resend/)
+- 🗄️ [資料庫](說明文件/資料庫/)
+- 🚀 [部署指南](說明文件/部署/)
+- 💻 [開發指南](說明文件/開發/)
+- 🐛 [問題修復](說明文件/問題修復/)
 
 ## 🚀 部署
 
 ### Vercel 部署
 
-```bash
-# 安裝 Vercel CLI
-npm i -g vercel
-
-# 部署
-vercel
-```
+詳見：[部署指南](說明文件/部署/DEPLOYMENT.md)
 
 ### GCP Cloud Run 部署
 
-詳見部署文件（開發中）
+詳見：[部署指南](說明文件/部署/DEPLOYMENT.md)
 
 ## 📄 授權
 

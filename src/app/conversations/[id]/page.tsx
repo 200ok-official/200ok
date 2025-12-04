@@ -12,6 +12,7 @@ import { confirmPayment, paymentPresets } from '@/utils/paymentConfirm';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
+import { apiGet, apiPost, isAuthenticated, clearAuth } from '@/lib/api';
 
 interface Message {
   id: string;
@@ -103,32 +104,23 @@ export default function ConversationPage() {
 
   const fetchConversation = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
+      if (!isAuthenticated()) {
         router.push('/login');
         return;
       }
 
-      const response = await fetch(`/api/v1/conversations/${params.id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      
-      if (response.ok) {
-        const { data } = await response.json();
-        setConversation(data);
-      } else if (response.status === 401) {
+      const { data } = await apiGet(`/api/v1/conversations/${params.id}`);
+      setConversation(data);
+    } catch (error: any) {
+      console.error('Failed to fetch conversation:', error);
+      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
         alert('登入已過期，請重新登入');
+        clearAuth();
         router.push('/login');
       } else {
         alert('無法載入對話');
         router.push('/conversations');
       }
-    } catch (error) {
-      console.error('Failed to fetch conversation:', error);
-      alert('載入對話失敗');
-      router.push('/conversations');
     } finally {
       setLoading(false);
     }
@@ -136,24 +128,16 @@ export default function ConversationPage() {
 
   const fetchMessages = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) return;
+      if (!isAuthenticated()) return;
 
-      const response = await fetch(`/api/v1/conversations/${params.id}/messages`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      
-      if (response.ok) {
-        const { data } = await response.json();
-        setMessages(data);
-      } else if (response.status === 401) {
-        console.error('Token expired');
+      const { data } = await apiGet(`/api/v1/conversations/${params.id}/messages`);
+      setMessages(data);
+    } catch (error: any) {
+      console.error('Failed to fetch messages:', error);
+      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+        clearAuth();
         router.push('/login');
       }
-    } catch (error) {
-      console.error('Failed to fetch messages:', error);
     }
   };
 
@@ -169,32 +153,18 @@ export default function ConversationPage() {
 
     setUnlocking(true);
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
+      if (!isAuthenticated()) {
         alert('請先登入');
         router.push('/login');
         return;
       }
 
-      const response = await fetch('/api/v1/conversations/unlock-proposal', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ conversation_id: conversation.id }),
-      });
-
-      if (response.ok) {
-        alert('✅ 提案已解鎖！已扣除 100 代幣');
-        fetchConversation();
-        fetchMessages();
-      } else {
-        const error = await response.json();
-        alert(`❌ 解鎖失敗：${error.message}`);
-      }
-    } catch (error) {
-      alert('解鎖失敗，請稍後再試');
+      await apiPost('/api/v1/conversations/unlock-proposal', { conversation_id: conversation.id });
+      alert('✅ 提案已解鎖！已扣除 100 代幣');
+      fetchConversation();
+      fetchMessages();
+    } catch (error: any) {
+      alert(`❌ 解鎖失敗：${error.message || '請稍後再試'}`);
     } finally {
       setUnlocking(false);
     }
@@ -206,34 +176,23 @@ export default function ConversationPage() {
 
     setSending(true);
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
+      if (!isAuthenticated()) {
         alert('請先登入');
         router.push('/login');
         return;
       }
 
-      const response = await fetch(`/api/v1/conversations/${params.id}/messages`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ content: newMessage }),
-      });
-
-      if (response.ok) {
-        setNewMessage('');
-        fetchMessages();
-      } else if (response.status === 401) {
+      await apiPost(`/api/v1/conversations/${params.id}/messages`, { content: newMessage });
+      setNewMessage('');
+      fetchMessages();
+    } catch (error: any) {
+      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
         alert('登入已過期，請重新登入');
+        clearAuth();
         router.push('/login');
       } else {
-        const error = await response.json();
-        alert(`❌ 發送失敗：${error.error || '未知錯誤'}`);
+        alert(`❌ 發送失敗：${error.message || '請稍後再試'}`);
       }
-    } catch (error: any) {
-      alert(`❌ 發送失敗：${error.message || '請稍後再試'}`);
     } finally {
       setSending(false);
     }

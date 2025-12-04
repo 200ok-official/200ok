@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { StarRating } from "@/components/ui/StarRating";
 import { confirmPayment, paymentPresets } from "@/utils/paymentConfirm";
+import { apiGet, apiPost, isAuthenticated } from "@/lib/api";
 
 interface User {
   id: string;
@@ -110,15 +111,11 @@ export default function UserProfilePage() {
       if (!token || !currentUserId) return;
 
       // 使用新的 API 檢查連接狀態
-      const response = await fetch(`/api/v1/connections/check?target_user_id=${userId}&type=direct`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+      const { data } = await apiGet(`/api/v1/connections/check`, {
+        target_user_id: userId,
+        type: 'direct',
       });
-
-      if (response.ok) {
-        const { data } = await response.json();
-        setExistingConversation(data);
+      setExistingConversation(data);
       }
     } catch (error) {
       console.error('Failed to check existing conversation:', error);
@@ -133,17 +130,11 @@ export default function UserProfilePage() {
 
   const fetchUserData = async () => {
     try {
-      const url = `/api/v1/users/${userId}?t=${Date.now()}`;
+      const url = `/api/v1/users/${userId}`;
       console.log("Fetching from:", url);
-      const response = await fetch(url, {
-        cache: 'no-store',
-      });
-      console.log("Response status:", response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Response data:", data);
-        console.log("Bio from API:", data.data?.bio?.substring(0, 50));
+      const data = await apiGet(url, { t: Date.now().toString() });
+      console.log("Response data:", data);
+      console.log("Bio from API:", data.data?.bio?.substring(0, 50));
         if (data.success && data.data) {
           setUser(data.data);
         } else {
@@ -167,11 +158,8 @@ export default function UserProfilePage() {
 
   const fetchUserStats = async () => {
     try {
-      const response = await fetch(`/api/v1/users/${userId}/stats`);
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data.data);
-      }
+      const data = await apiGet(`/api/v1/users/${userId}/stats`);
+      setStats(data.data);
     } catch (err) {
       console.error("Failed to fetch user stats:", err);
     }
@@ -179,11 +167,8 @@ export default function UserProfilePage() {
 
   const fetchUserReviews = async () => {
     try {
-      const response = await fetch(`/api/v1/users/${userId}/reviews?limit=10`);
-      if (response.ok) {
-        const data = await response.json();
-        setReviews(data.data || []);
-      }
+      const data = await apiGet(`/api/v1/users/${userId}/reviews`, { limit: '10' });
+      setReviews(data.data || []);
     } catch (err) {
       console.error("Failed to fetch reviews:", err);
     }
@@ -255,21 +240,13 @@ export default function UserProfilePage() {
 
     setUnlocking(true);
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
+      if (!isAuthenticated()) {
         alert('❌ 請先登入');
         router.push('/login');
         return;
       }
 
-      const response = await fetch('/api/v1/conversations/direct', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ recipient_id: userId }),
-      });
+      await apiPost('/api/v1/conversations/direct', { recipient_id: userId });
 
       if (response.ok) {
         const { data } = await response.json();

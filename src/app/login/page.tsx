@@ -6,6 +6,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { apiPost } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,19 +23,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/v1/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "登入失敗");
-      }
+      const data = await apiPost("/api/v1/auth/login", formData);
 
       // 儲存 token
       localStorage.setItem("access_token", data.data.access_token);

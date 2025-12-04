@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { TokenPurchaseModal } from '@/components/tokens/TokenPurchaseModal';
+import { apiGet, apiPost, clearAuth, isAuthenticated } from '@/lib/api';
 
 interface TokenBalance {
   balance: number;
@@ -33,8 +34,7 @@ export default function TokensPage() {
 
   useEffect(() => {
     // 檢查登入狀態
-    const token = localStorage.getItem('access_token');
-    if (!token) {
+    if (!isAuthenticated()) {
       router.push('/login');
       return;
     }
@@ -44,72 +44,37 @@ export default function TokensPage() {
 
   const handlePurchase = async (amount: number) => {
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        router.push('/login');
-        return;
-      }
-
-      const response = await fetch('/api/v1/tokens/purchase', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ amount }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      const data = await apiPost('/api/v1/tokens/purchase', { amount });
+      if (data.success) {
         alert(`✅ ${data.message || '購買成功！'}\n\n實際獲得：${data.data.total_received} 代幣\n當前餘額：${data.data.new_balance} 代幣`);
         // 重新載入代幣資料
         await fetchTokenData();
       } else {
         throw new Error(data.message || '購買失敗');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Purchase error:', error);
-      alert('購買失敗，請稍後再試');
+      alert(`購買失敗：${error.message || '請稍後再試'}`);
       throw error;
     }
   };
 
   const fetchTokenData = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        console.error('No access token found');
-        router.push('/login');
-        return;
-      }
-
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-      };
-
       // 取得餘額
-      const balanceResponse = await fetch('/api/v1/tokens/balance', { headers });
-      if (balanceResponse.ok) {
-        const { data } = await balanceResponse.json();
-        setBalance(data);
-      } else if (balanceResponse.status === 401) {
-        // Token 無效，清除並導向登入
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
-        router.push('/login');
-        return;
-      }
+      const balanceData = await apiGet('/api/v1/tokens/balance');
+      setBalance(balanceData.data);
 
       // 取得交易記錄
-      const transactionsResponse = await fetch('/api/v1/tokens/transactions?limit=20', { headers });
-      if (transactionsResponse.ok) {
-        const { data } = await transactionsResponse.json();
-        setTransactions(data);
-      }
-    } catch (error) {
+      const transactionsData = await apiGet('/api/v1/tokens/transactions', { limit: '20' });
+      setTransactions(transactionsData.data || []);
+    } catch (error: any) {
       console.error('Failed to fetch token data:', error);
+      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+        // Token 無效，清除並導向登入
+        clearAuth();
+        router.push('/login');
+      }
     } finally {
       setLoading(false);
     }

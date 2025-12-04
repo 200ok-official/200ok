@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { apiGet } from "@/lib/api";
 
 interface Freelancer {
   id: string;
@@ -15,7 +16,7 @@ interface Freelancer {
   avatar_url: string | null;
   bio: string | null;
   skills: string[];
-  rating: number;
+  rating: number | null;
   portfolio_links?: string[];
   hourly_rate?: number | null;
   created_at: string;
@@ -38,28 +39,9 @@ export default function FreelancersPage() {
 
   const fetchPopularSkills = async () => {
     try {
-      const response = await fetch("/api/v1/tags?category=tech&limit=12");
-      if (response.ok) {
-        const data = await response.json();
-        const skills = data.data?.map((tag: any) => tag.name) || [];
-        setPopularSkills(skills);
-      } else {
-        // 如果 API 還沒準備好，使用預設技能
-        setPopularSkills([
-          "React",
-          "Vue",
-          "Next.js",
-          "TypeScript",
-          "Node.js",
-          "Python",
-          "UI/UX",
-          "Figma",
-          "PostgreSQL",
-          "AWS",
-          "Docker",
-          "Git",
-        ]);
-      }
+      const data = await apiGet("/api/v1/tags", { category: "tech", limit: "12" });
+      const skills = data.data?.map((tag: any) => tag.name) || [];
+      setPopularSkills(skills);
     } catch (error) {
       console.error("Failed to fetch popular skills:", error);
       // 使用預設技能作為後備
@@ -83,19 +65,14 @@ export default function FreelancersPage() {
   const fetchFreelancers = async () => {
     setLoading(true);
     try {
-      let url = "/api/v1/users/search?limit=12";
+      const params: Record<string, string> = { limit: "12" };
       if (selectedSkill) {
-        url += `&skills[]=${encodeURIComponent(selectedSkill)}`;
+        params["skills[]"] = selectedSkill;
       }
 
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        // API 回應格式: { success: true, data: [...], pagination: {...} }
-        setFreelancers(data.data || []);
-      } else {
-        console.error("Failed to fetch freelancers:", response.status);
-      }
+      const data = await apiGet("/api/v1/users/search", params);
+      // API 回應格式: { success: true, data: [...], pagination: {...} }
+      setFreelancers(data.data || []);
     } catch (error) {
       console.error("Failed to fetch freelancers:", error);
     } finally {
@@ -232,7 +209,7 @@ export default function FreelancersPage() {
                           <svg
                             key={i}
                             className={`w-4 h-4 ${
-                              i < Math.floor(freelancer.rating)
+                              i < Math.floor(freelancer.rating || 0)
                                 ? "text-yellow-400"
                                 : "text-[#c5ae8c]"
                             }`}
@@ -243,7 +220,7 @@ export default function FreelancersPage() {
                           </svg>
                         ))}
                         <span className="ml-2 text-sm text-[#20263e] font-semibold">
-                          {freelancer.rating.toFixed(1)}
+                          {freelancer.rating !== null ? freelancer.rating.toFixed(1) : "N/A"}
                         </span>
                       </div>
                     </div>

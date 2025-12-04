@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { apiGet } from "@/lib/api";
 
 interface Project {
   id: string;
@@ -49,37 +50,32 @@ export default function ProjectsPage() {
   const fetchProjects = async (loadMore = false) => {
     try {
       const currentPage = loadMore ? page + 1 : 1;
-      const params = new URLSearchParams({
+      const params: Record<string, string> = {
         page: currentPage.toString(),
         limit: "10",
-      });
+      };
 
       if (searchKeyword) {
-        params.set("keyword", searchKeyword);
+        params.keyword = searchKeyword;
       }
 
       if (selectedTags.length > 0) {
-        params.set("tags", selectedTags.join(","));
+        params.tags = selectedTags.join(",");
       }
 
-      const response = await fetch(`/api/v1/projects?${params}`);
-      if (response.ok) {
-        const data = await response.json();
-        // API 回應格式: { success: true, data: { projects: [...], pagination: {...} } }
-        const newProjects = data.data?.projects || [];
+      const data = await apiGet("/api/v1/projects", params);
+      // API 回應格式: { success: true, data: { projects: [...], pagination: {...} } }
+      const newProjects = data.data?.projects || [];
 
-        if (loadMore) {
-          setProjects(prev => [...prev, ...newProjects]);
-          setPage(currentPage);
-        } else {
-          setProjects(newProjects);
-          setPage(1);
-        }
-
-        setHasMore(newProjects.length === 10);
+      if (loadMore) {
+        setProjects(prev => [...prev, ...newProjects]);
+        setPage(currentPage);
       } else {
-        console.error("Failed to fetch projects:", response.status);
+        setProjects(newProjects);
+        setPage(1);
       }
+
+      setHasMore(newProjects.length === 10);
     } catch (error) {
       console.error("Failed to fetch projects:", error);
     } finally {
@@ -89,25 +85,9 @@ export default function ProjectsPage() {
 
   const fetchPopularTags = async () => {
     try {
-      const response = await fetch("/api/v1/tags?category=tech&limit=10");
-      if (response.ok) {
-        const data = await response.json();
-        const tags = data.data?.map((tag: any) => tag.name) || [];
-        setPopularTags(tags);
-      } else {
-        // 如果 API 還沒準備好，使用預設標籤
-        setPopularTags([
-          "React",
-          "Vue",
-          "Next.js",
-          "Node.js",
-          "Python",
-          "電商",
-          "App",
-          "LineBot",
-          "UI/UX",
-        ]);
-      }
+      const data = await apiGet("/api/v1/tags", { category: "tech", limit: "10" });
+      const tags = data.data?.map((tag: any) => tag.name) || [];
+      setPopularTags(tags);
     } catch (error) {
       console.error("Failed to fetch popular tags:", error);
       // 使用預設標籤作為後備

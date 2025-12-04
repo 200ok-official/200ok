@@ -7,6 +7,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { apiGet, clearAuth, isAuthenticated } from '@/lib/api';
 
 interface Conversation {
   id: string;
@@ -70,29 +71,19 @@ export default function ConversationsPage() {
 
   const fetchConversations = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
+      if (!isAuthenticated()) {
         router.push('/login');
         return;
       }
 
-      const response = await fetch('/api/v1/conversations', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const { data } = await response.json();
-        setConversations(data);
-      } else if (response.status === 401) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
+      const { data } = await apiGet('/api/v1/conversations');
+      setConversations(data);
+    } catch (error: any) {
+      console.error('Failed to fetch conversations:', error);
+      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+        clearAuth();
         router.push('/login');
       }
-    } catch (error) {
-      console.error('Failed to fetch conversations:', error);
     } finally {
       setLoading(false);
     }

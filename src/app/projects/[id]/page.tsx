@@ -1,39 +1,97 @@
-import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import ProjectDetailClient from "@/components/projects/ProjectDetailClient";
+import { apiGet } from "@/lib/api";
 
-async function getProject(id: string, userId?: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-  const url = new URL(`${baseUrl}/api/v1/projects/${id}`);
-  
-  const res = await fetch(url.toString(), {
-    cache: "no-store",
-    headers: userId ? { "x-user-id": userId } : {},
-  });
-
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.data;
-}
-
-export default async function ProjectDetailPage({
+export default function ProjectDetailPage({
   params,
 }: {
   params: { id: string };
 }) {
-  const session = await getServerSession(authOptions);
-  // NextAuth 預設的 Session.user 型別沒有 id，我們這裡手動斷言擴充
-  const userId = (session?.user as { id?: string } | undefined)?.id;
-  const project = await getProject(params.id, userId);
+  const router = useRouter();
+  const [project, setProject] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  if (!project) {
-    notFound();
+  useEffect(() => {
+    // 獲取當前登入用戶
+    const token = localStorage.getItem("access_token");
+    const userData = localStorage.getItem("user");
+    
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setUserId(user.id);
+      } catch (e) {
+        console.error("Failed to parse user data", e);
+      }
+    }
+
+    // 獲取案件數據
+    fetchProject(token);
+  }, [params.id]);
+
+  const fetchProject = async (token: string | null) => {
+    try {
+      setLoading(true);
+      const data = await apiGet(`/api/v1/projects/${params.id}`);
+      if (data.success) {
+        setProject(data.data);
+      } else {
+        setError(data.error || "載入失敗");
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch project:", err);
+      if (err.message?.includes('404') || err.message?.includes('Not Found')) {
+        setError("案件不存在");
+      } else {
+        setError("載入案件時發生錯誤");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#20263e] mx-auto mb-4"></div>
+            <p className="text-[#20263e]">載入中...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !project) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-[#20263e] mb-4">
+              {error || "案件不存在"}
+            </h1>
+            <Button onClick={() => router.push("/projects")}>
+              返回案件列表
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   const isOwner = userId && userId === project.client_id;
@@ -410,7 +468,7 @@ export default async function ProjectDetailPage({
                   projectId={project.id} 
                   projectTitle={project.title}
                   isOwner={false} 
-                  userId={userId} 
+                  userId={userId || undefined} 
                 />
               )}
             </Card>

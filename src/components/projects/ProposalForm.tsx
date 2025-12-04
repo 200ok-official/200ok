@@ -7,6 +7,7 @@ import rehypeSanitize from 'rehype-sanitize';
 import { Button } from '@/components/ui/Button';
 import { detectContactInfo, containsContactInfo } from '@/utils/contactDetection';
 import { confirmPayment, paymentPresets } from '@/utils/paymentConfirm';
+import { apiPost } from '@/lib/api';
 
 interface ProposalFormProps {
   projectId: string;
@@ -83,22 +84,11 @@ export default function ProposalForm({
 
     try {
       // 1. 創建 bid
-      const bidResponse = await fetch(`/api/v1/projects/${projectId}/bids`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          proposal_content: proposal,
-          proposed_amount: parseFloat(amount),
-          estimated_days: parseInt(days),
-        }),
+      const { data: bid } = await apiPost(`/api/v1/projects/${projectId}/bids`, {
+        proposal_content: proposal,
+        proposed_amount: parseFloat(amount),
+        estimated_days: parseInt(days),
       });
-
-      if (!bidResponse.ok) {
-        const error = await bidResponse.json();
-        throw new Error(error.message || '提交失敗');
-      }
-
-      const { data: bid } = await bidResponse.json();
 
       // 2. 通知成功
       alert('✅ 提案已提交！\n\n已扣除 100 代幣\n等待發案者回應...');

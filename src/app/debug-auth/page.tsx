@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { apiGet, clearAuth as clearAuthUtil } from '@/lib/api';
 
 export default function DebugAuthPage() {
   const [authInfo, setAuthInfo] = useState<any>(null);
@@ -22,30 +23,16 @@ export default function DebugAuthPage() {
   }, []);
 
   const testAPI = async () => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      alert('沒有 token');
-      return;
-    }
-
     try {
-      const response = await fetch('/api/v1/tokens/balance', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-      alert(`API 回應 (${response.status}):\n${JSON.stringify(data, null, 2)}`);
+      const data = await apiGet('/api/v1/tokens/balance');
+      alert(`API 回應:\n${JSON.stringify(data, null, 2)}`);
     } catch (error: any) {
       alert(`錯誤: ${error.message}`);
     }
   };
 
   const clearAuth = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
+    clearAuthUtil();
     window.location.reload();
   };
 

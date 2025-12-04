@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { apiPost, apiGet } from "@/lib/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -46,25 +47,13 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/v1/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          phone: formData.phone,
-          roles: ["client"], // 預設為發案者，之後可在個人資料頁面更改
-        }),
+      await apiPost("/api/v1/auth/register", {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        roles: ["client"], // 預設為發案者，之後可在個人資料頁面更改
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "註冊失敗");
-      }
 
       // 顯示驗證郵件提示
       setShowVerificationMessage(true);
@@ -130,16 +119,10 @@ export default function RegisterPage() {
                 variant="outline"
                 onClick={async () => {
                   try {
-                    const response = await fetch(`/api/v1/auth/verify-email?email=${formData.email}`);
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                      alert("✅ 驗證郵件已重新發送！");
-                    } else {
-                      alert(`❌ ${data.error || "重新發送失敗"}`);
-                    }
-                  } catch (error) {
-                    alert("❌ 重新發送失敗，請稍後再試");
+                    await apiGet(`/api/v1/auth/verify-email?email=${formData.email}`);
+                    alert("✅ 驗證郵件已重新發送！");
+                  } catch (error: any) {
+                    alert(`❌ ${error.message || "重新發送失敗"}`);
                   }
                 }}
                 className="mb-4"

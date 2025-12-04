@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { apiGet, apiPost, isAuthenticated } from '@/lib/api';
 
 interface Project {
   id: string;
@@ -42,21 +43,14 @@ export default function SubmitProposalPage() {
 
   const fetchProjectInfo = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
+      if (!isAuthenticated()) {
         router.push('/login');
         return;
       }
 
-      const response = await fetch(`/api/v1/projects/${projectId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const data = await apiGet(`/api/v1/projects/${projectId}`);
 
-      const data = await response.json().catch(() => ({ success: false, error: '無效的回應格式' }));
-
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         throw new Error(data.error || '無法載入案件資訊');
       }
 
@@ -130,8 +124,7 @@ export default function SubmitProposalPage() {
     setSubmitting(true);
 
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
+      if (!isAuthenticated()) {
         router.push('/login');
         return;
       }
@@ -162,29 +155,16 @@ export default function SubmitProposalPage() {
 ${proposalContent}`;
 
       // 提交提案並支付代幣
-      const response = await fetch('/api/v1/conversations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+      const data = await apiPost('/api/v1/conversations', {
+        type: 'project_proposal',
+        project_id: projectId,
+        initial_message: fullMessage,
+        bid_data: {
+          amount: parseFloat(budgetAmount),
+          estimated_days: months * 30 + days, // 轉換為總天數供後端使用
+          proposal: proposalContent, // 保留原始提案內容
         },
-        body: JSON.stringify({
-          type: 'project_proposal',
-          project_id: projectId,
-          initial_message: fullMessage,
-          bid_data: {
-            amount: parseFloat(budgetAmount),
-            estimated_days: months * 30 + days, // 轉換為總天數供後端使用
-            proposal: proposalContent, // 保留原始提案內容
-          },
-        }),
       });
-
-      const data = await response.json().catch(() => ({ success: false, error: '無效的回應格式' }));
-
-      if (!response.ok) {
-        throw new Error(data.error || '提交失敗');
-      }
 
       if (data.success && data.data?.conversation_id) {
         const conversationId = data.data.conversation_id;

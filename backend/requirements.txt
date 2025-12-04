@@ -1,0 +1,47 @@
+# Backend Dependencies for 200ok FastAPI
+# 
+# ⚠️ Python 版本要求：Python 3.10+
+# 使用 psycopg (psycopg3) 作為 PostgreSQL driver，與 PgBouncer 完全相容
+#
+
+# FastAPI Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Database
+sqlalchemy==2.0.25
+psycopg[binary]==3.1.18  # Async PostgreSQL driver (PgBouncer 相容)
+psycopg2-binary==2.9.9  # Sync PostgreSQL driver (backup)
+alembic==1.13.1  # Database migrations
+greenlet==3.0.3  # Required for SQLAlchemy async operations
+
+# Pydantic & Validation
+pydantic==2.5.3
+pydantic-settings==2.1.0
+email-validator==2.1.0
+
+# Authentication & Security
+pyjwt==2.8.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.3.0
+python-jose[cryptography]==3.3.0
+
+# Environment & Config
+python-dotenv==1.0.0
+
+# HTTP Client (for external APIs if needed)
+httpx==0.26.0
+
+# Email (Resend)
+resend==0.7.0
+
+# Utilities
+python-dateutil==2.8.2
+
+# Development & Testing (optional)
+pytest==7.4.4
+pytest-asyncio==0.23.3
+black==23.12.1
+ruff==0.1.11
+

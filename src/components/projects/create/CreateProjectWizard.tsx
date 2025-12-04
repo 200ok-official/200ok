@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { apiPost } from "@/lib/api";
 
 // 引入各步驟組件 - 全新開發流程
 import { Step1ProjectType } from "./steps/Step1ProjectType";
@@ -322,24 +323,11 @@ export const CreateProjectWizard: React.FC = () => {
         }),
       };
 
-      const response = await fetch("/api/v1/projects", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        router.push(`/projects/${result.data.id}`);
-      } else {
-        const error = await response.json();
-        alert(`發布失敗: ${error.error || "未知錯誤"}`);
-      }
-    } catch (error) {
+      const result = await apiPost("/api/v1/projects", payload);
+      router.push(`/projects/${result.data.id}`);
+    } catch (error: any) {
       console.error("提交失敗:", error);
-      alert("提交失敗，請稍後再試");
+      alert(`發布失敗: ${error.message || "未知錯誤"}`);
     } finally {
       setIsSubmitting(false);
     }

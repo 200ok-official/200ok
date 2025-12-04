@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { apiPost } from "@/lib/api";
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -22,31 +23,19 @@ function VerifyEmailContent() {
     }
 
     // 呼叫驗證 API
-    fetch("/api/v1/auth/verify-email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ token }),
-    })
-      .then(async (response) => {
-        const data = await response.json();
-        if (response.ok) {
-          setStatus("success");
-          setMessage("電子郵件驗證成功！");
-          // 3秒後導向登入頁
-          setTimeout(() => {
-            router.push("/login");
-          }, 3000);
-        } else {
-          setStatus("error");
-          setMessage(data.error || "驗證失敗");
-        }
+    apiPost("/api/v1/auth/verify-email", { token })
+      .then(() => {
+        setStatus("success");
+        setMessage("電子郵件驗證成功！");
+        // 3秒後導向登入頁
+        setTimeout(() => {
+          router.push("/login");
+        }, 3000);
       })
-      .catch((error) => {
+      .catch((error: any) => {
         console.error("[VERIFY_EMAIL_ERROR]", error);
         setStatus("error");
-        setMessage("驗證失敗，請稍後再試");
+        setMessage(error.message || "驗證失敗，請稍後再試");
       });
   }, [token, router]);
 

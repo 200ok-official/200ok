@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { apiGet, isAuthenticated } from "@/lib/api";
 
 interface Project {
   id: string;
@@ -36,8 +37,12 @@ export default function HomePage() {
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
   const [recommendedFreelancers, setRecommendedFreelancers] = useState<Freelancer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    // 檢查是否已登入
+    setIsLoggedIn(isAuthenticated());
+    
     fetchHomeData();
   }, []);
 
@@ -46,15 +51,9 @@ export default function HomePage() {
     try {
       // 獲取最新案件
       try {
-        const projectsResponse = await fetch("/api/v1/projects?limit=5&status=open");
-        if (projectsResponse.ok) {
-          const projectsData = await projectsResponse.json();
-          // API 回應格式: { success: true, data: { projects: [...], pagination: {...} } }
-          setRecentProjects(projectsData.data?.projects || []);
-        } else {
-          console.error("Failed to fetch projects:", projectsResponse.status);
-          setRecentProjects([]); // 設定為空陣列，讓頁面繼續顯示
-        }
+        const projectsData = await apiGet("/api/v1/projects", { limit: "5", status: "open" });
+        // API 回應格式: { success: true, data: { projects: [...], pagination: {...} } }
+        setRecentProjects(projectsData.data?.projects || []);
       } catch (projectError) {
         console.error("Error fetching projects:", projectError);
         setRecentProjects([]); // 設定為空陣列，讓頁面繼續顯示
@@ -62,15 +61,9 @@ export default function HomePage() {
 
       // 獲取推薦接案工程師
       try {
-        const freelancersResponse = await fetch("/api/v1/users/search?limit=5");
-        if (freelancersResponse.ok) {
-          const freelancersData = await freelancersResponse.json();
-          // API 回應格式: { success: true, data: [...], pagination: {...} }
-          setRecommendedFreelancers(freelancersData.data || []);
-        } else {
-          console.error("Failed to fetch freelancers:", freelancersResponse.status);
-          setRecommendedFreelancers([]); // 設定為空陣列，讓頁面繼續顯示
-        }
+        const freelancersData = await apiGet("/api/v1/users/search", { limit: "5" });
+        // API 回應格式: { success: true, data: [...], pagination: {...} }
+        setRecommendedFreelancers(freelancersData.data || []);
       } catch (freelancerError) {
         console.error("Error fetching freelancers:", freelancerError);
         setRecommendedFreelancers([]); // 設定為空陣列，讓頁面繼續顯示
@@ -106,11 +99,13 @@ export default function HomePage() {
                   尋找接案工程師
                 </Button>
               </Link>
-              <Link href="/register">
-                <Button size="sm" className="bg-[#20263e] hover:bg-[#2d3550] text-white">
-                  加入平台
-                </Button>
-              </Link>
+              {!isLoggedIn && (
+                <Link href="/register">
+                  <Button size="sm" className="bg-[#20263e] hover:bg-[#2d3550] text-white">
+                    加入平台
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -331,11 +326,13 @@ export default function HomePage() {
           ) : (
             <div className="text-center py-12">
               <p className="text-[#c5ae8c] text-lg">目前沒有推薦的接案工程師</p>
-              <Link href="/register" className="inline-block mt-4">
-                <Button className="bg-[#20263e] hover:bg-[#2d3550] text-white">
-                  加入成為接案工程師
-                </Button>
-              </Link>
+              {!isLoggedIn && (
+                <Link href="/register" className="inline-block mt-4">
+                  <Button className="bg-[#20263e] hover:bg-[#2d3550] text-white">
+                    加入成為接案工程師
+                  </Button>
+                </Link>
+              )}
             </div>
           )}
         </div>

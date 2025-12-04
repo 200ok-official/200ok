@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { apiGet, apiPut } from "@/lib/api";
 
 type UserRole = "freelancer" | "client" | "admin";
 
@@ -52,23 +53,7 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
-      const token = localStorage.getItem("access_token");
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
-      const response = await fetch("/api/v1/users/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("無法載入個人資料");
-      }
-
-      const data = await response.json();
+      const data = await apiGet("/api/v1/users/me");
       setProfile(data.data);
       
       // 初始化表單
@@ -100,26 +85,7 @@ export default function ProfilePage() {
     setSaving(true);
 
     try {
-      const token = localStorage.getItem("access_token");
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
-      const response = await fetch("/api/v1/users/me", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "更新失敗");
-      }
-
+      await apiPut("/api/v1/users/me", formData);
       setSuccess("個人資料已更新！");
       await fetchProfile();
     } catch (error: any) {
@@ -189,16 +155,9 @@ export default function ProfilePage() {
       setError("");
       setSuccess("");
 
-      const response = await fetch("/api/v1/users/me", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ roles: newRoles }),
-      });
-
-      if (!response.ok) {
+      try {
+        await apiPut("/api/v1/users/me", { roles: newRoles });
+      } catch (error) {
         // 如果失敗，恢復原狀態
         setProfile((prev) => prev ? { ...prev, roles: currentRoles } : null);
         throw new Error("更新身份失敗");
@@ -292,18 +251,11 @@ export default function ProfilePage() {
                     className="mt-2"
                     onClick={async () => {
                       try {
-                        const response = await fetch(`/api/v1/auth/verify-email?email=${profile.email}`);
-                        const data = await response.json();
-                        
-                        if (response.ok) {
-                          setSuccess("驗證郵件已重新發送！請檢查您的信箱。");
-                          setError("");
-                        } else {
-                          setError(data.error || "重新發送失敗");
-                          setSuccess("");
-                        }
-                      } catch (error) {
-                        setError("重新發送失敗，請稍後再試");
+                        await apiGet(`/api/v1/auth/verify-email`, { email: profile.email });
+                        setSuccess("驗證郵件已重新發送！請檢查您的信箱。");
+                        setError("");
+                      } catch (error: any) {
+                        setError(error.message || "重新發送失敗");
                         setSuccess("");
                       }
                     }}
