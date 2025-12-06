@@ -108,7 +108,7 @@ export default function HomePage() {
             <div className="flex items-center space-x-4">
               <h2 className="text-lg font-semibold text-[#20263e]">歡迎來到 200 OK</h2>
               <span className="text-sm text-[#c5ae8c]">•</span>
-              <span className="text-sm text-[#c5ae8c]">軟體接案平台</span>
+              <span className="text-sm text-[#c5ae8c]">專為軟體工程設計的接案平台</span>
             </div>
             <div className="flex items-center space-x-3">
               <Link href="/projects">
@@ -363,37 +363,42 @@ export default function HomePage() {
       {/* Original Content - Compressed */}
       <section className="py-8 px-4 bg-white">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-center text-[#20263e] mb-6">
-            為什麼選擇 200 OK？
-          </h2>
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-[#20263e] mb-2">
+              為什麼選擇 200 OK？
+            </h2>
+            <p className="text-sm text-[#c5ae8c] mb-4">
+              專為軟體工程設計，與綜合型接案平台做出區隔
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center">
               <div className="w-12 h-12 bg-[#20263e] text-white rounded-full flex items-center justify-center text-lg mx-auto mb-3">
-                🎯
+                🤖
               </div>
-              <h3 className="text-lg font-semibold text-[#20263e] mb-2">智能匹配</h3>
+              <h3 className="text-lg font-semibold text-[#20263e] mb-2">AI 輔助需求分析</h3>
               <p className="text-sm text-[#c5ae8c]">
-                AI 智能分析案件需求，自動推薦最適合的接案工程師，提高專案成功率。
+                透過引導性類型特化步驟與 AI 輔助，讓您清楚說明需求，了解需求等級、描述完整度與市場定位。
               </p>
             </div>
 
             <div className="text-center">
               <div className="w-12 h-12 bg-[#20263e] text-white rounded-full flex items-center justify-center text-lg mx-auto mb-3">
-                🔒
+                💻
               </div>
-              <h3 className="text-lg font-semibold text-[#20263e] mb-2">安全保障</h3>
+              <h3 className="text-lg font-semibold text-[#20263e] mb-2">專為工程師設計</h3>
               <p className="text-sm text-[#c5ae8c]">
-                託管付款、分期付款機制，保障雙方權益，讓交易更安心。
+                專屬技能展示空間，讓接案工程師節省更多力氣去釐清需求，接案流程更流暢。
               </p>
             </div>
 
-      <div className="text-center">
+            <div className="text-center">
               <div className="w-12 h-12 bg-[#20263e] text-white rounded-full flex items-center justify-center text-lg mx-auto mb-3">
                 ⚡
               </div>
-              <h3 className="text-lg font-semibold text-[#20263e] mb-2">快速簡便</h3>
+              <h3 className="text-lg font-semibold text-[#20263e] mb-2">引導式發案流程</h3>
               <p className="text-sm text-[#c5ae8c]">
-                引導式發案流程，即使不懂技術也能清楚描述需求，快速找到合適的開發者。
+                即使不懂技術也能透過引導式問答清楚描述需求，快速找到合適的軟體開發者。
               </p>
             </div>
           </div>
@@ -406,10 +411,10 @@ export default function HomePage() {
           <h2 className="text-2xl font-bold text-center text-[#20263e] mb-6">運作流程</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { step: "1", title: "發布案件", description: "透過引導式問答描述您的需求" },
-              { step: "2", title: "收到投標", description: "專業接案工程師提交提案與報價" },
-              { step: "3", title: "選擇合作", description: "比較提案，選擇最適合的開發者" },
-              { step: "4", title: "完成專案", description: "追蹤進度，驗收成果，互相評價" },
+              { step: "1", title: "發布案件", description: "AI 引導式問答，協助清楚描述軟體需求" },
+              { step: "2", title: "AI 需求分析", description: "了解需求等級、完整度與市場定位" },
+              { step: "3", title: "收到投標", description: "專業軟體工程師提交提案與報價" },
+              { step: "4", title: "完成專案", description: "流暢溝通，驗收成果，互相評價" },
             ].map((item, index) => (
               <div key={index} className="text-center">
                 <div className="w-10 h-10 bg-[#c5ae8c] text-white rounded-full flex items-center justify-center text-sm font-bold mx-auto mb-2">
@@ -426,9 +431,9 @@ export default function HomePage() {
       {/* CTA Section - Compressed */}
       <section className="py-8 px-4 bg-[#20263e] text-white">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-xl font-bold mb-4">準備開始您的專案了嗎？</h2>
+          <h2 className="text-xl font-bold mb-4">準備開始您的軟體專案了嗎？</h2>
           <p className="text-sm mb-6 opacity-90">
-            立即加入 200 OK，與優秀的接案工程師合作，實現您的軟體夢想。
+            立即加入 200 OK，專為軟體工程設計的接案平台，透過 AI 輔助與引導式流程，讓需求更清晰，合作更順暢。
           </p>
           <div className="flex justify-center gap-3">
             <Link href="/projects/new">
