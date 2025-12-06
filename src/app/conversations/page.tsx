@@ -34,7 +34,7 @@ interface Conversation {
   last_message?: {
     content: string;
     created_at: string;
-  }[];
+  } | null;
 }
 
 export default function ConversationsPage() {
@@ -109,6 +109,31 @@ export default function ConversationsPage() {
     return conv.initiator.id === userId;
   };
 
+  // 處理訊息預覽：移除 Markdown 語法並截取前幾個字
+  const getMessagePreview = (content: string, maxLength: number = 50): string => {
+    if (!content) return '';
+    
+    // 移除 Markdown 語法
+    let text = content
+      .replace(/^#+\s+/gm, '') // 移除標題
+      .replace(/\*\*(.*?)\*\*/g, '$1') // 移除粗體
+      .replace(/\*(.*?)\*/g, '$1') // 移除斜體
+      .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // 移除連結，保留文字
+      .replace(/`([^`]+)`/g, '$1') // 移除行內代碼
+      .replace(/```[\s\S]*?```/g, '') // 移除代碼塊
+      .replace(/^\|.*\|$/gm, '') // 移除表格行
+      .replace(/^-\s+/gm, '') // 移除列表符號
+      .replace(/^\d+\.\s+/gm, '') // 移除有序列表
+      .replace(/\n+/g, ' ') // 將換行轉為空格
+      .trim();
+    
+    // 截取指定長度
+    if (text.length > maxLength) {
+      return text.substring(0, maxLength) + '...';
+    }
+    return text;
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
       <Navbar />
@@ -128,7 +153,7 @@ export default function ConversationsPage() {
             <div className="space-y-4">
               {conversations.map((conv) => {
                 const otherUser = getOtherUser(conv);
-                const lastMessage = conv.last_message?.[0];
+                const lastMessage = conv.last_message;
                 const needsUnlock = conv.type === 'project_proposal' && !conv.recipient_paid && !isInitiator(conv);
 
                 return (
@@ -184,8 +209,8 @@ export default function ConversationsPage() {
                         )}
 
                         {lastMessage ? (
-                          <p className="text-sm text-gray-500 truncate">
-                            {lastMessage.content}
+                          <p className="text-sm text-gray-500 truncate" title={lastMessage.content}>
+                            {getMessagePreview(lastMessage.content, 50)}
                           </p>
                         ) : (
                           <p className="text-sm text-gray-400 italic">
@@ -197,12 +222,20 @@ export default function ConversationsPage() {
                       {/* 時間 */}
                       <div className="text-right flex-shrink-0">
                         <p className="text-xs text-gray-400">
-                          {new Date(conv.updated_at).toLocaleString('zh-TW', {
-                            month: 'numeric',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                          {lastMessage?.created_at 
+                            ? new Date(lastMessage.created_at).toLocaleString('zh-TW', {
+                                month: 'numeric',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : new Date(conv.updated_at).toLocaleString('zh-TW', {
+                                month: 'numeric',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                          }
                         </p>
                       </div>
                     </div>

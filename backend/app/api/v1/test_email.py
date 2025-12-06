@@ -2,11 +2,14 @@
 Email Testing Endpoints
 用於測試 Resend email 功能
 """
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel, EmailStr
 
 from ...services.email_service import send_test_email
 from ...schemas.common import SuccessResponse
+from ...config import settings
+from ...dependencies import require_admin
+from ...models.user import User
 
 
 router = APIRouter(prefix="/test-email", tags=["test-email"])
@@ -25,13 +28,21 @@ class TestEmailRequest(BaseModel):
 
 
 @router.post("", response_model=SuccessResponse[dict])
-async def send_test_email_endpoint(data: TestEmailRequest):
+async def send_test_email_endpoint(
+    data: TestEmailRequest,
+    current_user: User = Depends(require_admin)
+):
     """
-    發送測試 email
+    發送測試 email（管理員專用）
     
     用於測試 Resend 設定是否正確
-    不需要認證，任何人都可以測試
+    僅限管理員使用，防止郵件濫用
     """
+    # 額外檢查：僅在開發環境或管理員可用
+    if not settings.DEBUG:
+        # 生產環境必須是管理員
+        pass  # require_admin 已處理
+    
     try:
         result = await send_test_email(data.email)
         

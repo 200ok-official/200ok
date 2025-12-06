@@ -66,7 +66,9 @@ export default function ConversationPage() {
   const [sending, setSending] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isComposing, setIsComposing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fetchingConversationRef = useRef(false);
 
   useEffect(() => {
     // 檢查登入狀態（NextAuth 或 localStorage）
@@ -103,7 +105,13 @@ export default function ConversationPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const fetchConversation = async () => {
+  const fetchConversation = async (silent = false, retryCount = 0) => {
+    // 防止重複調用
+    if (fetchingConversationRef.current) {
+      return;
+    }
+
+    fetchingConversationRef.current = true;
     try {
       if (!isAuthenticated()) {
         router.push('/login');
@@ -115,15 +123,29 @@ export default function ConversationPage() {
     } catch (error: any) {
       console.error('Failed to fetch conversation:', error);
       if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-        alert('登入已過期，請重新登入');
+        if (!silent) {
+          alert('登入已過期，請重新登入');
+        }
         clearAuth();
         router.push('/login');
       } else {
-        alert('無法載入對話');
-        router.push('/conversations');
+        // 如果是 404 或對話不存在，且是第一次嘗試，等待後重試一次（可能是剛建立的對話）
+        if ((error.message?.includes('404') || error.message?.includes('not found')) && retryCount === 0 && silent) {
+          fetchingConversationRef.current = false;
+          setTimeout(() => {
+            fetchConversation(true, 1);
+          }, 1000);
+          return;
+        }
+        // 只有在非靜默模式下才顯示錯誤
+        if (!silent) {
+          alert('無法載入對話');
+          router.push('/conversations');
+        }
       }
     } finally {
       setLoading(false);
+      fetchingConversationRef.current = false;
     }
   };
 
@@ -164,8 +186,11 @@ export default function ConversationPage() {
       alert('✅ 提案已解鎖！已扣除 100 代幣');
       // 通知 Navbar 更新代幣餘額
       triggerTokenBalanceUpdate();
-      fetchConversation();
-      fetchMessages();
+      // 延遲一下再重新載入，確保後端已更新
+      setTimeout(() => {
+        fetchConversation(true); // 靜默模式，避免顯示錯誤
+        fetchMessages();
+      }, 500);
     } catch (error: any) {
       alert(`❌ 解鎖失敗：${error.message || '請稍後再試'}`);
     } finally {
@@ -342,38 +367,34 @@ export default function ConversationPage() {
                             {message.sender.name}
                           </p>
                         )}
-                        {isProposal ? (
-                          <div className="prose prose-sm max-w-none text-[#20263e] 
-                            [&>*]:text-[#20263e] 
-                            [&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:text-[#20263e]
-                            [&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-2 [&_h2]:text-[#20263e]
-                            [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_h3]:text-[#20263e]
-                            [&_h4]:text-sm [&_h4]:font-semibold [&_h4]:mt-2 [&_h4]:mb-1 [&_h4]:text-[#20263e]
-                            [&_p]:text-sm [&_p]:leading-relaxed [&_p]:mb-2 [&_p]:text-[#20263e]
-                            [&_ul]:text-sm [&_ul]:my-2 [&_ul]:pl-5 [&_ul]:list-disc
-                            [&_ol]:text-sm [&_ol]:my-2 [&_ol]:pl-5 [&_ol]:list-decimal
-                            [&_li]:text-sm [&_li]:mb-1 [&_li]:text-[#20263e]
-                            [&_strong]:font-semibold [&_strong]:text-[#20263e]
-                            [&_em]:italic [&_em]:text-[#20263e]
-                            [&_a]:text-[#c5ae8c] [&_a]:underline [&_a]:hover:text-[#a08a6f]
-                            [&_code]:text-xs [&_code]:bg-gray-200 [&_code]:text-[#20263e] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono
-                            [&_pre]:bg-gray-200 [&_pre]:text-[#20263e] [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:my-2 [&_pre]:border [&_pre]:border-gray-300
-                            [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-xs
-                            [&_blockquote]:border-l-4 [&_blockquote]:border-[#c5ae8c] [&_blockquote]:pl-3 [&_blockquote]:my-2 [&_blockquote]:text-[#20263e] [&_blockquote]:italic
-                            [&_table]:w-full [&_table]:my-3 [&_table]:border-collapse [&_table]:border [&_table]:border-gray-300
-                            [&_th]:bg-gray-200 [&_th]:text-[#20263e] [&_th]:font-semibold [&_th]:text-sm [&_th]:px-3 [&_th]:py-2 [&_th]:border [&_th]:border-gray-300 [&_th]:text-left
-                            [&_td]:text-sm [&_td]:text-[#20263e] [&_td]:px-3 [&_td]:py-2 [&_td]:border [&_td]:border-gray-300
-                            [&_hr]:my-4 [&_hr]:border-gray-300">
-                            <ReactMarkdown
-                              remarkPlugins={[remarkGfm]}
-                              rehypePlugins={[rehypeSanitize]}
-                            >
-                              {message.content}
-                            </ReactMarkdown>
-                          </div>
-                        ) : (
-                          <p className="whitespace-pre-wrap break-words text-sm">{message.content}</p>
-                        )}
+                        <div className="prose prose-sm max-w-none text-[#20263e] 
+                          [&>*]:text-[#20263e] 
+                          [&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:text-[#20263e]
+                          [&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-2 [&_h2]:text-[#20263e]
+                          [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_h3]:text-[#20263e]
+                          [&_h4]:text-sm [&_h4]:font-semibold [&_h4]:mt-2 [&_h4]:mb-1 [&_h4]:text-[#20263e]
+                          [&_p]:text-sm [&_p]:leading-relaxed [&_p]:mb-2 [&_p]:text-[#20263e]
+                          [&_ul]:text-sm [&_ul]:my-2 [&_ul]:pl-5 [&_ul]:list-disc
+                          [&_ol]:text-sm [&_ol]:my-2 [&_ol]:pl-5 [&_ol]:list-decimal
+                          [&_li]:text-sm [&_li]:mb-1 [&_li]:text-[#20263e]
+                          [&_strong]:font-semibold [&_strong]:text-[#20263e]
+                          [&_em]:italic [&_em]:text-[#20263e]
+                          [&_a]:text-[#c5ae8c] [&_a]:underline [&_a]:hover:text-[#a08a6f]
+                          [&_code]:text-xs [&_code]:bg-gray-200 [&_code]:text-[#20263e] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono
+                          [&_pre]:bg-gray-200 [&_pre]:text-[#20263e] [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:my-2 [&_pre]:border [&_pre]:border-gray-300
+                          [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-xs
+                          [&_blockquote]:border-l-4 [&_blockquote]:border-[#c5ae8c] [&_blockquote]:pl-3 [&_blockquote]:my-2 [&_blockquote]:text-[#20263e] [&_blockquote]:italic
+                          [&_table]:w-full [&_table]:my-3 [&_table]:border-collapse [&_table]:border [&_table]:border-gray-300
+                          [&_th]:bg-gray-200 [&_th]:text-[#20263e] [&_th]:font-semibold [&_th]:text-sm [&_th]:px-3 [&_th]:py-2 [&_th]:border [&_th]:border-gray-300 [&_th]:text-left
+                          [&_td]:text-sm [&_td]:text-[#20263e] [&_td]:px-3 [&_td]:py-2 [&_td]:border [&_td]:border-gray-300
+                          [&_hr]:my-4 [&_hr]:border-gray-300">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            rehypePlugins={[rehypeSanitize]}
+                          >
+                            {message.content}
+                          </ReactMarkdown>
+                        </div>
                         <p className="text-xs mt-2 text-gray-500">
                           {new Date(message.created_at).toLocaleString('zh-TW', {
                             month: 'numeric',
@@ -394,28 +415,36 @@ export default function ConversationPage() {
           {/* 輸入區域 */}
           <Card className="p-4">
             {canSend ? (
-              <form onSubmit={handleSendMessage} className="flex gap-2">
-                <textarea
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="輸入訊息..."
-                  rows={3}
-                  className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-transparent resize-none"
-                  disabled={sending}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage(e);
-                    }
-                  }}
-                />
-                <Button
-                  type="submit"
-                  disabled={sending || !newMessage.trim()}
-                  className="self-end"
-                >
-                  {sending ? '發送中...' : '發送'}
-                </Button>
+              <form onSubmit={handleSendMessage} className="space-y-2">
+                <div className="flex gap-2">
+                  <textarea
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="輸入訊息...（支援 Markdown 語法）"
+                    rows={3}
+                    className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-transparent resize-none font-mono text-sm"
+                    disabled={sending}
+                    onCompositionStart={() => setIsComposing(true)}
+                    onCompositionEnd={() => setIsComposing(false)}
+                    onKeyDown={(e) => {
+                      // 如果正在進行中文輸入（IME），不觸發發送
+                      if (isComposing) {
+                        return;
+                      }
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage(e);
+                      }
+                    }}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={sending || !newMessage.trim()}
+                    className="self-end"
+                  >
+                    {sending ? '發送中...' : '發送'}
+                  </Button>
+                </div>
               </form>
             ) : (
               <div className="text-center text-gray-500 py-4">
