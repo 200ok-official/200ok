@@ -4,7 +4,7 @@
 不使用 ORM，速度快 10x，完美適配 PgBouncer 和 Cloud Run
 """
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncConnection
-from sqlalchemy import text, TypeDecorator
+from sqlalchemy import text, TypeDecorator, event
 from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.orm import DeclarativeBase
 from typing import AsyncGenerator, Any, Optional
@@ -17,7 +17,7 @@ from .config import settings
 # 
 # 使用 SQLAlchemy Core + psycopg (psycopg3)，完全沒有 ORM
 # 優點：
-# 1. psycopg 支援 prepare_threshold=0，完美解決 PgBouncer prepared statement 問題
+# 1. psycopg 支援 prepare_threshold=None，完美解決 PgBouncer prepared statement 問題
 # 2. 純 Python driver，跨平台相容性好
 # 3. 速度是 ORM 10x
 # 4. 完美適配 Cloud Run（省 connection 數）
@@ -29,14 +29,14 @@ engine = create_async_engine(
     max_overflow=10,  # 最多額外建立的連線數
     pool_pre_ping=False,  # 關閉 pre-ping（避免 prepared statements）
     pool_recycle=300,  # 5 分鐘回收連線（PgBouncer transaction pooling 建議較短時間）
-    connect_args={
-        "prepare_threshold": 0,  # 禁用 prepared statements（PgBouncer transaction pooling 相容）
-        # 注意：psycopg 不支援 server_settings，application_name 可通過連接字串設定
-    },
     # 禁用 SQLAlchemy 的 prepared statement 功能（PgBouncer 相容）
     execution_options={
         "compiled_cache": None,  # 禁用 SQLAlchemy SQL 編譯快取
         "schema_translate_map": None,  # 禁用 schema 轉換
+    },
+    # 直接在 psycopg 連接參數中設置 prepare_threshold=None
+    connect_args={
+        "prepare_threshold": None,  # 完全禁用 prepared statements（適配 Supabase pooler / PgBouncer）
     },
     # 使用原生 SQL 模式，不進行任何預處理
     future=True,
@@ -96,12 +96,8 @@ async def get_db_connection():
     ```
     """
     async with engine.begin() as conn:
-        # PgBouncer transaction pooling 相容：清理可能殘留的 prepared statements
-        try:
-            await conn.execute(text("DEALLOCATE ALL"))
-        except Exception:
-            # 如果沒有 prepared statements 需要清理，會拋出異常，忽略它
-            pass
+        # 不需要 DEALLOCATE ALL，因為已設定 prepare_threshold=None
+        # PgBouncer transaction pooling 會自動處理連線狀態
         yield conn
 
 
@@ -128,15 +124,11 @@ async def get_db() -> AsyncGenerator[AsyncConnection, None]:
     - 使用 result.fetchone() 取得單筆
     - 使用 result.fetchall() 取得所有筆
     - 使用 result.scalar() 取得單一值
-    - psycopg 已設定 prepare_threshold=0，天然相容 PgBouncer
+    - psycopg 已設定 prepare_threshold=None，天然相容 PgBouncer
     """
     async with engine.begin() as conn:
-        # PgBouncer transaction pooling 相容：清理可能殘留的 prepared statements
-        try:
-            await conn.execute(text("DEALLOCATE ALL"))
-        except Exception:
-            # 如果沒有 prepared statements 需要清理，會拋出異常，忽略它
-            pass
+        # 不需要 DEALLOCATE ALL，因為已設定 prepare_threshold=None
+        # PgBouncer transaction pooling 會自動處理連線狀態
         yield conn
 
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
@@ -10,12 +10,21 @@ import { apiPost } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // 檢查是否有從 URL 或 localStorage 來的 returnUrl
+  useEffect(() => {
+    const urlReturnUrl = searchParams?.get('returnUrl');
+    if (urlReturnUrl && typeof window !== 'undefined') {
+      localStorage.setItem('returnUrl', urlReturnUrl);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,13 +39,20 @@ export default function LoginPage() {
       localStorage.setItem("refresh_token", data.data.refresh_token);
       localStorage.setItem("user", JSON.stringify(data.data.user));
 
-      // 檢查是否有返回 URL
-      const returnUrl = localStorage.getItem("returnUrl");
-      if (returnUrl) {
+      // 檢查是否有返回 URL（優先順序：URL query > localStorage）
+      const urlReturnUrl = searchParams?.get('returnUrl');
+      const storedReturnUrl = localStorage.getItem("returnUrl");
+      const returnUrl = urlReturnUrl || storedReturnUrl;
+
+      // 清除 returnUrl
+      if (storedReturnUrl) {
         localStorage.removeItem("returnUrl");
+      }
+
+      // 跳轉到返回頁面或首頁
+      if (returnUrl && returnUrl !== '/login') {
         router.push(returnUrl);
       } else {
-        // 導向首頁或儀表板
         router.push("/");
       }
       router.refresh();

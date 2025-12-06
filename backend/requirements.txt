@@ -11,10 +11,10 @@ python-multipart==0.0.6
 
 # Database
 sqlalchemy==2.0.25
-psycopg[binary]==3.1.18  # Async PostgreSQL driver (PgBouncer 相容)
+psycopg[binary]==3.2.0  # Async PostgreSQL driver (PgBouncer 相容)
 psycopg2-binary==2.9.9  # Sync PostgreSQL driver (backup)
 alembic==1.13.1  # Database migrations
-greenlet==3.0.3  # Required for SQLAlchemy async operations
+greenlet==3.1.0  # Required for SQLAlchemy async operations
 
 # Pydantic & Validation
 pydantic==2.5.3

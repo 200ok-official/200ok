@@ -17,8 +17,19 @@ export const Step4Features: React.FC<Props> = ({ data, updateData }) => {
   const handleAddFeature = () => {
     if (newFeature.trim()) {
       const features = data.features || [];
-      updateData({ features: [...features, newFeature.trim()] });
+      // 檢查是否已存在
+      if (!features.includes(newFeature.trim())) {
+        updateData({ features: [...features, newFeature.trim()] });
+      }
       setNewFeature("");
+    }
+  };
+
+  const handleQuickAdd = (example: string) => {
+    const features = data.features || [];
+    // 檢查是否已存在
+    if (!features.includes(example)) {
+      updateData({ features: [...features, example] });
     }
   };
 
@@ -87,18 +98,29 @@ export const Step4Features: React.FC<Props> = ({ data, updateData }) => {
         </div>
       )}
 
-      {/* 範例提示 */}
+      {/* 快速新增按鈕 */}
       <div className="mt-4 p-4 bg-[#f5f3ed] rounded-lg">
-        <p className="text-sm font-semibold text-[#20263e] mb-2">
-          功能範例參考：
+        <p className="text-sm font-semibold text-[#20263e] mb-3">
+          快速新增功能範例：
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs md:text-sm text-[#c5ae8c]">
-          {featureExamples.map((item, idx) => (
-            <div key={idx} className="flex items-start gap-1.5">
-              <span className="mt-0.5 text-[10px]">•</span>
-              <span>{item}</span>
-            </div>
-          ))}
+        <div className="flex flex-wrap gap-2">
+          {featureExamples.map((item, idx) => {
+            const isAdded = data.features?.includes(item);
+            return (
+              <button
+                key={idx}
+                onClick={() => handleQuickAdd(item)}
+                disabled={isAdded}
+                className={`px-3 py-1.5 rounded-full text-xs md:text-sm transition-all ${
+                  isAdded
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed line-through'
+                    : 'bg-white border border-[#c5ae8c] text-[#20263e] hover:border-[#20263e] hover:bg-[#e6dfcf]'
+                }`}
+              >
+                {isAdded ? '✓ ' : ''}{item}
+              </button>
+            );
+          })}
         </div>
       </div>
 

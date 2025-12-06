@@ -256,6 +256,32 @@ async def create_project(
     # 建立專案
     project_data = data.model_dump(exclude={'tag_ids'})
     
+    # 補全缺失的欄位為 None，避免 SQLAlchemy 報錯
+    all_fields = [
+        # 共用
+        'client_id', 'title', 'description', 'project_mode', 'project_type',
+        'budget_min', 'budget_max', 'budget_estimate_only',
+        'start_date', 'deadline', 'deadline_flexible',
+        'payment_method', 'payment_schedule', 'required_skills',
+        'reference_links', 'special_requirements', 'status', 'ai_summary',
+        # New Dev
+        'new_usage_scenario', 'new_goals', 'new_features', 'new_outputs',
+        'new_outputs_other', 'new_design_style', 'new_integrations',
+        'new_integrations_other', 'new_deliverables',
+        'new_communication_preference', 'new_special_requirements', 'new_concerns',
+        # Maint
+        'maint_system_name', 'maint_system_purpose', 'maint_current_users_count',
+        'maint_system_age', 'maint_current_problems', 'maint_desired_improvements',
+        'maint_new_features', 'maint_known_tech_stack', 'maint_has_source_code',
+        'maint_has_documentation', 'maint_can_provide_access', 'maint_technical_contact',
+        'maint_expected_outcomes', 'maint_success_criteria', 'maint_additional_notes'
+    ]
+    
+    params = {field: None for field in all_fields}
+    params.update(project_data)
+    params['client_id'] = str(current_user.id)
+    params['status'] = 'draft'  # 預設狀態
+    
     # INSERT SQL
     insert_sql = """
         INSERT INTO projects (
@@ -291,12 +317,6 @@ async def create_project(
         )
         RETURNING id, created_at, updated_at
     """
-    
-    params = {
-        'client_id': str(current_user.id),
-        **project_data,
-        'status': 'draft'  # 預設狀態
-    }
     
     result = await db.execute(text(insert_sql), params)
     row = result.fetchone()
@@ -434,18 +454,23 @@ async def get_project(
             detail="您沒有權限查看此案件"
         )
     
-    return {
-        "success": True,
-        "data": {
+    # 建構完整的回傳資料（包含所有欄位）
+    project_data = {
             "id": str(row.id),
             "client_id": str(row.client_id),
             "title": row.title,
             "description": row.description,
             "project_mode": row.project_mode,
+        "project_type": row.project_type,
             "budget_min": float(row.budget_min) if row.budget_min else None,
             "budget_max": float(row.budget_max) if row.budget_max else None,
+        "budget_estimate_only": row.budget_estimate_only,
+        "payment_method": row.payment_method,
+        "start_date": row.start_date,
+        "deadline": row.deadline,
             "status": row.status,
             "required_skills": parse_pg_array(row.required_skills),
+        "reference_links": parse_pg_array(row.reference_links),
             "created_at": row.created_at,
             "updated_at": row.updated_at,
             "client": ClientBasic(
@@ -455,8 +480,44 @@ async def get_project(
                 rating=float(row.client_rating) if row.client_rating else None
             ) if row.client_user_id else None,
             "bids_count": int(row.bids_count),
-            "is_saved": bool(row.is_saved)
+        "is_saved": bool(row.is_saved),
+        "_count": {
+            "bids": int(row.bids_count)
         }
+    }
+    
+    # 根據 project_mode 加入相應的欄位
+    if row.project_mode == "new_development":
+        project_data.update({
+            "new_usage_scenario": row.new_usage_scenario,
+            "new_goals": row.new_goals,
+            "new_features": parse_pg_array(row.new_features),
+            "new_outputs": parse_pg_array(row.new_outputs),
+            "new_deliverables": parse_pg_array(row.new_deliverables),
+            "new_design_style": parse_pg_array(row.new_design_style),
+            "new_integrations": parse_pg_array(row.new_integrations),
+            "new_special_requirements": row.new_special_requirements,
+            "new_concerns": parse_pg_array(row.new_concerns),
+        })
+    elif row.project_mode == "maintenance":
+        project_data.update({
+            "maint_system_name": row.maint_system_name,
+            "maint_system_purpose": row.maint_system_purpose,
+            "maint_current_problems": row.maint_current_problems,
+            "maint_desired_improvements": row.maint_desired_improvements,
+            "maint_new_features": row.maint_new_features,
+            "maint_current_users_count": row.maint_current_users_count,
+            "maint_has_source_code": row.maint_has_source_code,
+            "maint_has_documentation": row.maint_has_documentation,
+            "maint_can_provide_access": row.maint_can_provide_access,
+            "maint_known_tech_stack": parse_pg_array(row.maint_known_tech_stack),
+            "maint_expected_outcomes": row.maint_expected_outcomes,
+            "maint_success_criteria": row.maint_success_criteria,
+        })
+    
+    return {
+        "success": True,
+        "data": project_data
     }
 
 

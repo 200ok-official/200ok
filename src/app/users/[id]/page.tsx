@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { StarRating } from "@/components/ui/StarRating";
 import { confirmPayment, paymentPresets } from "@/utils/paymentConfirm";
 import { apiGet, apiPost, isAuthenticated } from "@/lib/api";
+import { triggerTokenBalanceUpdate } from "@/hooks/useSession";
 
 interface User {
   id: string;
@@ -112,11 +113,9 @@ export default function UserProfilePage() {
 
       // 使用新的 API 檢查連接狀態
       const { data } = await apiGet(`/api/v1/connections/check`, {
-        target_user_id: userId,
-        type: 'direct',
+        userId: userId,  // Backend 期望的參數名稱是 userId
       });
       setExistingConversation(data);
-      }
     } catch (error) {
       console.error('Failed to check existing conversation:', error);
     }
@@ -135,17 +134,11 @@ export default function UserProfilePage() {
       const data = await apiGet(url, { t: Date.now().toString() });
       console.log("Response data:", data);
       console.log("Bio from API:", data.data?.bio?.substring(0, 50));
-        if (data.success && data.data) {
-          setUser(data.data);
-        } else {
-          const errorMsg = data.error || "無法載入使用者資料";
-          console.error("API returned error:", errorMsg);
-          setError(errorMsg);
-        }
+      if (data.success && data.data) {
+        setUser(data.data);
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMsg = errorData.error || `無法載入使用者資料 (${response.status})`;
-        console.error("HTTP error:", response.status, errorData);
+        const errorMsg = data.error || "無法載入使用者資料";
+        console.error("API returned error:", errorMsg);
         setError(errorMsg);
       }
     } catch (err) {
@@ -246,17 +239,17 @@ export default function UserProfilePage() {
         return;
       }
 
-      await apiPost('/api/v1/conversations/direct', { recipient_id: userId });
+      const result = await apiPost('/api/v1/conversations/direct', { recipient_id: userId });
 
-      if (response.ok) {
-        const { data } = await response.json();
+      if (result.success && result.data) {
         alert('✅ 已解鎖聯絡方式！已扣除 200 代幣');
+        // 通知 Navbar 更新代幣餘額
+        triggerTokenBalanceUpdate();
         // 重新檢查連接狀態
         await checkExistingConversation();
-        router.push(`/conversations/${data.id}`);
+        router.push(`/conversations/${result.data.conversation_id || result.data.id}`);
       } else {
-        const error = await response.json();
-        alert(`❌ 解鎖失敗：${error.error || '未知錯誤'}`);
+        alert(`❌ 解鎖失敗：${result.error || '未知錯誤'}`);
       }
     } catch (error: any) {
       alert(`❌ 解鎖失敗：${error.message || '請稍後再試'}`);
@@ -328,7 +321,20 @@ export default function UserProfilePage() {
                 {/* 聯絡按鈕（非本人） */}
                 {!isOwnProfile && currentUserId && (
                   <div className="mb-4">
-                    {existingConversation?.status === 'connected' && existingConversation?.conversation_id ? (
+                    {(() => {
+                      // 判斷我是否已經解鎖（不論是 initiator 還是 recipient）
+                      const iHaveUnlocked = existingConversation?.has_connection && (
+                        existingConversation.is_initiator 
+                          ? existingConversation.initiator_unlocked 
+                          : existingConversation.recipient_unlocked
+                      );
+
+                      if (iHaveUnlocked) {
+                        // 我已經付費解鎖了
+                        if (existingConversation.conversation_id) {
+                          // 有對話 ID，可以開始對話
+                          return (
+                            <>
                       <Button
                         onClick={() => router.push(`/conversations/${existingConversation.conversation_id}`)}
                         variant="primary"
@@ -336,13 +342,44 @@ export default function UserProfilePage() {
                       >
                         💬 開始對話
                       </Button>
-                    ) : existingConversation?.status === 'pending' ? (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <p className="text-sm text-yellow-800">
-                          ⏳ 等待對方回應中...
+                              <div className="mt-2 text-xs text-green-600">
+                                ✓ 已解鎖聯絡方式
+                              </div>
+                            </>
+                          );
+                        } else {
+                          // 我已解鎖但還沒有對話 ID（等待對方解鎖）
+                          return (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                              <p className="text-sm text-blue-800">
+                                ⏳ 等待對方解鎖...
+                              </p>
+                              <p className="text-xs text-blue-600 mt-1">
+                                ✓ 您已解鎖此聯絡，等待對方回應
                         </p>
                       </div>
-                    ) : (
+                          );
+                        }
+                      } else if (existingConversation?.has_connection) {
+                        // 對方已發起連接，但我還沒解鎖
+                        return (
+                          <>
+                            <Button
+                              onClick={handleUnlockContact}
+                              disabled={unlocking}
+                              variant="primary"
+                              className="w-full md:w-auto"
+                            >
+                              {unlocking ? '解鎖中...' : '🔓 解鎖聯絡方式 (200 代幣)'}
+                            </Button>
+                            <p className="text-xs text-gray-500 mt-2">
+                              對方已發起聯絡，解鎖後可開通對話
+                            </p>
+                          </>
+                        );
+                      } else {
+                        // 沒有任何連接
+                        return (
                       <>
                         <Button
                           onClick={handleUnlockContact}
@@ -356,7 +393,9 @@ export default function UserProfilePage() {
                           解鎖後可查看聯絡資訊並開通站內文字通訊
                         </p>
                       </>
-                    )}
+                        );
+                      }
+                    })()}
                   </div>
                 )}
                 
@@ -382,7 +421,7 @@ export default function UserProfilePage() {
                 )}
 
                 {/* 技能標籤 */}
-                {user.skills && user.skills.length > 0 && (
+                {user.skills && Array.isArray(user.skills) && user.skills.length > 0 && (
                   <div className="mb-4">
                     <h3 className="text-sm font-semibold text-gray-600 mb-2">
                       技能標籤
@@ -402,7 +441,7 @@ export default function UserProfilePage() {
                 )}
 
                 {/* 作品集連結 */}
-                {user.portfolio_links && user.portfolio_links.length > 0 && (
+                {user.portfolio_links && Array.isArray(user.portfolio_links) && user.portfolio_links.length > 0 && (
                   <div className="mb-4">
                     <h3 className="text-sm font-semibold text-gray-600 mb-2">
                       作品集
@@ -528,7 +567,7 @@ export default function UserProfilePage() {
                         {review.comment && (
                           <p className="text-gray-700 mb-2">{review.comment}</p>
                         )}
-                        {review.tags && review.tags.length > 0 && (
+                        {review.tags && Array.isArray(review.tags) && review.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1">
                             {review.tags.map((tag, index) => (
                               <Badge

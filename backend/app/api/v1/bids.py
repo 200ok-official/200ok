@@ -528,6 +528,17 @@ async def create_bid(
             detail="您已經投標過此案件"
         )
     
+    # 檢查代幣餘額（需要 100 代幣提交提案）
+    balance_sql = "SELECT id, balance FROM user_tokens WHERE user_id = :user_id"
+    balance_result = await db.execute(text(balance_sql), {'user_id': str(current_user.id)})
+    user_token = balance_result.fetchone()
+    
+    if not user_token or user_token.balance < 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="代幣餘額不足，提交提案需要 100 代幣"
+        )
+    
     # 建立投標
     bid_id = uuid.uuid4()
     insert_bid_sql = """
@@ -547,6 +558,83 @@ async def create_bid(
     })
     new_bid = result.fetchone()
     
+    # 建立提案對話（project_proposal 類型）
+    conversation_id = uuid.uuid4()
+    insert_conv_sql = """
+        INSERT INTO conversations (
+            id, type, project_id, initiator_id, recipient_id, 
+            initiator_paid, recipient_paid, is_unlocked, 
+            created_at, updated_at
+        )
+        VALUES (
+            :id, :type, :project_id, :initiator_id, :recipient_id,
+            TRUE, FALSE, FALSE, NOW(), NOW()
+        )
+    """
+    await db.execute(text(insert_conv_sql), {
+        'id': str(conversation_id),
+        'type': ConversationType.PROJECT_PROPOSAL.value,
+        'project_id': str(project_id),
+        'initiator_id': str(current_user.id),
+        'recipient_id': str(project.client_id)
+    })
+    
+    # 建立 user_connection 記錄（initiator 已付費，recipient 未付費，7 天後過期）
+    connection_id = uuid.uuid4()
+    expires_at = datetime.utcnow() + timedelta(days=7)
+    insert_connection_sql = """
+        INSERT INTO user_connections (
+            id, initiator_id, recipient_id, connection_type,
+            status, conversation_id, initiator_unlocked_at, recipient_unlocked_at,
+            expires_at, created_at, updated_at
+        )
+        VALUES (
+            :id, :initiator_id, :recipient_id, :connection_type,
+            'pending', :conversation_id, NOW(), NULL, :expires_at, NOW(), NOW()
+        )
+    """
+    await db.execute(text(insert_connection_sql), {
+        'id': str(connection_id),
+        'initiator_id': str(current_user.id),
+        'recipient_id': str(project.client_id),
+        'connection_type': ConversationType.PROJECT_PROPOSAL.value,
+        'conversation_id': str(conversation_id),
+        'expires_at': expires_at
+    })
+    
+    # 扣除代幣（100 代幣）
+    update_token_sql = """
+        UPDATE user_tokens
+        SET balance = balance - 100,
+            total_spent = total_spent + 100,
+            updated_at = NOW()
+        WHERE user_id = :user_id
+        RETURNING balance
+    """
+    token_result = await db.execute(text(update_token_sql), {'user_id': str(current_user.id)})
+    new_balance_row = token_result.fetchone()
+    
+    # 記錄代幣交易
+    insert_transaction_sql = """
+        INSERT INTO token_transactions (
+            id, user_id, amount, balance_after, transaction_type, 
+            reference_id, description, created_at
+        )
+        VALUES (
+            :id, :user_id, :amount, :balance_after, :transaction_type,
+            :reference_id, :description, NOW()
+        )
+    """
+    await db.execute(text(insert_transaction_sql), {
+        'id': str(uuid.uuid4()),
+        'user_id': str(current_user.id),
+        'amount': -100,
+        'balance_after': new_balance_row.balance,
+        'transaction_type': TransactionType.SUBMIT_PROPOSAL.value,
+        'reference_id': str(conversation_id),
+        'description': f"提交提案至「{project.title}」"
+    })
+    
     # 建立通知給發案者
     notification_sql = """
         INSERT INTO notifications (id, user_id, type, title, content, related_project_id, related_bid_id, is_read, created_at)
@@ -564,7 +652,7 @@ async def create_bid(
     
     return {
         "success": True,
-        "message": "投標成功",
+        "message": "提案已提交，扣除 100 代幣",
         "data": {
             "id": str(new_bid.id),
             "project_id": str(new_bid.project_id),
@@ -572,7 +660,9 @@ async def create_bid(
             "bid_amount": float(new_bid.bid_amount) if new_bid.bid_amount else None,
             "estimated_days": new_bid.estimated_days,
             "status": new_bid.status,
-            "created_at": new_bid.created_at
+            "created_at": new_bid.created_at,
+            "conversation_id": str(conversation_id),
+            "expires_at": expires_at.isoformat()
         }
     }
 

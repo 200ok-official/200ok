@@ -41,10 +41,10 @@ class BidResponse(BaseModel):
         from_attributes = True
 
 
+# # Additional bid schemas
 
-# Additional bid schemas
+# class BidCreate(BaseModel):
+#     proposal: str = Field(..., min_length=50)
+#     bid_amount: float = Field(..., gt=0)
+#     estimated_days: Optional[int] = Field(None, gt=0)
 
-class BidCreate(BaseModel):
-    proposal: str = Field(..., min_length=50)
-    bid_amount: float = Field(..., gt=0)
-    estimated_days: Optional[int] = Field(None, gt=0)

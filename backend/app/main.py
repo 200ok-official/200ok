@@ -22,7 +22,8 @@ from .api.v1 import (
     reviews,
     saved_projects,
     connections,
-    admin
+    admin,
+    test_email # 測試郵件
 )
 
 
@@ -32,6 +33,12 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# 減少 SQLAlchemy 和 psycopg 的日誌輸出
+logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+logging.getLogger("sqlalchemy.pool").setLevel(logging.WARNING)
+logging.getLogger("sqlalchemy.dialects").setLevel(logging.WARNING)
+# logging.getLogger("psycopg").setLevel(logging.WARNING)
 
 
 # Lifespan event handler
@@ -181,6 +188,7 @@ app.include_router(reviews.router, prefix="/api/v1", tags=["reviews"])
 app.include_router(saved_projects.router, prefix="/api/v1", tags=["saved-projects"])
 app.include_router(connections.router, prefix="/api/v1", tags=["connections"])
 app.include_router(admin.router, prefix="/api/v1", tags=["admin"])
+app.include_router(test_email.router, prefix="/api/v1", tags=["test-email"])
 
 
 # ==================== 啟動說明 ====================

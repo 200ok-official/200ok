@@ -100,9 +100,19 @@ async def check_connection(
     
     RLS 邏輯: 只能查詢與自己相關的連接
     """
-    # 查詢與指定使用者的連接
+    # 查詢與指定使用者的連接（包含完整的解鎖狀態）
     sql = """
-        SELECT id, status, connection_type, conversation_id
+        SELECT 
+            id, 
+            status, 
+            connection_type, 
+            conversation_id,
+            initiator_id,
+            recipient_id,
+            initiator_unlocked_at,
+            recipient_unlocked_at,
+            expires_at,
+            created_at
         FROM user_connections
         WHERE (
             (initiator_id = :current_user_id AND recipient_id = :target_user_id)
@@ -128,12 +138,40 @@ async def check_connection(
             }
         }
     
+    # 判斷當前使用者是否為 initiator
+    is_current_user_initiator = str(connection.initiator_id) == str(current_user.id)
+    
+    # 判斷當前使用者是否已解鎖（不論是 initiator 還是 recipient）
+    current_user_unlocked = (
+        (is_current_user_initiator and connection.initiator_unlocked_at is not None) or
+        (not is_current_user_initiator and connection.recipient_unlocked_at is not None)
+    )
+    
+    # 判斷對方是否已解鎖
+    other_user_unlocked = (
+        (is_current_user_initiator and connection.recipient_unlocked_at is not None) or
+        (not is_current_user_initiator and connection.initiator_unlocked_at is not None)
+    )
+    
+    # 只要有一方解鎖，雙方都應該顯示已解鎖（用於 UI 顯示）
+    either_unlocked = connection.initiator_unlocked_at is not None or connection.recipient_unlocked_at is not None
+    
     return {
         "success": True,
         "data": {
             "has_connection": True,
             "status": connection.status,
             "connection_type": connection.connection_type,
-            "conversation_id": str(connection.conversation_id) if connection.conversation_id else None
+            "conversation_id": str(connection.conversation_id) if connection.conversation_id else None,
+            "initiator_id": str(connection.initiator_id),
+            "recipient_id": str(connection.recipient_id),
+            "is_initiator": is_current_user_initiator,
+            "initiator_unlocked": connection.initiator_unlocked_at is not None,
+            "recipient_unlocked": connection.recipient_unlocked_at is not None,
+            "current_user_unlocked": current_user_unlocked,  # 當前使用者是否已解鎖
+            "other_user_unlocked": other_user_unlocked,      # 對方是否已解鎖
+            "either_unlocked": either_unlocked,              # 只要有一方解鎖就為 True
+            "expires_at": connection.expires_at.isoformat() if connection.expires_at else None,
+            "created_at": connection.created_at.isoformat() if connection.created_at else None
         }
     }

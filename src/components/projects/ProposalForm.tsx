@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { detectContactInfo, containsContactInfo } from '@/utils/contactDetection';
 import { confirmPayment, paymentPresets } from '@/utils/paymentConfirm';
 import { apiPost } from '@/lib/api';
+import { triggerTokenBalanceUpdate } from '@/hooks/useSession';
 
 interface ProposalFormProps {
   projectId: string;
@@ -84,18 +85,24 @@ export default function ProposalForm({
 
     try {
       // 1. 創建 bid
-      const { data: bid } = await apiPost(`/api/v1/projects/${projectId}/bids`, {
-        proposal_content: proposal,
-        proposed_amount: parseFloat(amount),
+      const response = await apiPost(`/api/v1/projects/${projectId}/bids`, {
+        proposal: proposal,
+        bid_amount: parseFloat(amount),
         estimated_days: parseInt(days),
       });
 
       // 2. 通知成功
       alert('✅ 提案已提交！\n\n已扣除 100 代幣\n等待發案者回應...');
 
-      // 3. 回調
-      if (onSuccess && bid.conversation_id) {
-        onSuccess(bid.conversation_id);
+      // 3. 通知 Navbar 更新代幣餘額
+      triggerTokenBalanceUpdate();
+
+      // 4. 回調（檢查是否有 conversation_id）
+      if (onSuccess && response.data?.conversation_id) {
+        onSuccess(response.data.conversation_id);
+      } else if (onSuccess && response.data?.id) {
+        // 如果只有 bid id，導向到案件頁面
+        window.location.href = `/projects/${projectId}`;
       }
     } catch (error: any) {
       alert(`❌ 提交失敗：${error.message}`);

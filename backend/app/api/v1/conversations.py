@@ -56,7 +56,7 @@ async def get_user_conversations(
     
     RLS 邏輯: 只能查看自己參與的對話
     """
-    # 一次性取得所有資料（conversations + users + projects + last_message + unread_count）
+    # 一次性取得所有資料（conversations + users + projects + last_message + unread_count + user_connections）
     sql = """
         SELECT 
             c.id,
@@ -77,11 +77,15 @@ async def get_user_conversations(
             p.title as project_title,
             last_msg.content as last_message_content,
             last_msg.created_at as last_message_created_at,
-            unread.unread_count
+            unread.unread_count,
+            uc.initiator_unlocked_at,
+            uc.recipient_unlocked_at,
+            uc.expires_at
         FROM conversations c
         LEFT JOIN users i ON i.id = c.initiator_id
         LEFT JOIN users r ON r.id = c.recipient_id
         LEFT JOIN projects p ON p.id = c.project_id
+        LEFT JOIN user_connections uc ON uc.conversation_id = c.id
         LEFT JOIN LATERAL (
             SELECT content, created_at
             FROM messages
@@ -105,13 +109,19 @@ async def get_user_conversations(
     
     conversations_data = []
     for row in rows:
+        initiator_paid = row.initiator_unlocked_at is not None
+        recipient_paid = row.recipient_unlocked_at is not None
+        
         conversations_data.append({
             "id": str(row.id),
             "type": row.type,
             "project_id": str(row.project_id) if row.project_id else None,
-            "is_unlocked": row.is_unlocked,
+            "is_unlocked": row.is_unlocked or (initiator_paid and recipient_paid),
             "initiator_id": str(row.initiator_id),
             "recipient_id": str(row.recipient_id),
+            "initiator_paid": initiator_paid,
+            "recipient_paid": recipient_paid,
+            "expires_at": row.expires_at.isoformat() if row.expires_at else None,
             "created_at": row.created_at,
             "updated_at": row.updated_at,
             "initiator": {
@@ -199,6 +209,27 @@ async def create_direct_conversation(
         'type': ConversationType.DIRECT.value,
         'initiator_id': str(current_user.id),
         'recipient_id': str(data.recipient_id)
+    })
+    
+    # 建立 user_connection 記錄（雙方都已解鎖，direct 聯絡是雙向付費的）
+    connection_id = uuid.uuid4()
+    insert_connection_sql = """
+        INSERT INTO user_connections (
+            id, initiator_id, recipient_id, connection_type,
+            status, conversation_id, initiator_unlocked_at, recipient_unlocked_at,
+            created_at, updated_at
+        )
+        VALUES (
+            :id, :initiator_id, :recipient_id, :connection_type,
+            'connected', :conversation_id, NOW(), NOW(), NOW(), NOW()
+        )
+    """
+    await db.execute(text(insert_connection_sql), {
+        'id': str(connection_id),
+        'initiator_id': str(current_user.id),
+        'recipient_id': str(data.recipient_id),
+        'connection_type': ConversationType.DIRECT.value,
+        'conversation_id': str(conversation_id)
     })
     
     # 扣除代幣
@@ -363,7 +394,7 @@ async def get_conversation(
     
     RLS 邏輯: 必須是對話參與者
     """
-    # 查詢對話
+    # 查詢對話（包含 user_connections 的解鎖狀態）
     sql = """
         SELECT 
             c.id,
@@ -376,16 +407,23 @@ async def get_conversation(
             i.name as initiator_name,
             i.avatar_url as initiator_avatar_url,
             i.email as initiator_email,
+            i.phone as initiator_phone,
             r.id as recipient_id_full,
             r.name as recipient_name,
             r.avatar_url as recipient_avatar_url,
             r.email as recipient_email,
+            r.phone as recipient_phone,
             p.id as project_id_full,
-            p.title as project_title
+            p.title as project_title,
+            uc.initiator_unlocked_at,
+            uc.recipient_unlocked_at,
+            uc.expires_at,
+            uc.status as connection_status
         FROM conversations c
         LEFT JOIN users i ON i.id = c.initiator_id
         LEFT JOIN users r ON r.id = c.recipient_id
         LEFT JOIN projects p ON p.id = c.project_id
+        LEFT JOIN user_connections uc ON uc.conversation_id = c.id
         WHERE c.id = :conversation_id
     """
     
@@ -405,24 +443,41 @@ async def get_conversation(
             detail="您沒有權限查看此對話"
         )
     
+    # 判斷當前使用者是否為 initiator
+    is_current_user_initiator = str(row.initiator_id) == str(current_user.id)
+    initiator_unlocked = row.initiator_unlocked_at is not None
+    recipient_unlocked = row.recipient_unlocked_at is not None
+    
+    # 只有在對方也解鎖時，才顯示對方的聯絡資訊
+    show_initiator_contact = recipient_unlocked if not is_current_user_initiator else True
+    show_recipient_contact = initiator_unlocked if is_current_user_initiator else True
+    
     return {
         "success": True,
         "data": {
             "id": str(row.id),
             "type": row.type,
             "project_id": str(row.project_id) if row.project_id else None,
-            "is_unlocked": row.is_unlocked,
+            "is_unlocked": row.is_unlocked or (initiator_unlocked and recipient_unlocked),
+            "initiator_id": str(row.initiator_id),
+            "recipient_id": str(row.recipient_id),
+            "initiator_paid": initiator_unlocked,
+            "recipient_paid": recipient_unlocked,
+            "expires_at": row.expires_at.isoformat() if row.expires_at else None,
+            "connection_status": row.connection_status,
             "initiator": {
                 "id": str(row.initiator_id_full),
                 "name": row.initiator_name,
                 "avatar_url": row.initiator_avatar_url,
-                "email": row.initiator_email if row.is_unlocked else None
+                "email": row.initiator_email if show_initiator_contact else None,
+                "phone": row.initiator_phone if show_initiator_contact else None
             } if row.initiator_id_full else None,
             "recipient": {
                 "id": str(row.recipient_id_full),
                 "name": row.recipient_name,
                 "avatar_url": row.recipient_avatar_url,
-                "email": row.recipient_email if row.is_unlocked else None
+                "email": row.recipient_email if show_recipient_contact else None,
+                "phone": row.recipient_phone if show_recipient_contact else None
             } if row.recipient_id_full else None,
             "project": {
                 "id": str(row.project_id_full),

@@ -10,9 +10,15 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8
  * 取得完整的 API URL
  */
 export function getApiUrl(path: string): string {
-  // 確保 path 以 / 開頭
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  return `${API_BASE_URL}${normalizedPath}`;
+  // 移除 path 開頭的斜線
+  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+  
+  // 移除 base url 結尾的斜線
+  const cleanBaseUrl = API_BASE_URL.endsWith('/') 
+    ? API_BASE_URL.substring(0, API_BASE_URL.length - 1) 
+    : API_BASE_URL;
+    
+  return `${cleanBaseUrl}/${cleanPath}`;
 }
 
 /**
@@ -66,8 +72,29 @@ export async function apiFetchJson<T = any>(
   const response = await apiFetch(path, options);
   
   if (!response.ok) {
+    // 處理 401 Unauthorized (Session 過期)
+    if (response.status === 401) {
+      // 儲存當前頁面 URL，登入後可以返回
+      if (typeof window !== 'undefined') {
+        const currentPath = window.location.pathname + window.location.search;
+        localStorage.setItem('returnUrl', currentPath);
+        
+        // 觸發 session expired 事件
+        window.dispatchEvent(new CustomEvent('session-expired', {
+          detail: { path: currentPath }
+        }));
+      }
+    }
+    
     const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-    throw new Error(error.error || error.message || `HTTP ${response.status}`);
+    const errorMessage = error.error || error.message || `HTTP ${response.status}`;
+    
+    // 如果是 401，使用更友好的錯誤訊息
+    if (response.status === 401) {
+      throw new Error('登入已逾時，請重新登入');
+    }
+    
+    throw new Error(errorMessage);
   }
   
   return response.json();

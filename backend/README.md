@@ -29,10 +29,10 @@ backend/
 │   ├── __init__.py
 │   ├── main.py              # FastAPI app 進入點
 │   ├── config.py            # 環境變數設定
-│   ├── db.py                # 資料庫連線 (SQLAlchemy async)
+│   ├── db.py                # 資料庫連線 (SQLAlchemy async + psycopg)
 │   ├── security.py          # JWT / 密碼處理 / RLS 輔助函數
 │   ├── dependencies.py      # FastAPI Dependencies (get_current_user, 等)
-│   ├── models/              # SQLAlchemy ORM models
+│   ├── models/              # SQLAlchemy ORM models (參考用)
 │   │   ├── __init__.py
 │   │   ├── user.py
 │   │   ├── project.py
@@ -52,19 +52,29 @@ backend/
 │   │   ├── bid.py
 │   │   ├── conversation.py
 │   │   └── token.py
+│   ├── services/            # 業務邏輯服務層
+│   │   └── email_service.py # Email 發送服務 (Resend)
 │   └── api/
 │       ├── __init__.py
 │       └── v1/
 │           ├── __init__.py
-│           ├── auth.py          # 認證相關 endpoints
-│           ├── projects.py      # 專案 endpoints (示範 RLS 實作)
-│           ├── users.py         # (TODO)
-│           ├── bids.py          # (TODO)
-│           ├── conversations.py # (TODO)
-│           └── tokens.py        # (TODO)
+│           ├── auth.py          # 認證相關 endpoints (含 Email 驗證)
+│           ├── projects.py      # 專案 endpoints
+│           ├── users.py         # 使用者 endpoints
+│           ├── bids.py          # 投標 endpoints
+│           ├── conversations.py # 對話 endpoints
+│           ├── tokens.py        # 代幣系統 endpoints
+│           ├── tags.py          # 標籤 endpoints
+│           ├── reviews.py       # 評價 endpoints
+│           ├── saved_projects.py # 收藏專案 endpoints
+│           ├── connections.py   # 使用者連接 endpoints
+│           ├── admin.py         # 管理員 endpoints
+│           └── test_email.py   # Email 測試 endpoint
 ├── requirements.txt
 ├── .env.example
 ├── .gitignore
+├── SETUP.md                 # 詳細設定說明
+├── API_MAPPING.md           # API 對應表
 └── README.md (本檔案)
 ```
 
@@ -75,15 +85,6 @@ backend/
 **⚠️ 重要：本專案需要使用 Python 3.10+**
 
 本專案使用 `psycopg` (psycopg3) 作為 PostgreSQL async driver，與 PgBouncer 完全相容。
-
-**快速設定（推薦）：**
-```bash
-cd backend
-./setup-python310.sh  # 自動安裝並設定 Python 3.10
-source .venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-```
 
 **手動設定：**
 ```bash
@@ -113,23 +114,23 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 2. 設定環境變數
-
-複製 `.env.example` 為 `.env`，並填入正確的值：
-
-```bash
-cp .env.example .env
-```
-
 **重要設定：**
 
 - `DATABASE_URL`: Supabase Postgres 連線字串
   ```
+  # 直連 Supabase Postgres
   postgresql+psycopg://postgres:[PASSWORD]@db.[PROJECT-ID].supabase.co:5432/postgres
+  
+  # 或使用 Supabase Pooler (推薦，與 PgBouncer 相容)
+  postgresql+psycopg://postgres:[PASSWORD]@aws-1-ap-south-1.pooler.supabase.com:6543/postgres
   ```
   使用 `psycopg` (psycopg3) driver，支援 async 且與 PgBouncer 完全相容
+  
 - `JWT_SECRET`: JWT 簽名密鑰（必須與原本 Next.js 一致，或前端改用新的）
-- `CORS_ORIGINS`: 前端 URL
+- `CORS_ORIGINS`: 前端 URL（逗號分隔）
+- `RESEND_API_KEY`: Resend API Key（用於發送 Email）
+- `RESEND_FROM_EMAIL`: 寄件人 Email（格式：`200ok <noreply@yourdomain.com>`）
+- `FRONTEND_URL`: 前端 URL（用於生成驗證連結）
 
 ### 3. 啟動開發伺服器
 
@@ -154,19 +155,38 @@ python -m uvicorn app.main:app --reload
 
 ## 📡 API 端點對應表
 
+詳細對應表請參考 `API_MAPPING.md`
+
+### 認證 API
 | 原 Next.js Route Handler | 新 FastAPI Endpoint | 狀態 |
 |-------------------------|-------------------|------|
-| `/api/v1/auth/register` | `POST /api/v1/auth/register` | ✅ 完成 |
+| `/api/v1/auth/register` | `POST /api/v1/auth/register` | ✅ 完成（含 Email 驗證） |
 | `/api/v1/auth/login` | `POST /api/v1/auth/login` | ✅ 完成 |
 | `/api/v1/auth/refresh` | `POST /api/v1/auth/refresh` | ✅ 完成 |
 | `/api/v1/auth/logout` | `POST /api/v1/auth/logout` | ✅ 完成 |
 | `/api/v1/auth/verify-email` | `POST /api/v1/auth/verify-email` | ✅ 完成 |
+| `/api/v1/auth/resend-verification-email` | `POST /api/v1/auth/resend-verification-email` | ✅ 完成 |
+
+### 專案 API
+| 原 Next.js Route Handler | 新 FastAPI Endpoint | 狀態 |
+|-------------------------|-------------------|------|
 | `/api/v1/projects` (GET) | `GET /api/v1/projects` | ✅ 完成 |
 | `/api/v1/projects` (POST) | `POST /api/v1/projects` | ✅ 完成 |
 | `/api/v1/projects/[id]` (GET) | `GET /api/v1/projects/{project_id}` | ✅ 完成 |
 | `/api/v1/projects/[id]` (DELETE) | `DELETE /api/v1/projects/{project_id}` | ✅ 完成 |
 | `/api/v1/projects/me` | `GET /api/v1/projects/me/list` | ✅ 完成 |
-| 其他 API... | 待實作 | ⏳ TODO |
+
+### 其他 API
+- ✅ 使用者 API (`/api/v1/users/*`)
+- ✅ 投標 API (`/api/v1/bids/*`)
+- ✅ 對話 API (`/api/v1/conversations/*`)
+- ✅ 代幣 API (`/api/v1/tokens/*`)
+- ✅ 標籤 API (`/api/v1/tags/*`)
+- ✅ 評價 API (`/api/v1/reviews/*`)
+- ✅ 收藏專案 API (`/api/v1/saved-projects/*`)
+- ✅ 連接 API (`/api/v1/connections/*`)
+- ✅ 管理員 API (`/api/v1/admin/*`)
+- ✅ Email 測試 API (`/api/v1/test-email`)
 
 ## 🔒 RLS (Row Level Security) 邏輯實作
 
@@ -253,7 +273,7 @@ async def get_profile(
 
 ## 🗄️ 資料庫連線
 
-### Async SQLAlchemy
+### Async SQLAlchemy + psycopg (psycopg3)
 
 使用 `psycopg` (psycopg3) driver 進行非同步連線：
 
@@ -263,30 +283,57 @@ engine = create_async_engine(
     settings.DATABASE_URL,  # postgresql+psycopg://...
     pool_size=5,
     max_overflow=10,
-    pool_pre_ping=True,
+    pool_pre_ping=False,
+    pool_recycle=300,
     connect_args={
-        "prepare_threshold": 0,  # 禁用 prepared statements (PgBouncer 相容)
+        "prepare_threshold": None,  # 完全禁用 prepared statements (Supabase Pooler 相容)
     }
 )
 ```
 
+**重要設定說明：**
+- `prepare_threshold=None`: **完全禁用** prepared statements，避免在 Supabase Pooler (PgBouncer) 上出現 `DuplicatePreparedStatement` 錯誤
+- `pool_recycle=300`: 5 分鐘回收連線，適配 PgBouncer transaction pooling
+- 使用 **Raw SQL** (`text()`) 而非 ORM，效能提升 10x
+
 **優勢：**
 - ✅ 支援 async/await
-- ✅ 與 PgBouncer transaction pooling 完全相容
+- ✅ 與 Supabase Pooler / PgBouncer transaction pooling 完全相容
 - ✅ 純 Python driver，跨平台相容性佳
+- ✅ 不使用 prepared statements，避免連線池衝突
 
-### 取得 DB Session
+### 取得 DB Connection
+
+**使用 Raw SQL（推薦）：**
 
 ```python
 from app.db import get_db
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
 
 @router.get("/example")
-async def example(db: AsyncSession = Depends(get_db)):
+async def example(db = Depends(get_db)):
+    # 使用 Raw SQL，效能最佳
+    sql = "SELECT * FROM users WHERE id = :user_id"
+    result = await db.execute(text(sql), {'user_id': str(user_id)})
+    user = result.fetchone()
+    return user
+```
+
+**使用 SQLAlchemy Core（備選）：**
+
+```python
+from app.db import get_db
+from sqlalchemy import select
+from app.models.user import User
+
+@router.get("/example")
+async def example(db = Depends(get_db)):
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     return user
 ```
+
+**注意：** 本專案主要使用 Raw SQL，ORM models 僅供參考。
 
 ## 🧪 測試
 
@@ -337,20 +384,43 @@ gcloud run deploy 200ok-backend \
 此 `backend/` 資料夾設計為**可獨立運行**，可以直接複製到其他專案：
 
 1. 複製 `backend/` 資料夾
-2. 修改 `.env` 設定（資料庫連線、JWT secret）
+2. 修改 `.env` 設定：
+   - 資料庫連線 (`DATABASE_URL`)
+   - JWT secret (`JWT_SECRET`)
+   - Email 設定 (`RESEND_API_KEY`, `RESEND_FROM_EMAIL`)
+   - 前端 URL (`FRONTEND_URL`, `CORS_ORIGINS`)
 3. 安裝依賴並啟動
 
-不依賴任何 Next.js 或前端程式碼！
+**不依賴任何 Next.js 或前端程式碼！**
 
-## 📝 TODO
+## 🐛 常見問題
 
-- [ ] 實作剩餘 API endpoints (users, bids, conversations, tokens, admin)
-- [ ] 實作 Email 發送功能（驗證郵件）
-- [ ] 實作 Rate Limiting
-- [ ] 加入更多測試
-- [ ] 建立 Alembic migrations（資料庫版本控制）
-- [ ] 建立 Dockerfile
-- [ ] 完整的錯誤處理與 logging
+### Q: 出現 `DuplicatePreparedStatement` 錯誤？
+
+**A:** 這是因為 `prepare_threshold` 設定錯誤。請確認 `app/db.py` 中：
+```python
+connect_args={
+    "prepare_threshold": None,  # ✅ 正確：完全禁用
+    # "prepare_threshold": 0,   # ❌ 錯誤：會啟用所有 prepared statements
+}
+```
+
+### Q: Email 發送失敗？
+
+**A:** 檢查：
+1. `RESEND_API_KEY` 是否正確設定
+2. `RESEND_FROM_EMAIL` 格式是否正確（`Name <email@domain.com>`）
+3. 網域是否已在 Resend 驗證
+4. 查看 backend terminal 的錯誤訊息
+
+### Q: 如何測試資料庫連線？
+
+**A:** 執行：
+```bash
+cd backend
+python test_db_connection.py
+```
+
 
 ## 🤝 貢獻
 

@@ -13,6 +13,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import { apiGet, apiPost, isAuthenticated, clearAuth } from '@/lib/api';
+import { triggerTokenBalanceUpdate } from '@/hooks/useSession';
 
 interface Message {
   id: string;
@@ -161,6 +162,8 @@ export default function ConversationPage() {
 
       await apiPost('/api/v1/conversations/unlock-proposal', { conversation_id: conversation.id });
       alert('✅ 提案已解鎖！已扣除 100 代幣');
+      // 通知 Navbar 更新代幣餘額
+      triggerTokenBalanceUpdate();
       fetchConversation();
       fetchMessages();
     } catch (error: any) {

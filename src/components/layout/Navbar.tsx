@@ -23,7 +23,7 @@ export const Navbar: React.FC = () => {
         try {
           const parsedUser = JSON.parse(userData);
           setUser(parsedUser);
-          // 取得代幣餘額和未讀訊息
+          // 只在初始載入時取得一次代幣餘額
           fetchTokenBalance();
           fetchUnreadCount();
         } catch (e) {
@@ -31,6 +31,21 @@ export const Navbar: React.FC = () => {
         }
       }
     }
+  }, []);
+
+  useEffect(() => {
+    // 監聽代幣餘額更新事件（只在代幣操作時觸發）
+    const handleTokenBalanceUpdate = () => {
+      if (isAuthenticated()) {
+        fetchTokenBalance();
+      }
+    };
+
+    window.addEventListener('token-balance-updated', handleTokenBalanceUpdate);
+
+    return () => {
+      window.removeEventListener('token-balance-updated', handleTokenBalanceUpdate);
+    };
   }, []);
 
   const fetchTokenBalance = async () => {

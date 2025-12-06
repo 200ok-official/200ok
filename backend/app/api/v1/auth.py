@@ -8,6 +8,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
 import uuid
+import secrets
 
 from ...db import get_db, parse_pg_array
 from ...models.user import User, UserRole
@@ -18,6 +19,7 @@ from ...schemas.auth import (
 from ...schemas.common import SuccessResponse
 from ...security import hash_password, verify_password, create_access_token, create_refresh_token, decode_token
 from ...config import settings
+from ...services.email_service import send_verification_email
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -107,12 +109,36 @@ async def register(
         'expires_at': expires_at
     })
     
-    # TODO: 異步發送驗證郵件（類似原本的 setImmediate）
-    # await send_verification_email(user.id, user.email, user.name)
+    # 生成並儲存 email 驗證 token
+    verification_token = secrets.token_urlsafe(32)
+    verification_expires = datetime.utcnow() + timedelta(hours=24)  # 24 小時有效
+    
+    insert_verification_sql = """
+        INSERT INTO email_verification_tokens (id, user_id, token, expires_at, created_at)
+        VALUES (:id, :user_id, :token, :expires_at, NOW())
+    """
+    await db.execute(text(insert_verification_sql), {
+        'id': str(uuid.uuid4()),
+        'user_id': str(user.id),
+        'token': verification_token,
+        'expires_at': verification_expires
+    })
+    
+    # 發送驗證郵件（異步，不阻塞註冊流程）
+    try:
+        await send_verification_email(
+            user_id=str(user.id),
+            email=user.email,
+            name=user.name,
+            token=verification_token
+        )
+    except Exception as e:
+        # 郵件發送失敗不影響註冊，只記錄錯誤
+        print(f"⚠️  發送驗證郵件失敗: {e}")
     
     return {
         "success": True,
-        "message": "註冊成功",
+        "message": "註冊成功，請檢查您的信箱以驗證 Email",
         "data": AuthResponse(
             access_token=access_token,
             refresh_token=refresh_token,

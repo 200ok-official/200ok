@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { TokenPurchaseModal } from '@/components/tokens/TokenPurchaseModal';
 import { apiGet, apiPost, clearAuth, isAuthenticated } from '@/lib/api';
+import { triggerTokenBalanceUpdate } from '@/hooks/useSession';
 
 interface TokenBalance {
   balance: number;
@@ -49,6 +50,8 @@ export default function TokensPage() {
         alert(`✅ ${data.message || '購買成功！'}\n\n實際獲得：${data.data.total_received} 代幣\n當前餘額：${data.data.new_balance} 代幣`);
         // 重新載入代幣資料
         await fetchTokenData();
+        // 通知 Navbar 更新代幣餘額
+        triggerTokenBalanceUpdate();
       } else {
         throw new Error(data.message || '購買失敗');
       }
@@ -67,9 +70,18 @@ export default function TokensPage() {
 
       // 取得交易記錄
       const transactionsData = await apiGet('/api/v1/tokens/transactions', { limit: '20' });
-      setTransactions(transactionsData.data || []);
+      // Backend 回傳格式：{ success: true, data: { transactions: [...], pagination: {...} } }
+      // 所以要取 transactionsData.data.transactions
+      if (transactionsData.data && Array.isArray(transactionsData.data.transactions)) {
+        setTransactions(transactionsData.data.transactions);
+      } else {
+        console.error('Transactions data is not an array:', transactionsData);
+        setTransactions([]);
+      }
     } catch (error: any) {
       console.error('Failed to fetch token data:', error);
+      // 發生錯誤時確保 transactions 是空陣列
+      setTransactions([]);
       if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
         // Token 無效，清除並導向登入
         clearAuth();

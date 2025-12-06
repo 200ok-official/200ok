@@ -23,6 +23,7 @@ const DESIGN_STYLES = [
 export const Step6Reference: React.FC<Props> = ({ data, updateData }) => {
   const hints = getProjectTypeHints(data.projectType);
   const [newLink, setNewLink] = useState("");
+  const [customStyle, setCustomStyle] = useState("");
 
   const handleAddLink = () => {
     if (newLink.trim()) {
@@ -49,6 +50,29 @@ export const Step6Reference: React.FC<Props> = ({ data, updateData }) => {
 
   const isStyleSelected = (style: string) => {
     return (data.designStyle || []).includes(style);
+  };
+
+  const handleAddCustomStyle = () => {
+    if (customStyle.trim()) {
+      const styles = data.designStyle || [];
+      // 檢查是否已存在
+      if (!styles.includes(customStyle.trim())) {
+        updateData({ designStyle: [...styles, customStyle.trim()] });
+      }
+      setCustomStyle("");
+    }
+  };
+
+  const handleRemoveStyle = (style: string) => {
+    const styles = (data.designStyle || []).filter((s: string) => s !== style);
+    updateData({ designStyle: styles });
+  };
+
+  const handleCustomStyleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleAddCustomStyle();
+    }
   };
 
   return (
@@ -114,7 +138,9 @@ export const Step6Reference: React.FC<Props> = ({ data, updateData }) => {
         <label className="block text-sm font-semibold text-[#20263e] mb-3">
           設計風格偏好（可複選）
         </label>
-        <div className="flex flex-wrap gap-2">
+        
+        {/* 預設風格選項 */}
+        <div className="flex flex-wrap gap-2 mb-4">
           {DESIGN_STYLES.map((style) => (
             <button
               key={style}
@@ -129,6 +155,62 @@ export const Step6Reference: React.FC<Props> = ({ data, updateData }) => {
             </button>
           ))}
         </div>
+
+        {/* 自由填答 */}
+        <div className="mt-4">
+          <label className="block text-xs text-[#c5ae8c] mb-2">
+            或自訂設計風格：
+          </label>
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={customStyle}
+              onChange={(e) => setCustomStyle(e.target.value)}
+              onKeyPress={handleCustomStyleKeyPress}
+              placeholder="例如：復古、極簡、文青風..."
+              className="flex-1 px-4 py-2 rounded-lg border border-[#c5ae8c] focus:border-[#20263e] focus:outline-none focus:ring-2 focus:ring-[#20263e] focus:ring-opacity-20 text-sm"
+            />
+            <Button 
+              onClick={handleAddCustomStyle} 
+              disabled={!customStyle.trim()}
+              size="sm"
+            >
+              新增
+            </Button>
+          </div>
+        </div>
+
+        {/* 自訂風格標籤（只顯示非預設選項） */}
+        {(() => {
+          const customStyles = (data.designStyle || []).filter((style: string) => !DESIGN_STYLES.includes(style));
+          if (customStyles.length > 0) {
+            return (
+              <div className="mt-4 space-y-2">
+                <p className="text-xs text-[#20263e] font-semibold">
+                  已新增的自訂風格：
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {customStyles.map((style: string, index: number) => (
+                    <div
+                      key={index}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#e6dfcf] border border-[#c5ae8c] text-[#20263e] text-xs md:text-sm"
+                    >
+                      <span>{style}</span>
+                      <button
+                        onClick={() => handleRemoveStyle(style)}
+                        className="text-red-500 hover:text-red-700 text-xs ml-1"
+                        aria-label="移除風格"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
       </div>
 
       {/* 小提示 */}

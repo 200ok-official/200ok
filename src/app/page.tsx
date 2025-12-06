@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -36,44 +36,66 @@ interface Freelancer {
 export default function HomePage() {
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
   const [recommendedFreelancers, setRecommendedFreelancers] = useState<Freelancer[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [freelancersLoading, setFreelancersLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  // 使用 ref 防止重複初始化
+  const hasInitialized = useRef(false);
+  const freelancersRequested = useRef(false);
+
+  // 案件載入完成後，再載入工程師
+  const fetchFreelancers = useCallback(async () => {
+    // 防止重複調用（如果已經請求過，則跳過）
+    if (freelancersRequested.current) {
+      return;
+    }
+    
+    freelancersRequested.current = true;
+    setFreelancersLoading(true);
+    try {
+      const freelancersData = await apiGet("/api/v1/users/search", { limit: "5" });
+      // API 回應格式: { success: true, data: [...], pagination: {...} }
+      setRecommendedFreelancers(freelancersData.data || []);
+    } catch (freelancerError) {
+      console.error("Error fetching freelancers:", freelancerError);
+      setRecommendedFreelancers([]);
+    } finally {
+      setFreelancersLoading(false);
+    }
+  }, []);
+
+  // 優先載入案件
+  const fetchProjects = useCallback(async () => {
+    setProjectsLoading(true);
+    try {
+      const projectsData = await apiGet("/api/v1/projects", { limit: "5", status: "open" });
+      // API 回應格式: { success: true, data: { projects: [...], pagination: {...} } }
+      setRecentProjects(projectsData.data?.projects || []);
+    } catch (projectError) {
+      console.error("Error fetching projects:", projectError);
+      setRecentProjects([]);
+    } finally {
+      setProjectsLoading(false);
+      // 案件載入完成後，再載入工程師
+      fetchFreelancers();
+    }
+  }, [fetchFreelancers]);
 
   useEffect(() => {
+    // 防止重複初始化（React StrictMode 會導致執行兩次）
+    if (hasInitialized.current) {
+      return;
+    }
+    
+    hasInitialized.current = true;
+    
     // 檢查是否已登入
     setIsLoggedIn(isAuthenticated());
     
-    fetchHomeData();
-  }, []);
-
-  const fetchHomeData = async () => {
-    setLoading(true);
-    try {
-      // 獲取最新案件
-      try {
-        const projectsData = await apiGet("/api/v1/projects", { limit: "5", status: "open" });
-        // API 回應格式: { success: true, data: { projects: [...], pagination: {...} } }
-        setRecentProjects(projectsData.data?.projects || []);
-      } catch (projectError) {
-        console.error("Error fetching projects:", projectError);
-        setRecentProjects([]); // 設定為空陣列，讓頁面繼續顯示
-      }
-
-      // 獲取推薦接案工程師
-      try {
-        const freelancersData = await apiGet("/api/v1/users/search", { limit: "5" });
-        // API 回應格式: { success: true, data: [...], pagination: {...} }
-        setRecommendedFreelancers(freelancersData.data || []);
-      } catch (freelancerError) {
-        console.error("Error fetching freelancers:", freelancerError);
-        setRecommendedFreelancers([]); // 設定為空陣列，讓頁面繼續顯示
-      }
-    } catch (error) {
-      console.error("Failed to fetch home data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    // 先載入案件（優先顯示）
+    fetchProjects();
+  }, [fetchProjects]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
@@ -126,7 +148,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {loading ? (
+          {projectsLoading ? (
             <div className="relative">
               <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide px-2 scroll-smooth">
                 {[...Array(5)].map((_, i) => (
@@ -216,7 +238,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {loading ? (
+          {freelancersLoading ? (
             <div className="relative">
               <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide px-2 scroll-smooth">
                 {[...Array(5)].map((_, i) => (

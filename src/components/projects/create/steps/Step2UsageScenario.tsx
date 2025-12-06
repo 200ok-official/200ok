@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
 import { getProjectTypeHints } from "../config/projectTypeHints";
 
 interface Props {
@@ -12,8 +12,39 @@ export const Step2UsageScenario: React.FC<Props> = ({ data, updateData }) => {
   const hints = getProjectTypeHints(data.projectType);
   // 只顯示前兩個範例
   const examples = hints.usageScenario.examples.slice(0, 2);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
   const handleExampleSelect = (example: string) => {
     updateData({ usageScenario: example });
+  };
+
+  const handleInsertArrow = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentValue = data.usageScenario || "";
+    
+    // 在當前光標位置插入箭頭符號
+    const arrowText = " → ";
+    const newValue = 
+      currentValue.substring(0, start) + 
+      arrowText + 
+      currentValue.substring(end);
+    
+    // 更新狀態
+    updateData({ usageScenario: newValue });
+    
+    // 設置新的光標位置（在插入的箭頭後面）
+    // 使用 requestAnimationFrame 確保 DOM 更新完成
+    requestAnimationFrame(() => {
+      if (textarea) {
+        const newPosition = start + arrowText.length;
+        textarea.focus();
+        textarea.setSelectionRange(newPosition, newPosition);
+      }
+    });
   };
 
   return (
@@ -31,13 +62,25 @@ export const Step2UsageScenario: React.FC<Props> = ({ data, updateData }) => {
         <label className="block text-sm font-semibold text-[#20263e]">
           使用情境描述
         </label>
-        <textarea
-          value={data.usageScenario || ""}
-          onChange={(e) => updateData({ usageScenario: e.target.value })}
-          placeholder={hints.usageScenario.placeholder}
-          className="w-full px-3 py-2 rounded-lg border border-[#c5ae8c] focus:border-[#20263e] focus:outline-none focus:ring-2 focus:ring-[#20263e] focus:ring-opacity-20 text-sm min-h-[72px]"
-          rows={3}
-        />
+        <div className="relative">
+          <textarea
+            ref={textareaRef}
+            value={data.usageScenario || ""}
+            onChange={(e) => updateData({ usageScenario: e.target.value })}
+            placeholder={hints.usageScenario.placeholder}
+            className="w-full px-3 py-2 pr-24 rounded-lg border border-[#c5ae8c] focus:border-[#20263e] focus:outline-none focus:ring-2 focus:ring-[#20263e] focus:ring-opacity-20 text-sm min-h-[72px]"
+            rows={3}
+          />
+          <button
+            type="button"
+            onClick={handleInsertArrow}
+            className="absolute right-2 top-2 px-2.5 py-1.5 text-xs bg-[#20263e] text-white rounded hover:bg-[#2d3550] transition-colors flex items-center gap-1 shadow-sm"
+            title="在當前位置插入箭頭符號 →"
+          >
+            <span>插入</span>
+            <span className="text-sm">→</span>
+          </button>
+        </div>
       </div>
 
       {/* 範例參考 */}
