@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { apiPost } from "@/lib/api";
 
-export default function LoginPage() {
+// 提取使用 useSearchParams 的組件
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
@@ -228,5 +229,21 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+// 主頁面組件，用 Suspense 包裹 LoginForm
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#e6dfcf]">
+        <div className="text-center">
+          <h1 className="text-5xl font-bold text-[#20263e] mb-4">200 OK</h1>
+          <p className="text-[#c5ae8c]">載入中...</p>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
