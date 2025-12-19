@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { HeroBanner } from "@/components/layout/HeroBanner";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -100,6 +101,9 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
       <Navbar />
+
+      {/* Hero Banner */}
+      <HeroBanner />
 
       {/* Dashboard / Login Quick Access */}
       <section className="py-6 px-4 bg-white border-b border-[#c5ae8c]">
