@@ -74,6 +74,38 @@ export async function apiFetchJson<T = any>(
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
     
+    // 處理 422 Validation Error（包含欄位特定的錯誤）
+    if (response.status === 422 && error.errors && typeof error.errors === 'object') {
+      // 將欄位錯誤組合成易讀的訊息
+      const fieldErrors: string[] = [];
+      
+      // 欄位名稱對應的中文
+      const fieldNameMap: Record<string, string> = {
+        'email': '電子郵件',
+        'password': '密碼',
+        'name': '姓名',
+        'phone': '手機號碼',
+        'full_name': '全名',
+        'role': '角色',
+      };
+      
+      Object.entries(error.errors).forEach(([field, messages]) => {
+        const fieldName = fieldNameMap[field] || field;
+        if (Array.isArray(messages)) {
+          messages.forEach((msg) => {
+            fieldErrors.push(`${fieldName}: ${msg}`);
+          });
+        } else if (typeof messages === 'string') {
+          fieldErrors.push(`${fieldName}: ${messages}`);
+        }
+      });
+      
+      // 如果有欄位錯誤，優先顯示欄位錯誤
+      if (fieldErrors.length > 0) {
+        throw new Error(fieldErrors.join('\n'));
+      }
+    }
+    
     // 取得錯誤訊息（FastAPI 使用 detail，其他 API 可能使用 error 或 message）
     const errorMessage = error.detail || error.error || error.message || `HTTP ${response.status}`;
     

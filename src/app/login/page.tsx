@@ -15,6 +15,7 @@ function LoginForm() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    rememberMe: false,
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -65,9 +66,10 @@ function LoginForm() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: type === 'checkbox' ? checked : value,
     });
   };
 
@@ -142,25 +144,43 @@ function LoginForm() {
 
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-[#20263e] focus:ring-[#20263e] border-[#c5ae8c] rounded"
-                />
-                <label
-                  htmlFor="remember-me"
-                  className="ml-2 block text-sm text-[#20263e]"
-                >
+              <label className="flex items-center group cursor-pointer">
+                <div className="relative">
+                  <input
+                    id="rememberMe"
+                    name="rememberMe"
+                    type="checkbox"
+                    checked={formData.rememberMe}
+                    onChange={handleChange}
+                    className="sr-only peer"
+                  />
+                  <div className="w-5 h-5 border-2 border-[#c5ae8c] rounded bg-white peer-checked:bg-[#20263e] peer-checked:border-[#20263e] transition-all duration-200 group-hover:border-[#20263e] flex items-center justify-center">
+                    <svg
+                      className={`w-3.5 h-3.5 text-white transition-opacity duration-200 ${
+                        formData.rememberMe ? "opacity-100" : "opacity-0"
+                      }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <span className="ml-3 text-sm font-medium text-[#20263e] group-hover:text-[#c5ae8c] transition-colors duration-200">
                   記住我
-                </label>
-              </div>
+                </span>
+              </label>
 
               <div className="text-sm">
                 <a
                   href="#"
-                  className="font-medium text-[#20263e] hover:text-[#c5ae8c] transition"
+                  className="font-medium text-[#20263e] hover:text-[#c5ae8c] transition underline decoration-[#c5ae8c]/30 underline-offset-4"
                 >
                   忘記密碼？
                 </a>
