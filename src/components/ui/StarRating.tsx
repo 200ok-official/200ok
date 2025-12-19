@@ -1,7 +1,7 @@
 import React from "react";
 
 interface StarRatingProps {
-  rating: number;
+  rating: number | null;
   maxRating?: number;
   size?: "sm" | "md" | "lg";
   showNumber?: boolean;
@@ -23,8 +23,9 @@ export const StarRating: React.FC<StarRatingProps> = ({
 
   const renderStars = () => {
     const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
+    const ratingValue = rating ?? 0;
+    const fullStars = Math.floor(ratingValue);
+    const hasHalfStar = ratingValue % 1 >= 0.5;
 
     for (let i = 0; i < fullStars; i++) {
       stars.push(
@@ -79,7 +80,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
       <div className="flex items-center">{renderStars()}</div>
       {showNumber && (
         <span className="ml-1 text-sm font-medium text-gray-700">
-          {rating.toFixed(1)}
+          {rating !== null ? rating.toFixed(1) : "N/A"}
         </span>
       )}
     </div>

@@ -53,7 +53,7 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
-      const data = await apiGet("/api/v1/users/me");
+      const data = await apiGet("/api/v1/users/me/profile");
       setProfile(data.data);
       
       // 初始化表單
@@ -85,7 +85,7 @@ export default function ProfilePage() {
     setSaving(true);
 
     try {
-      await apiPut("/api/v1/users/me", formData);
+      await apiPut("/api/v1/users/me/profile", formData);
       setSuccess("個人資料已更新！");
       await fetchProfile();
     } catch (error: any) {
@@ -156,7 +156,7 @@ export default function ProfilePage() {
       setSuccess("");
 
       try {
-        await apiPut("/api/v1/users/me", { roles: newRoles });
+        await apiPut("/api/v1/users/me/profile", { roles: newRoles });
       } catch (error) {
         // 如果失敗，恢復原狀態
         setProfile((prev) => prev ? { ...prev, roles: currentRoles } : null);

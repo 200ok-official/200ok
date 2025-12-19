@@ -18,7 +18,7 @@ interface ProjectCardProps {
     client: {
       name: string;
       avatar_url?: string;
-      rating: number;
+      rating: number | null;
     };
     tags?: Array<{
       tag: {
@@ -108,7 +108,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 {project.client.name}
               </p>
               <p className="text-xs text-gray-500">
-                ⭐ {project.client.rating.toFixed(1)} · {project.bids_count || 0} 個投標
+                ⭐ {project.client.rating !== null ? project.client.rating.toFixed(1) : "N/A"} · {project.bids_count || 0} 個投標
               </p>
             </div>
           </div>

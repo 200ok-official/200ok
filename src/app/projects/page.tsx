@@ -20,7 +20,7 @@ interface Project {
   client: {
     name: string;
     avatar_url?: string;
-    rating: number;
+    rating: number | null;
   };
   tags: Array<{
     tag: {
