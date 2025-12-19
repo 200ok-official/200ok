@@ -75,7 +75,8 @@ export async function apiFetchJson<T = any>(
     const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
     
     // 處理 422 Validation Error（包含欄位特定的錯誤）
-    if (response.status === 422 && error.errors && typeof error.errors === 'object') {
+    // 後端格式：error.detail.errors = [{field: "body -> email", message: "...", type: "..."}]
+    if (response.status === 422 && error.detail?.errors && Array.isArray(error.detail.errors)) {
       // 將欄位錯誤組合成易讀的訊息
       const fieldErrors: string[] = [];
       
@@ -89,15 +90,46 @@ export async function apiFetchJson<T = any>(
         'role': '角色',
       };
       
-      Object.entries(error.errors).forEach(([field, messages]) => {
-        const fieldName = fieldNameMap[field] || field;
-        if (Array.isArray(messages)) {
-          messages.forEach((msg) => {
-            fieldErrors.push(`${fieldName}: ${msg}`);
-          });
-        } else if (typeof messages === 'string') {
-          fieldErrors.push(`${fieldName}: ${messages}`);
+      error.detail.errors.forEach((err: any) => {
+        // 從 "body -> email" 中提取欄位名稱
+        const fieldMatch = err.field?.match(/-> (\w+)$/);
+        const fieldKey = fieldMatch ? fieldMatch[1] : err.field;
+        const fieldName = fieldNameMap[fieldKey] || fieldKey || '欄位';
+        const rawMessage = err.message || '格式錯誤';
+        
+        // 將技術性錯誤訊息轉換為友善的中文
+        let friendlyMessage = rawMessage;
+        
+        // Email 驗證錯誤
+        if (rawMessage.includes('not a valid email') || rawMessage.includes('@-sign')) {
+          friendlyMessage = '請輸入有效的電子郵件格式（例如：example@mail.com）';
         }
+        // 必填欄位
+        else if (rawMessage.includes('field required') || rawMessage.includes('missing')) {
+          friendlyMessage = '此欄位為必填';
+        }
+        // 字串長度
+        else if (rawMessage.includes('at least') && rawMessage.includes('characters')) {
+          const minLength = rawMessage.match(/\d+/)?.[0];
+          friendlyMessage = minLength ? `至少需要 ${minLength} 個字元` : '字元數不足';
+        }
+        else if (rawMessage.includes('at most') && rawMessage.includes('characters')) {
+          const maxLength = rawMessage.match(/\d+/)?.[0];
+          friendlyMessage = maxLength ? `最多 ${maxLength} 個字元` : '字元數過多';
+        }
+        // 密碼強度
+        else if (rawMessage.includes('password') && (rawMessage.includes('weak') || rawMessage.includes('strong'))) {
+          friendlyMessage = '密碼強度不足，請使用至少 8 個字元，包含大小寫字母和數字';
+        }
+        // 數值範圍
+        else if (rawMessage.includes('greater than')) {
+          friendlyMessage = '數值過小';
+        }
+        else if (rawMessage.includes('less than')) {
+          friendlyMessage = '數值過大';
+        }
+        
+        fieldErrors.push(`${fieldName}：${friendlyMessage}`);
       });
       
       // 如果有欄位錯誤，優先顯示欄位錯誤
@@ -106,8 +138,17 @@ export async function apiFetchJson<T = any>(
       }
     }
     
-    // 取得錯誤訊息（FastAPI 使用 detail，其他 API 可能使用 error 或 message）
-    const errorMessage = error.detail || error.error || error.message || `HTTP ${response.status}`;
+    // 取得錯誤訊息（優先使用 message，因為 detail 可能是物件）
+    let errorMessage: string;
+    if (typeof error.detail === 'string') {
+      errorMessage = error.detail;
+    } else if (typeof error.error === 'string') {
+      errorMessage = error.error;
+    } else if (typeof error.message === 'string') {
+      errorMessage = error.message;
+    } else {
+      errorMessage = `HTTP ${response.status}`;
+    }
     
     // 處理 401 Unauthorized
     if (response.status === 401) {

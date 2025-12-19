@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { apiPost, apiGet } from "@/lib/api";
@@ -17,7 +18,9 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
     phone: "",
+    terms: false,
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
@@ -25,22 +28,56 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
 
-    // 驗證密碼
-    if (formData.password !== formData.confirmPassword) {
-      setError("密碼不一致");
-      return;
+    const errors: Record<string, string> = {};
+
+    // 前端基本驗證
+    if (!formData.name) {
+      errors.name = "請輸入姓名";
+    }
+    
+    // 電子郵件驗證
+    if (!formData.email) {
+      errors.email = "請輸入電子郵件";
+    } else {
+      // 驗證電子郵件格式
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        errors.email = "請輸入有效的電子郵件格式（例如：example@mail.com）";
+      }
+    }
+    
+    // 密碼驗證
+    if (!formData.password) {
+      errors.password = "請輸入密碼";
+    } else {
+      if (formData.password.length < 8) {
+        errors.password = "密碼長度至少需要 8 個字元";
+      } else {
+        // 驗證密碼強度（至少包含大小寫字母與數字）
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+        if (!passwordRegex.test(formData.password)) {
+          errors.password = "密碼需包含大小寫字母與數字";
+        }
+      }
+    }
+    
+    // 確認密碼驗證
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = "請確認密碼";
+    } else if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = "密碼不一致";
+    }
+    
+    // 服務條款驗證
+    if (!formData.terms) {
+      errors.terms = "請同意服務條款和隱私政策";
     }
 
-    if (formData.password.length < 8) {
-      setError("密碼長度至少需要 8 個字元");
-      return;
-    }
-
-    // 驗證密碼強度（至少包含大小寫字母與數字）
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
-    if (!passwordRegex.test(formData.password)) {
-      setError("密碼需包含大小寫字母與數字");
+    // 如果有錯誤，設定欄位錯誤並返回
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
 
@@ -63,24 +100,77 @@ export default function RegisterPage() {
         router.push("/login");
       }, 5000);
     } catch (err: any) {
-      setError(err.message || "註冊失敗，請稍後再試");
+      // 處理後端返回的欄位錯誤
+      const errorMessage = err.message || "註冊失敗，請稍後再試";
+      
+      // 嘗試解析後端錯誤訊息（格式：欄位名稱：錯誤訊息）
+      const backendErrors: Record<string, string> = {};
+      if (errorMessage.includes('：') || errorMessage.includes(':')) {
+        const lines = errorMessage.split('\n');
+        lines.forEach((line: string) => {
+          const match = line.match(/(電子郵件|姓名|密碼|確認密碼|手機號碼|全名|角色|欄位)[：:]\s*(.+)/);
+          if (match) {
+            const fieldNameMap: Record<string, string> = {
+              '電子郵件': 'email',
+              '姓名': 'name',
+              '密碼': 'password',
+              '確認密碼': 'confirmPassword',
+              '手機號碼': 'phone',
+            };
+            const fieldKey = fieldNameMap[match[1]] || match[1].toLowerCase();
+            backendErrors[fieldKey] = match[2];
+          }
+        });
+      }
+      
+      if (Object.keys(backendErrors).length > 0) {
+        setFieldErrors(backendErrors);
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: type === 'checkbox' ? checked : value,
     });
+    
+    // 清除該欄位的錯誤（當用戶開始輸入時）
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+    
+    // 如果修改的是密碼或確認密碼，也要清除另一個欄位的錯誤（如果錯誤是「密碼不一致」）
+    if (name === 'password' && fieldErrors.confirmPassword === '密碼不一致') {
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.confirmPassword;
+        return newErrors;
+      });
+    }
+    if (name === 'confirmPassword' && fieldErrors.confirmPassword === '密碼不一致') {
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.confirmPassword;
+        return newErrors;
+      });
+    }
   };
 
   if (showVerificationMessage) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
+      <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center py-12 px-4">
+        <main className="flex-1 flex items-center justify-center py-24 px-4">
           <div className="max-w-md w-full">
             <Card className="p-8 text-center bg-white shadow-lg border-2 border-[#c5ae8c]">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -141,16 +231,16 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
+    <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
       <Navbar />
-      <main className="flex-1 py-12 px-4">
+      <main className="flex-1 py-24 px-4 flex items-center justify-center">
         <div className="max-w-md w-full mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-[#20263e] mb-3">
               建立您的帳號
             </h2>
-            <p className="text-[#c5ae8c]">
+            <p className="text-[#c5ae8c] text-lg">
               加入我們，開始您的接案或發案之旅
             </p>
           </div>
@@ -181,8 +271,8 @@ export default function RegisterPage() {
 
           {/* Registration Form */}
           <Card className="p-8 bg-white shadow-lg border-2 border-[#c5ae8c]">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {error && (
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+              {error && !Object.keys(fieldErrors).length && (
                 <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded">
                   <p className="font-medium">{error}</p>
                 </div>
@@ -200,12 +290,20 @@ export default function RegisterPage() {
                   id="name"
                   name="name"
                   type="text"
-                  required
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-[#c5ae8c] rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e] transition"
+                  className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 transition bg-[#e6dfcf]/30 ${
+                    fieldErrors.name
+                      ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                      : 'border-[#c5ae8c] focus:ring-[#20263e] focus:border-[#20263e]'
+                  }`}
                   placeholder="您的姓名"
                 />
+                {fieldErrors.name && (
+                  <div className="mt-2 bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded">
+                    <p className="font-medium">{fieldErrors.name}</p>
+                  </div>
+                )}
               </div>
 
               {/* Email */}
@@ -220,15 +318,24 @@ export default function RegisterPage() {
                   id="email"
                   name="email"
                   type="email"
-                  required
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-[#c5ae8c] rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e] transition"
+                  className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 transition bg-[#e6dfcf]/30 ${
+                    fieldErrors.email
+                      ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                      : 'border-[#c5ae8c] focus:ring-[#20263e] focus:border-[#20263e]'
+                  }`}
                   placeholder="your@email.com"
                 />
-                <p className="mt-1 text-xs text-[#c5ae8c]">
-                  註冊後我們會寄送驗證信到此信箱
-                </p>
+                {fieldErrors.email ? (
+                  <div className="mt-2 bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded">
+                    <p className="font-medium">{fieldErrors.email}</p>
+                  </div>
+                ) : (
+                  <p className="mt-1 text-xs text-[#c5ae8c]">
+                    註冊後我們會寄送驗證信到此信箱
+                  </p>
+                )}
               </div>
 
               {/* Phone */}
@@ -245,9 +352,18 @@ export default function RegisterPage() {
                   type="tel"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-[#c5ae8c] rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e] transition"
+                  className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 transition bg-[#e6dfcf]/30 ${
+                    fieldErrors.phone
+                      ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                      : 'border-[#c5ae8c] focus:ring-[#20263e] focus:border-[#20263e]'
+                  }`}
                   placeholder="0912-345-678"
                 />
+                {fieldErrors.phone && (
+                  <div className="mt-2 bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded">
+                    <p className="font-medium">{fieldErrors.phone}</p>
+                  </div>
+                )}
               </div>
 
               {/* Password */}
@@ -262,15 +378,24 @@ export default function RegisterPage() {
                   id="password"
                   name="password"
                   type="password"
-                  required
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-[#c5ae8c] rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e] transition"
+                  className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 transition bg-[#e6dfcf]/30 ${
+                    fieldErrors.password
+                      ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                      : 'border-[#c5ae8c] focus:ring-[#20263e] focus:border-[#20263e]'
+                  }`}
                   placeholder="••••••••"
                 />
-                <p className="mt-1 text-xs text-[#c5ae8c]">
-                  至少 8 個字元，需包含大小寫字母與數字
-                </p>
+                {fieldErrors.password ? (
+                  <div className="mt-2 bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded">
+                    <p className="font-medium">{fieldErrors.password}</p>
+                  </div>
+                ) : (
+                  <p className="mt-1 text-xs text-[#c5ae8c]">
+                    至少 8 個字元，需包含大小寫字母與數字
+                  </p>
+                )}
               </div>
 
               {/* Confirm Password */}
@@ -285,46 +410,63 @@ export default function RegisterPage() {
                   id="confirmPassword"
                   name="confirmPassword"
                   type="password"
-                  required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-[#c5ae8c] rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e] transition"
+                  className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 transition bg-[#e6dfcf]/30 ${
+                    fieldErrors.confirmPassword
+                      ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                      : 'border-[#c5ae8c] focus:ring-[#20263e] focus:border-[#20263e]'
+                  }`}
                   placeholder="••••••••"
                 />
+                {fieldErrors.confirmPassword && (
+                  <div className="mt-2 bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded">
+                    <p className="font-medium">{fieldErrors.confirmPassword}</p>
+                  </div>
+                )}
               </div>
 
               {/* Terms */}
-              <div className="flex items-start">
-                <input
+              <div className="flex flex-col">
+                <Checkbox
                   id="terms"
                   name="terms"
-                  type="checkbox"
-                  required
-                  className="h-4 w-4 text-[#20263e] focus:ring-[#20263e] border-[#c5ae8c] rounded mt-1"
+                  checked={formData.terms}
+                  onChange={handleChange}
+                  error={!!fieldErrors.terms}
+                  label={
+                    <>
+                      我同意{" "}
+                      <a
+                        href="#"
+                        className="text-[#20263e] hover:text-[#c5ae8c] transition underline font-semibold"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        服務條款
+                      </a>{" "}
+                      和{" "}
+                      <a
+                        href="#"
+                        className="text-[#20263e] hover:text-[#c5ae8c] transition underline font-semibold"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        隱私政策
+                      </a>
+                    </>
+                  }
                 />
-                <label htmlFor="terms" className="ml-2 text-sm text-[#20263e]">
-                  我同意{" "}
-                  <a
-                    href="#"
-                    className="text-[#20263e] hover:text-[#c5ae8c] transition underline font-semibold"
-                  >
-                    服務條款
-                  </a>{" "}
-                  和{" "}
-                  <a
-                    href="#"
-                    className="text-[#20263e] hover:text-[#c5ae8c] transition underline font-semibold"
-                  >
-                    隱私政策
-                  </a>
-                </label>
+                {fieldErrors.terms && (
+                  <div className="mt-3 bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded">
+                    <p className="font-medium">{fieldErrors.terms}</p>
+                  </div>
+                )}
               </div>
 
               {/* Submit Button */}
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 text-lg bg-[#20263e] hover:bg-[#2d3550] text-white font-semibold"
+                className="w-full py-3 text-lg bg-[#20263e] hover:bg-[#2d3550] text-white font-semibold disabled:bg-[#c5ae8c] disabled:cursor-not-allowed"
               >
                 {loading ? "註冊中..." : "完成註冊"}
               </Button>

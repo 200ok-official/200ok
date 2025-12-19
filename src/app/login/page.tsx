@@ -6,6 +6,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { apiPost } from "@/lib/api";
 
 // 提取使用 useSearchParams 的組件
@@ -18,7 +19,23 @@ function LoginForm() {
     rememberMe: false,
   });
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{ email?: boolean; password?: boolean }>({});
   const [loading, setLoading] = useState(false);
+  const [isShaking, setIsShaking] = useState(false);
+
+  // 震動效果觸發器
+  const triggerShake = () => {
+    // 先設為 false 以確保動畫可以重啟
+    setIsShaking(false);
+    
+    setTimeout(() => {
+      setIsShaking(true);
+    }, 10);
+
+    setTimeout(() => {
+      setIsShaking(false);
+    }, 600); // 稍微比動畫長一點
+  };
 
   // 檢查是否有從 URL 或 localStorage 來的 returnUrl
   useEffect(() => {
@@ -31,11 +48,29 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
+    
+    // 前端基本驗證
+    const newFieldErrors: { email?: boolean; password?: boolean } = {};
+    if (!formData.email) {
+      newFieldErrors.email = true;
+    }
+    if (!formData.password) {
+      newFieldErrors.password = true;
+    }
+
+    if (Object.keys(newFieldErrors).length > 0) {
+      setFieldErrors(newFieldErrors);
+      setError("請填寫所有必要欄位");
+      triggerShake();
+      return;
+    }
+    
     setLoading(true);
 
     try {
       const data = await apiPost("/api/v1/auth/login", formData);
-
+      // ... (其餘登入成功邏輯保持不變)
       // 儲存 token
       localStorage.setItem("access_token", data.data.access_token);
       localStorage.setItem("refresh_token", data.data.refresh_token);
@@ -60,6 +95,8 @@ function LoginForm() {
       router.refresh();
     } catch (err: any) {
       setError(err.message || "登入失敗，請稍後再試");
+      setFieldErrors({ email: true, password: true });
+      triggerShake();
     } finally {
       setLoading(false);
     }
@@ -71,6 +108,10 @@ function LoginForm() {
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
     });
+    // 當用戶開始輸入時，清除該欄位的錯誤狀態
+    if (fieldErrors[name as keyof typeof fieldErrors]) {
+      setFieldErrors(prev => ({ ...prev, [name]: false }));
+    }
   };
 
   const handleGoogleLogin = () => {
@@ -95,7 +136,7 @@ function LoginForm() {
 
         {/* Login Form */}
         <Card className="p-8 bg-white shadow-lg border-2 border-[#c5ae8c]">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             {error && (
               <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded">
                 <p className="font-medium">{error}</p>
@@ -103,7 +144,7 @@ function LoginForm() {
             )}
 
             {/* Email */}
-            <div>
+            <div className={`block ${fieldErrors.email && isShaking ? "shake-active" : ""}`}>
               <label
                 htmlFor="email"
                 className="block text-sm font-semibold text-[#20263e] mb-2"
@@ -114,16 +155,19 @@ function LoginForm() {
                 id="email"
                 name="email"
                 type="email"
-                required
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-[#c5ae8c] rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e] transition bg-[#e6dfcf]/30"
+                className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 transition-all bg-[#e6dfcf]/30 ${
+                  fieldErrors.email 
+                    ? "border-red-500 focus:ring-red-500 focus:border-red-500" 
+                    : "border-[#c5ae8c] focus:ring-[#20263e] focus:border-[#20263e]"
+                }`}
                 placeholder="your@email.com"
               />
             </div>
 
             {/* Password */}
-            <div>
+            <div className={`block ${fieldErrors.password && isShaking ? "shake-active" : ""}`}>
               <label
                 htmlFor="password"
                 className="block text-sm font-semibold text-[#20263e] mb-2"
@@ -134,48 +178,26 @@ function LoginForm() {
                 id="password"
                 name="password"
                 type="password"
-                required
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-[#c5ae8c] rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e] transition bg-[#e6dfcf]/30"
+                className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 transition-all bg-[#e6dfcf]/30 ${
+                  fieldErrors.password 
+                    ? "border-red-500 focus:ring-red-500 focus:border-red-500" 
+                    : "border-[#c5ae8c] focus:ring-[#20263e] focus:border-[#20263e]"
+                }`}
                 placeholder="••••••••"
               />
             </div>
 
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
-              <label className="flex items-center group cursor-pointer">
-                <div className="relative">
-                  <input
-                    id="rememberMe"
-                    name="rememberMe"
-                    type="checkbox"
-                    checked={formData.rememberMe}
-                    onChange={handleChange}
-                    className="sr-only peer"
-                  />
-                  <div className="w-5 h-5 border-2 border-[#c5ae8c] rounded bg-white peer-checked:bg-[#20263e] peer-checked:border-[#20263e] transition-all duration-200 group-hover:border-[#20263e] flex items-center justify-center">
-                    <svg
-                      className={`w-3.5 h-3.5 text-white transition-opacity duration-200 ${
-                        formData.rememberMe ? "opacity-100" : "opacity-0"
-                      }`}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <span className="ml-3 text-sm font-medium text-[#20263e] group-hover:text-[#c5ae8c] transition-colors duration-200">
-                  記住我
-                </span>
-              </label>
+              <Checkbox
+                id="rememberMe"
+                name="rememberMe"
+                checked={formData.rememberMe}
+                onChange={handleChange}
+                label="記住我"
+              />
 
               <div className="text-sm">
                 <a

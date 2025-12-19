@@ -94,6 +94,18 @@
   .badge-error {
     @apply badge bg-red-500 text-white;
   }
+
+  /* 自定義震動動畫 - 確保高優先權 */
+  @keyframes manual-shake {
+    0%, 100% { transform: translateX(0); }
+    15%, 45%, 75% { transform: translateX(-5px); }
+    30%, 60%, 90% { transform: translateX(5px); }
+  }
+
+  .shake-active {
+    animation: manual-shake 0.5s cubic-bezier(.36,.07,.19,.97) both !important;
+    transition: none !important; /* 震動時停用 transition 以免衝突 */
+  }
 }
 
 @layer utilities {
