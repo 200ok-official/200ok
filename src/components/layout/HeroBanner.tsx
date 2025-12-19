@@ -3,11 +3,16 @@
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { cubicBezier } from "framer-motion";
 
 export const HeroBanner: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const leftShapeRef = useRef<HTMLDivElement>(null);
   const rightShapeRef = useRef<HTMLDivElement>(null);
+
+  // Define easing curve (Standard Ease-In-Out)
+  // This curve starts slow, speeds up in the middle, and slows down at the end
+  const ease = cubicBezier(0.45, 0.05, 0.55, 0.95);
 
   // ========== 動畫參數配置 ==========
   // 調整這些參數來改變動畫效果：
@@ -15,7 +20,7 @@ export const HeroBanner: React.FC = () => {
     // 動畫距離倍數（相對於視窗高度）
     // 例如：1.5 表示需要滾動 1.5 個視窗高度才會完成動畫
     // 數值越大，動畫時間越長
-    animationDistanceMultiplier: 1.5,
+    animationDistanceMultiplier: 2,
     
     // 初始偏移量（像素）
     // 兩個圖形初始位置的間距，數值越大，初始分開越遠
@@ -38,7 +43,10 @@ export const HeroBanner: React.FC = () => {
       // 計算動畫進度：從頁面頂部開始滾動到動畫結束
       const animationDistance = window.innerHeight * animationConfig.animationDistanceMultiplier;
       const scrolled = window.scrollY;
-      const progress = Math.min(1, Math.max(0, scrolled / animationDistance));
+      const linearProgress = Math.min(1, Math.max(0, scrolled / animationDistance));
+      
+      // Apply easing to the progress
+      const progress = ease(linearProgress);
 
       // 計算圖形移動距離（從中間向兩側滑開）
       // 左邊圖形：從 -initialOffset 開始，向左移動到 -(initialOffset + maxTranslate)
