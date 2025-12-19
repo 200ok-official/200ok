@@ -72,8 +72,22 @@ export async function apiFetchJson<T = any>(
   const response = await apiFetch(path, options);
   
   if (!response.ok) {
-    // 處理 401 Unauthorized (Session 過期)
+    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+    
+    // 取得錯誤訊息（FastAPI 使用 detail，其他 API 可能使用 error 或 message）
+    const errorMessage = error.detail || error.error || error.message || `HTTP ${response.status}`;
+    
+    // 處理 401 Unauthorized
     if (response.status === 401) {
+      // 檢查是否為登入相關的 API（登入/註冊時不應該顯示「登入逾時」）
+      const isAuthEndpoint = path.includes('/auth/login') || path.includes('/auth/register');
+      
+      // 如果是登入/註冊 API，使用後端的錯誤訊息
+      if (isAuthEndpoint) {
+        throw new Error(errorMessage);
+      }
+      
+      // 如果是其他 API 的 401（表示已登入但 token 過期），才顯示「登入逾時」
       // 儲存當前頁面 URL，登入後可以返回
       if (typeof window !== 'undefined') {
         const currentPath = window.location.pathname + window.location.search;
@@ -84,13 +98,7 @@ export async function apiFetchJson<T = any>(
           detail: { path: currentPath }
         }));
       }
-    }
-    
-    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-    const errorMessage = error.error || error.message || `HTTP ${response.status}`;
-    
-    // 如果是 401，使用更友好的錯誤訊息
-    if (response.status === 401) {
+      
       throw new Error('登入已逾時，請重新登入');
     }
     

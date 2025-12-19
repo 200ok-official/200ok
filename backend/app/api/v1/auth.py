@@ -183,10 +183,18 @@ async def login(
     result = await db.execute(text(sql), {'email': data.email})
     user = result.fetchone()
     
-    if not user or not user.password_hash:
+    # 如果使用者不存在，回傳帳號尚未註冊的錯誤
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email 或密碼錯誤"
+            detail="此帳號尚未註冊"
+        )
+    
+    # 如果使用者存在但沒有密碼（例如使用 Google 登入的帳號）
+    if not user.password_hash:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="此帳號使用第三方登入，請使用 Google 登入"
         )
     
     # 驗證密碼
