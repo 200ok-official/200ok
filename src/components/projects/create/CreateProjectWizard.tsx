@@ -284,7 +284,7 @@ export const CreateProjectWizard: React.FC = () => {
         payment_schedule: formData.paymentSchedule,
         reference_links: formData.referenceLinks?.filter(link => link.trim() !== ""),
         special_requirements: formData.specialRequirements,
-        status: "draft",
+        status: "open",
         
         // 全新開發欄位
         ...((!isMaintenanceMode) && {
@@ -324,7 +324,7 @@ export const CreateProjectWizard: React.FC = () => {
       };
 
       const result = await apiPost("/api/v1/projects", payload);
-      // 建立成功，跳轉到專案詳情頁（草稿狀態）
+      // 建立成功，跳轉到專案詳情頁
       router.push(`/projects/${result.data.id}`);
     } catch (error: any) {
       console.error("建立專案失敗:", error);

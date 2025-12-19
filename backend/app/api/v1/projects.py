@@ -280,7 +280,7 @@ async def create_project(
     params = {field: None for field in all_fields}
     params.update(project_data)
     params['client_id'] = str(current_user.id)
-    params['status'] = 'draft'  # 預設狀態
+    params['status'] = 'open'  # 直接發布
     
     # INSERT SQL
     insert_sql = """

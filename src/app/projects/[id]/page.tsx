@@ -20,7 +20,6 @@ export default function ProjectDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [isPublishing, setIsPublishing] = useState(false);
 
   useEffect(() => {
     // 獲取當前登入用戶
@@ -58,31 +57,6 @@ export default function ProjectDetailPage({
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handlePublish = async () => {
-    if (!confirm("確定要發布此專案嗎？發布後將公開顯示給所有接案者。")) {
-      return;
-    }
-
-    try {
-      setIsPublishing(true);
-      const data = await apiPost(`/api/v1/projects/${params.id}/publish`, {});
-      
-      if (data.success) {
-        alert("專案發布成功！");
-        // 重新載入專案資料
-        const token = localStorage.getItem("access_token");
-        await fetchProject(token);
-      } else {
-        alert(`發布失敗: ${data.error || "未知錯誤"}`);
-      }
-    } catch (err: any) {
-      console.error("Failed to publish project:", err);
-      alert(`發布失敗: ${err.message || "未知錯誤"}`);
-    } finally {
-      setIsPublishing(false);
     }
   };
 
@@ -173,16 +147,6 @@ export default function ProjectDetailPage({
             </div>
             {isOwner && (
               <div className="flex gap-2">
-                {project.status === "draft" && (
-                  <Button 
-                    size="sm"
-                    onClick={handlePublish}
-                    disabled={isPublishing}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    {isPublishing ? "發布中..." : "📢 發布專案"}
-                  </Button>
-                )}
                 <Button variant="outline" size="sm">
                   編輯
                 </Button>
@@ -197,30 +161,6 @@ export default function ProjectDetailPage({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 左側主要內容 */}
           <div className="lg:col-span-2 space-y-8">
-            {/* 草稿狀態提示 */}
-            {isOwner && project.status === "draft" && (
-              <Card className="p-6 bg-yellow-50 border-l-4 border-yellow-500">
-                <div className="flex items-start gap-4">
-                  <span className="text-3xl">⚠️</span>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-yellow-800 mb-2">
-                      此專案尚未發布
-                    </h3>
-                    <p className="text-yellow-700 mb-4">
-                      您的專案目前為草稿狀態，只有您能看到。點擊右上角的「發布專案」按鈕，讓接案者看到您的專案並開始接案！
-                    </p>
-                    <Button 
-                      onClick={handlePublish}
-                      disabled={isPublishing}
-                      className="bg-yellow-600 hover:bg-yellow-700 text-white"
-                    >
-                      {isPublishing ? "發布中..." : "📢 立即發布"}
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            )}
-
             {/* 專案概況區塊 */}
             <section>
               <h2 className="text-2xl font-bold text-[#20263e] mb-4">專案概況</h2>
