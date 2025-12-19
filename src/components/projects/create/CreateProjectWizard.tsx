@@ -284,7 +284,6 @@ export const CreateProjectWizard: React.FC = () => {
         payment_schedule: formData.paymentSchedule,
         reference_links: formData.referenceLinks?.filter(link => link.trim() !== ""),
         special_requirements: formData.specialRequirements,
-        status: "draft",
         
         // 全新開發欄位
         ...((!isMaintenanceMode) && {
@@ -323,8 +322,21 @@ export const CreateProjectWizard: React.FC = () => {
         }),
       };
 
+      // 1. 創建專案（狀態為 draft）
       const result = await apiPost("/api/v1/projects", payload);
-      router.push(`/projects/${result.data.id}`);
+      const projectId = result.data.id;
+      
+      // 2. 立即發布專案（draft → open）
+      try {
+        await apiPost(`/api/v1/projects/${projectId}/publish`, {});
+      } catch (publishError: any) {
+        console.error("發布失敗:", publishError);
+        // 即使發布失敗，也導向專案頁面（專案已創建，只是狀態還是 draft）
+        alert(`專案已建立但發布失敗: ${publishError.message}。您可以在專案頁面手動發布。`);
+      }
+      
+      // 3. 導向專案詳情頁
+      router.push(`/projects/${projectId}`);
     } catch (error: any) {
       console.error("提交失敗:", error);
       alert(`發布失敗: ${error.message || "未知錯誤"}`);

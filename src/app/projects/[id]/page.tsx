@@ -20,6 +20,7 @@ export default function ProjectDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   useEffect(() => {
     // 獲取當前登入用戶
@@ -57,6 +58,29 @@ export default function ProjectDetailPage({
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!confirm("確定要發布此專案嗎？發布後將公開顯示。")) {
+      return;
+    }
+
+    setIsPublishing(true);
+    try {
+      const { apiPost } = await import("@/lib/api");
+      await apiPost(`/api/v1/projects/${params.id}/publish`, {});
+      
+      // 重新載入專案資料
+      const token = localStorage.getItem("access_token");
+      await fetchProject(token);
+      
+      alert("專案已成功發布！");
+    } catch (err: any) {
+      console.error("Failed to publish project:", err);
+      alert(`發布失敗: ${err.message || "未知錯誤"}`);
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -147,6 +171,15 @@ export default function ProjectDetailPage({
             </div>
             {isOwner && (
               <div className="flex gap-2">
+                {project.status === "draft" && (
+                  <Button 
+                    size="sm" 
+                    onClick={handlePublish}
+                    disabled={isPublishing}
+                  >
+                    {isPublishing ? "發布中..." : "發布專案"}
+                  </Button>
+                )}
                 <Button variant="outline" size="sm">
                   編輯
                 </Button>
