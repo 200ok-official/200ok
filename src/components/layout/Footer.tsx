@@ -43,19 +43,31 @@ export const Footer: React.FC = () => {
             <h3 className="text-lg font-semibold mb-4">法律資訊</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/terms" className="text-gray-300 hover:text-[#c5ae8c]">
+                <a 
+                  href="#" 
+                  onClick={(e) => { e.preventDefault(); alert('服務條款頁面即將推出'); }} 
+                  className="text-gray-300 hover:text-[#c5ae8c] cursor-pointer"
+                >
                   服務條款
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/privacy" className="text-gray-300 hover:text-[#c5ae8c]">
+                <a 
+                  href="#" 
+                  onClick={(e) => { e.preventDefault(); alert('隱私政策頁面即將推出'); }} 
+                  className="text-gray-300 hover:text-[#c5ae8c] cursor-pointer"
+                >
                   隱私政策
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/faq" className="text-gray-300 hover:text-[#c5ae8c]">
+                <a 
+                  href="#" 
+                  onClick={(e) => { e.preventDefault(); alert('常見問題頁面即將推出'); }} 
+                  className="text-gray-300 hover:text-[#c5ae8c] cursor-pointer"
+                >
                   常見問題
-                </Link>
+                </a>
               </li>
             </ul>
           </div>

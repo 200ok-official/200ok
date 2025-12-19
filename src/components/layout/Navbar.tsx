@@ -69,9 +69,9 @@ export const Navbar: React.FC = () => {
 
   const fetchUnreadCount = async () => {
     try {
-      // 使用專門的未讀訊息 API
-      const { data } = await apiGet('/api/v1/messages/unread-count');
-      setUnreadCount(data.count || 0);
+      // 使用專門的未讀訊息 API（修正路徑）
+      const { data } = await apiGet('/api/v1/conversations/me/unread-count');
+      setUnreadCount(data.unread_count || 0);
     } catch (error) {
       // 靜默處理錯誤，不影響頁面顯示
       setUnreadCount(0);
