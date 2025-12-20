@@ -11,6 +11,11 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
   ],
+  session: {
+    strategy: "jwt",
+    // 設定 session 為 24 小時
+    maxAge: 24 * 60 * 60, // 24 小時（以秒為單位）
+  },
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account?.provider === "google" && profile?.email) {

@@ -52,7 +52,8 @@ export function generateAccessToken(payload: {
   email: string;
   roles: UserRole[];
 }): string {
-  const expiresIn = process.env.JWT_ACCESS_TOKEN_EXPIRY || "15m";
+  // 設定為 365 天，幾乎等於永久登入
+  const expiresIn = process.env.JWT_ACCESS_TOKEN_EXPIRY || "1d";
 
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn,
@@ -67,7 +68,8 @@ export function generateRefreshToken(payload: {
   userId: string;
   email: string;
 }): string {
-  const expiresIn = process.env.JWT_REFRESH_TOKEN_EXPIRY || "7d";
+  // 設定為 365 天，幾乎等於永久登入
+  const expiresIn = process.env.JWT_REFRESH_TOKEN_EXPIRY || "1d";
 
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn,
