@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { getProjectTypeHints } from "../config/projectTypeHints";
+import { CheckIcon, XMarkIcon, LightBulbIcon } from "@heroicons/react/24/outline";
 
 interface Props {
   data: any;
@@ -87,10 +88,10 @@ export const Step4Features: React.FC<Props> = ({ data, updateData }) => {
                 <span>{feature}</span>
                 <button
                   onClick={() => handleRemoveFeature(index)}
-                  className="text-red-500 hover:text-red-700 text-xs"
+                  className="text-red-500 hover:text-red-700"
                   aria-label="移除功能"
                 >
-                  ✕
+                  <XMarkIcon className="w-3 h-3" />
                 </button>
               </div>
             ))}
@@ -111,13 +112,14 @@ export const Step4Features: React.FC<Props> = ({ data, updateData }) => {
                 key={idx}
                 onClick={() => handleQuickAdd(item)}
                 disabled={isAdded}
-                className={`px-3 py-1.5 rounded-full text-xs md:text-sm transition-all ${
+                className={`px-3 py-1.5 rounded-full text-xs md:text-sm transition-all flex items-center gap-1 ${
                   isAdded
                     ? 'bg-gray-200 text-gray-500 cursor-not-allowed line-through'
                     : 'bg-white border border-[#c5ae8c] text-[#20263e] hover:border-[#20263e] hover:bg-[#e6dfcf]'
                 }`}
               >
-                {isAdded ? '✓ ' : ''}{item}
+                {isAdded && <CheckIcon className="w-3 h-3" />}
+                {item}
               </button>
             );
           })}
@@ -126,8 +128,11 @@ export const Step4Features: React.FC<Props> = ({ data, updateData }) => {
 
       {/* 小提示 */}
       <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800">
-          <strong>💡 小提示：</strong> {hints.features.hint}
+        <p className="text-sm text-blue-800 flex items-start gap-1">
+          <LightBulbIcon className="w-5 h-5 shrink-0" />
+          <span>
+            <strong>小提示：</strong> {hints.features.hint}
+          </span>
         </p>
       </div>
     </div>

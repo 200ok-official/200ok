@@ -344,15 +344,18 @@ export default function HowItWorksPage() {
         </div>
 
         {/* FAQ Section */}
-        <div className="mt-20">
-          <h2 className="text-3xl font-bold text-[#20263e] text-center mb-12">
+        <div className="mt-12">
+          <h2 className="text-3xl font-bold text-[#20263e] text-center mb-8">
             常見問題
           </h2>
 
           <div className="max-w-3xl mx-auto space-y-4">
             <Card className="p-6 bg-white border-2 border-[#c5ae8c]">
-              <h3 className="text-lg font-bold text-[#20263e] mb-2">
-                ❓ 使用平台需要付費嗎？
+              <h3 className="text-lg font-bold text-[#20263e] mb-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-red-600 shrink-0">
+                  <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm11.378-3.917c-.89-.777-2.366-.777-3.255 0a.75.75 0 0 1-.988-1.117c1.435-1.27 3.797-1.27 5.232 0 .714.63.99 1.52.926 2.35-.061.793-.405 1.501-1.029 2.038l-1.42 1.226a.375.375 0 0 0-.117.286v.714a.75.75 0 0 1-1.5 0v-.714c0-.6.237-1.174.659-1.587l1.42-1.226a.75.75 0 0 0 .225-.514c.023-.294-.076-.642-.424-.95ZM12 15.75a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" clipRule="evenodd" />
+                </svg>
+                使用平台需要付費嗎？
               </h3>
               <p className="text-[#20263e]">
                 註冊和瀏覽案件完全免費！我們僅在交易成功後收取少量服務費。
@@ -360,8 +363,11 @@ export default function HowItWorksPage() {
             </Card>
 
             <Card className="p-6 bg-white border-2 border-[#c5ae8c]">
-              <h3 className="text-lg font-bold text-[#20263e] mb-2">
-                ❓ 如何確保案件品質？
+              <h3 className="text-lg font-bold text-[#20263e] mb-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-red-600 shrink-0">
+                  <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm11.378-3.917c-.89-.777-2.366-.777-3.255 0a.75.75 0 0 1-.988-1.117c1.435-1.27 3.797-1.27 5.232 0 .714.63.99 1.52.926 2.35-.061.793-.405 1.501-1.029 2.038l-1.42 1.226a.375.375 0 0 0-.117.286v.714a.75.75 0 0 1-1.5 0v-.714c0-.6.237-1.174.659-1.587l1.42-1.226a.75.75 0 0 0 .225-.514c.023-.294-.076-.642-.424-.95ZM12 15.75a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" clipRule="evenodd" />
+                </svg>
+                如何確保案件品質？
               </h3>
               <p className="text-[#20263e]">
                 我們有完善的評價系統，您可以查看接案工程師的過往評價與作品集，選擇最適合的人選。
@@ -369,8 +375,11 @@ export default function HowItWorksPage() {
             </Card>
 
             <Card className="p-6 bg-white border-2 border-[#c5ae8c]">
-              <h3 className="text-lg font-bold text-[#20263e] mb-2">
-                ❓ 付款安全嗎？
+              <h3 className="text-lg font-bold text-[#20263e] mb-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-red-600 shrink-0">
+                  <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm11.378-3.917c-.89-.777-2.366-.777-3.255 0a.75.75 0 0 1-.988-1.117c1.435-1.27 3.797-1.27 5.232 0 .714.63.99 1.52.926 2.35-.061.793-.405 1.501-1.029 2.038l-1.42 1.226a.375.375 0 0 0-.117.286v.714a.75.75 0 0 1-1.5 0v-.714c0-.6.237-1.174.659-1.587l1.42-1.226a.75.75 0 0 0 .225-.514c.023-.294-.076-.642-.424-.95ZM12 15.75a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" clipRule="evenodd" />
+                </svg>
+                付款安全嗎？
               </h3>
               <p className="text-[#20263e]">
                 我們提供第三方支付保障與託管機制，確保雙方權益。款項會在案件完成驗收後才撥付給接案工程師。
@@ -378,8 +387,11 @@ export default function HowItWorksPage() {
             </Card>
 
             <Card className="p-6 bg-white border-2 border-[#c5ae8c]">
-              <h3 className="text-lg font-bold text-[#20263e] mb-2">
-                ❓ 發生糾紛怎麼辦？
+              <h3 className="text-lg font-bold text-[#20263e] mb-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-red-600 shrink-0">
+                  <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm11.378-3.917c-.89-.777-2.366-.777-3.255 0a.75.75 0 0 1-.988-1.117c1.435-1.27 3.797-1.27 5.232 0 .714.63.99 1.52.926 2.35-.061.793-.405 1.501-1.029 2.038l-1.42 1.226a.375.375 0 0 0-.117.286v.714a.75.75 0 0 1-1.5 0v-.714c0-.6.237-1.174.659-1.587l1.42-1.226a.75.75 0 0 0 .225-.514c.023-.294-.076-.642-.424-.95ZM12 15.75a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" clipRule="evenodd" />
+                </svg>
+                發生糾紛怎麼辦？
               </h3>
               <p className="text-[#20263e]">
                 我們有專業的客服團隊協助處理糾紛，確保公平合理的解決方案。
@@ -389,7 +401,7 @@ export default function HowItWorksPage() {
         </div>
 
         {/* CTA Section */}
-        <div className="mt-20 bg-[#20263e] rounded-2xl p-12 text-center text-white">
+        <div className="mt-12 bg-[#20263e] rounded-2xl p-10 text-center text-white">
           <h2 className="text-4xl font-bold mb-4">準備開始了嗎？</h2>
           <p className="text-xl text-[#c5ae8c] mb-2">
             立即加入 200 OK，專為軟體工程設計的接案平台
@@ -399,12 +411,12 @@ export default function HowItWorksPage() {
           </p>
           <div className="flex justify-center space-x-4">
             <Link href="/register">
-              <Button className="bg-[#c5ae8c] hover:bg-[#b89d7a] text-[#20263e] px-8 py-3 text-lg font-semibold">
+              <Button className="!bg-[#c5ae8c] hover:!bg-[#b89d7a] !text-[#20263e] px-8 py-3 text-lg font-semibold border-none shadow-md">
                 免費註冊
               </Button>
             </Link>
             <Link href="/projects">
-              <Button className="bg-white hover:bg-[#e6dfcf] text-[#20263e] px-8 py-3 text-lg font-semibold">
+              <Button className="!bg-white hover:!bg-[#e6dfcf] !text-[#20263e] px-8 py-3 text-lg font-semibold border-none shadow-md">
                 瀏覽案件
               </Button>
             </Link>

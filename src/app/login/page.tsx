@@ -124,7 +124,11 @@ function LoginForm() {
         {/* Logo / Header */}
         <div className="text-center">
           <Link href="/" className="inline-block mb-4">
-            <h1 className="text-5xl font-bold text-[#20263e]">200 OK</h1>
+            <img 
+              src="/200ok_logo_dark.png" 
+              alt="200 OK" 
+              className="h-24 mx-auto"
+            />
           </Link>
           <h2 className="text-2xl font-semibold text-[#20263e] mt-4">
             歡迎回來
@@ -280,7 +284,11 @@ export default function LoginPage() {
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-[#e6dfcf]">
         <div className="text-center">
-          <h1 className="text-5xl font-bold text-[#20263e] mb-4">200 OK</h1>
+          <img 
+            src="/200ok_logo_dark.png" 
+            alt="200 OK" 
+            className="h-24 mx-auto mb-4"
+          />
           <p className="text-[#c5ae8c]">載入中...</p>
         </div>
       </div>

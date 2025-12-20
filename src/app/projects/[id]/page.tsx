@@ -169,73 +169,78 @@ export default function ProjectDetailPage({
                       {/* 專案描述 */}
                       <div>
                         <h3 className="text-xl font-bold text-[#20263e] mb-4">專案描述</h3>
-                        <p className="text-[#20263e] leading-relaxed whitespace-pre-line text-lg">
-                          {project.description}
-                        </p>
-                      </div>
+                    <p className="text-[#20263e] leading-relaxed whitespace-pre-line text-lg">
+                      {project.description}
+                    </p>
+                  </div>
 
-                      {/* 根據專案模式顯示核心資訊 */}
-                      {isNewDevelopment ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                          {project.new_usage_scenario && (
-                            <div>
-                              <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">使用場景</h4>
-                              <p className="text-[#20263e] leading-relaxed">{project.new_usage_scenario}</p>
-                            </div>
-                          )}
-                          {project.new_goals && (
-                            <div>
-                              <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">專案目標</h4>
-                              <p className="text-[#20263e] leading-relaxed">{project.new_goals}</p>
-                            </div>
-                          )}
+                  {/* 根據專案模式顯示核心資訊 */}
+                  {isNewDevelopment ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {project.new_usage_scenario && (
+                        <div>
+                          <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">使用場景</h4>
+                          <p className="text-[#20263e] leading-relaxed">{project.new_usage_scenario}</p>
                         </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                          {project.maint_system_name && (
-                            <div>
-                              <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">系統名稱</h4>
-                              <p className="text-[#20263e] font-medium text-lg">{project.maint_system_name}</p>
-                            </div>
-                          )}
-                          {project.maint_system_purpose && (
-                            <div>
-                              <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">系統用途</h4>
-                              <p className="text-[#20263e] leading-relaxed">{project.maint_system_purpose}</p>
-                            </div>
-                          )}
+                      )}
+                      {project.new_goals && (
+                        <div>
+                          <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">專案目標</h4>
+                          <p className="text-[#20263e] leading-relaxed">{project.new_goals}</p>
                         </div>
                       )}
                     </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {project.maint_system_name && (
+                        <div>
+                          <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">系統名稱</h4>
+                          <p className="text-[#20263e] font-medium text-lg">{project.maint_system_name}</p>
+                        </div>
+                      )}
+                      {project.maint_system_purpose && (
+                        <div>
+                          <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">系統用途</h4>
+                          <p className="text-[#20263e] leading-relaxed">{project.maint_system_purpose}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                   </div>
 
                   {/* 灰色分隔線 */}
                   <hr className="border-[#e5e7eb]" />
 
-                  {/* 詳細需求區塊 */}
+            {/* 詳細需求區塊 */}
                   <div>
-                    {isNewDevelopment ? (
-                      <NewDevelopmentDetails project={project} />
-                    ) : (
-                      <MaintenanceDetails project={project} />
+                {isNewDevelopment ? (
+                  <NewDevelopmentDetails project={project} />
+                ) : (
+                  <MaintenanceDetails project={project} />
                     )}
                   </div>
 
 
-                  {/* 補充與參考資料 */}
-                  {(project.reference_links?.length > 0 || project.new_special_requirements || project.new_concerns?.length > 0) && (
+            {/* 補充與參考資料 */}
+            {(project.reference_links?.length > 0 || project.new_special_requirements || project.new_concerns?.length > 0) && (
                     <>
                       {/* 灰色分隔線 */}
                       <hr className="border-[#e5e7eb]" />
                       
                       <div>
                         <h3 className="text-xl font-bold text-[#20263e] mb-4">其他資訊</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                          {/* 參考資料 */}
-                          {project.reference_links && project.reference_links.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* 參考資料 */}
+                    {project.reference_links && project.reference_links.length > 0 && (
                             <div className="md:col-span-2">
-                              <h4 className="text-lg font-semibold text-[#20263e] mb-3">🔗 參考資料</h4>
-                              <ul className="space-y-2">
+                              <h4 className="text-lg font-semibold text-[#20263e] mb-3 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-[#20263e]">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.08 0 0 1 1.24 6.157M14.85 8.11a6 5.447 0 0 1 1.654 8.21M13.19 8.688a4.5 4.08 0 0 0-5.926-1.811M14.85 8.11a6 5.447 0 0 0-7.899-2.415M4.742 16.11a1.5 1.5 0 0 1 2.122 0l1.06 1.061a1.5 1.5 0 0 1 0 2.122 1.501 1.501 0 0 1-2.122 0l-1.06-1.06a1.5 1.5 0 0 1 0-2.122ZM17.654 4.742a1.5 1.5 0 0 1 0 2.122l-1.061 1.06a1.5 1.5 0 0 1-2.122 0 1.5 1.5 0 0 1 0-2.122l1.06-1.061a1.5 1.5 0 0 1 2.122 0Z" />
+                                </svg>
+                                參考資料
+                              </h4>
+                        <ul className="space-y-2">
                                 {project.reference_links.map((link: string, index: number) => {
                                   // 从 URL 提取域名作为显示文字
                                   const getLinkText = (url: string): string => {
@@ -251,43 +256,53 @@ export default function ProjectDetailPage({
                                   const linkText = getLinkText(link);
                                   
                                   return (
-                                    <li key={index}>
-                                      <a
-                                        href={link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                            <li key={index}>
+                              <a
+                                href={link}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                         className="text-blue-600 hover:text-blue-800 hover:underline"
-                                      >
+                              >
                                         {linkText}
-                                      </a>
-                                    </li>
+                              </a>
+                            </li>
                                   );
                                 })}
-                              </ul>
-                            </div>
-                          )}
+                        </ul>
+                      </div>
+                    )}
 
-                          {/* 特殊需求 */}
-                          {project.new_special_requirements && (
-                            <div>
-                              <h4 className="text-lg font-semibold text-[#20263e] mb-3">⚠️ 特殊需求</h4>
-                              <p className="text-[#20263e] leading-relaxed whitespace-pre-line">
-                                {project.new_special_requirements}
-                              </p>
-                            </div>
-                          )}
+                    {/* 特殊需求 */}
+                    {project.new_special_requirements && (
+                      <div>
+                              <h4 className="text-lg font-semibold text-[#20263e] mb-3 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-[#20263e]">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                                </svg>
+                                特殊需求
+                              </h4>
+                        <p className="text-[#20263e] leading-relaxed whitespace-pre-line">
+                          {project.new_special_requirements}
+                        </p>
+                      </div>
+                    )}
 
-                          {/* 擔憂事項 */}
-                          {project.new_concerns && project.new_concerns.length > 0 && (
-                            <div className="md:col-span-2">
-                              <h4 className="text-lg font-semibold text-[#20263e] mb-3">😟 擔憂與顧慮</h4>
-                              <ul className="list-disc list-inside space-y-1 text-[#20263e]">
-                                {project.new_concerns.map((concern: string, index: number) => (
-                                  <li key={index}>{concern}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+                    {/* 擔憂事項 */}
+                    {project.new_concerns && project.new_concerns.length > 0 && (
+                      <div className="md:col-span-2">
+                              <h4 className="text-lg font-semibold text-[#20263e] mb-3 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-[#20263e]">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.182 15.182a4.5 4.5 0 0 1-6.364 0M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9 10.5h.01m5.99 0h.01" />
+                                </svg>
+                                擔憂與顧慮
+                              </h4>
+                        <ul className="list-disc list-inside space-y-1 text-[#20263e]">
+                          {project.new_concerns.map((concern: string, index: number) => (
+                            <li key={index}>{concern}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                         </div>
                       </div>
                     </>
@@ -306,7 +321,10 @@ export default function ProjectDetailPage({
                       </div>
                       {project.budget_estimate_only && (
                         <p className="text-sm text-[#c5ae8c] mt-1 flex items-center justify-center gap-1">
-                          ℹ️ 預算僅供參考
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#20263e]">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                          </svg>
+                          預算僅供參考
                         </p>
                       )}
                     </div>
@@ -348,9 +366,9 @@ export default function ProjectDetailPage({
                       />
                     )}
                   </div>
-                </div>
-              </Card>
-            </section>
+                  </div>
+                </Card>
+              </section>
 
             {/* 投標列表（僅發案者可見） */}
             {isOwner && project.bids && project.bids.length > 0 && (
@@ -370,10 +388,13 @@ export default function ProjectDetailPage({
                             <p className="font-bold text-lg text-[#20263e]">
                               {bid.freelancer.name}
                             </p>
-                            <div className="flex items-center gap-2 text-sm text-[#c5ae8c]">
-                              <span>⭐ {bid.freelancer.rating || "尚無評分"}</span>
+                            <div className="flex items-center gap-1 text-sm text-[#c5ae8c]">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-[#fbbf24]">
+                                <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
+                              </svg>
+                              <span>{bid.freelancer.rating || "尚無評分"}</span>
                               {bid.freelancer.skills && (
-                                <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full">
+                                <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full ml-1">
                                   {bid.freelancer.skills.slice(0, 3).join(", ")}
                                 </span>
                               )}
@@ -434,7 +455,12 @@ export default function ProjectDetailPage({
                   {/* 技能需求 */}
                   {project.required_skills && project.required_skills.length > 0 && (
                     <div>
-                      <h4 className="text-base font-semibold text-[#20263e] mb-3">🛠️ 技能需求</h4>
+                      <h4 className="text-base font-semibold text-[#20263e] mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-[#20263e]">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M11.423 19.007a6.631 6.631 0 0 1-1.25-1.25m.082-9.765a4.5 4.5 0 0 1 6.364 6.364l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l4.5-4.5Zm0 0-1.359-1.359m0 0A1.5 1.5 0 0 1 9.5 5.5a4.5 4.5 0 0 0-1.414 1.414m1.414-1.414L5.5 9.5a1.5 1.5 0 0 1-2.122 0 4.5 4.5 0 0 0 1.414 1.414m-1.414-1.414 1.359 1.359" />
+                        </svg>
+                        技能需求
+                      </h4>
                       <div className="flex flex-wrap gap-2">
                         {project.required_skills.map((skill: string) => (
                           <Badge key={skill} variant="info" className="text-sm py-1 px-3">
@@ -448,7 +474,12 @@ export default function ProjectDetailPage({
                   {/* 設計風格 (全新開發) */}
                   {project.new_design_style && project.new_design_style.length > 0 && (
                     <div>
-                      <h4 className="text-base font-semibold text-[#20263e] mb-3">🎨 設計風格</h4>
+                      <h4 className="text-base font-semibold text-[#20263e] mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-[#20263e]">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.998 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 3.405-1.622m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 3.405-1.622m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m0 0a15.998 15.998 0 0 0-3.388-1.62m5.043.025a15.994 15.998 0 0 1-1.622 3.395m-3.42-3.42a15.995 15.995 0 0 0-3.405 1.622m5.043.025a15.994 15.994 0 0 1-1.622 3.395m0 0a15.998 15.998 0 0 0 3.388 1.62m-5.043.025a15.994 15.994 0 0 1-1.622 3.395" />
+                        </svg>
+                        設計風格
+                      </h4>
                       <div className="flex flex-wrap gap-2">
                         {project.new_design_style.map((style: string) => (
                           <Badge key={style} variant="info" className="text-sm py-1 px-3">
@@ -462,7 +493,12 @@ export default function ProjectDetailPage({
                   {/* 整合需求 (全新開發) */}
                   {project.new_integrations && project.new_integrations.length > 0 && (
                     <div>
-                      <h4 className="text-base font-semibold text-[#20263e] mb-3">🔌 外部整合</h4>
+                      <h4 className="text-base font-semibold text-[#20263e] mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-[#20263e]">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.25 9.75 16.5 12l-2.25 2.25m-4.5 0L7.5 12l2.25-2.25M6 20.25h12A2.25 2.25 0 0 0 20.25 18V6A2.25 2.25 0 0 0 18 3.75H6A2.25 2.25 0 0 0 3.75 6v12A2.25 2.25 0 0 0 6 20.25Z" />
+                        </svg>
+                        外部整合
+                      </h4>
                       <div className="flex flex-wrap gap-2">
                         {project.new_integrations.map((integration: string) => (
                           <Badge key={integration} variant="info" className="text-sm py-1 px-3">
@@ -476,7 +512,12 @@ export default function ProjectDetailPage({
                   {/* 已知技術棧 (修改維護) */}
                   {project.maint_known_tech_stack && project.maint_known_tech_stack.length > 0 && (
                     <div>
-                      <h4 className="text-base font-semibold text-[#20263e] mb-3">🏗️ 現有技術棧</h4>
+                      <h4 className="text-base font-semibold text-[#20263e] mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-[#20263e]">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v14.25A2.25 2.25 0 0 0 5.25 19.5h13.5A2.25 2.25 0 0 0 21 17.25V6.75A2.25 2.25 0 0 0 18.75 4.5H5.25A2.25 2.25 0 0 0 3 6.75V19.5M6.75 7.5h.75m.75 0h.75m.75 0h.75m-4.5 3h.75m.75 0h.75m.75 0h.75m-4.5 3h.75m.75 0h.75m.75 0h.75" />
+                        </svg>
+                        現有技術棧
+                      </h4>
                       <div className="flex flex-wrap gap-2">
                         {project.maint_known_tech_stack.map((tech: string) => (
                           <Badge key={tech} variant="info" className="text-sm py-1 px-3">
@@ -484,21 +525,26 @@ export default function ProjectDetailPage({
                           </Badge>
                         ))}
                       </div>
-                    </div>
+              </div>
                   )}
 
                   {/* 預期交付項目 (全新開發) */}
                   {project.new_outputs && project.new_outputs.length > 0 && (
                     <div>
-                      <h4 className="text-base font-semibold text-[#20263e] mb-3">📦 預期交付項目</h4>
+                      <h4 className="text-base font-semibold text-[#20263e] mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-[#20263e]">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                        </svg>
+                        預期交付項目
+                      </h4>
                       <div className="flex flex-wrap gap-2">
                         {project.new_outputs.map((output: string, index: number) => (
                           <Badge key={index} variant="info" className="text-sm py-1 px-3">
                             {output}
                           </Badge>
                         ))}
-                      </div>
-                    </div>
+                </div>
+                </div>
                   )}
                 </div>
               </div>
@@ -513,26 +559,44 @@ export default function ProjectDetailPage({
                   {project.client.name[0]}
                 </div>
                 <div className="flex items-center gap-6">
-                  <div>
-                    <p className="font-bold text-lg text-[#20263e]">
-                      {project.client.name}
-                    </p>
-                    <div className="flex items-center gap-1 text-[#fbbf24]">
-                      {"★".repeat(Math.round(project.client.rating || 0))}
-                      <span className="text-[#c5ae8c] text-sm ml-1">
-                        ({project.client.rating || "尚無評分"})
-                      </span>
-                    </div>
-                  </div>
-                  
+                <div>
+                  <p className="font-bold text-lg text-[#20263e]">
+                    {project.client.name}
+                  </p>
+                    <div className="flex items-center gap-0.5">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <svg
+                          key={i}
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className={`w-4 h-4 ${
+                            i < Math.round(project.client.rating || 0)
+                              ? "text-[#fbbf24]"
+                              : "text-gray-300"
+                          }`}
+                        >
+                          <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
+                        </svg>
+                      ))}
+                    <span className="text-[#c5ae8c] text-sm ml-1">
+                      ({project.client.rating || "尚無評分"})
+                    </span>
+                </div>
+              </div>
+              
                   <div className="flex flex-col gap-2 text-sm">
-                    <div className="flex items-center gap-2 text-[#20263e]">
-                      <span>📧</span>
-                      <span>Email 已驗證</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[#20263e]">
-                      <span>📱</span>
-                      <span>電話已驗證</span>
+                <div className="flex items-center gap-2 text-[#20263e]">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#20263e]">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                      </svg>
+                  <span>Email 已驗證</span>
+                </div>
+                <div className="flex items-center gap-2 text-[#20263e]">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#20263e]">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+                      </svg>
+                  <span>電話已驗證</span>
                     </div>
                   </div>
                 </div>
@@ -561,7 +625,9 @@ function NewDevelopmentDetails({ project }: { project: any }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {project.new_features.map((feature: string, index: number) => (
               <div key={index} className="flex items-center gap-2">
-                <span className="text-[#20263e]">✅</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-4 h-4 text-[#20263e]">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
                 <span className="text-[#20263e]">{feature}</span>
               </div>
             ))}
@@ -656,8 +722,11 @@ function MaintenanceDetails({ project }: { project: any }) {
       {/* 預期成果與驗收 */}
       {(project.maint_expected_outcomes || project.maint_success_criteria) && (
         <div className="bg-[#f0f9ff] p-6 rounded-lg border border-blue-100">
-          <h3 className="text-lg font-semibold text-[#20263e] mb-4">
-            🎯 預期成果與驗收標準
+          <h3 className="text-lg font-semibold text-[#20263e] mb-4 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-[#20263e]">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+            </svg>
+            預期成果與驗收標準
           </h3>
           <div className="space-y-4">
             {project.maint_expected_outcomes && (

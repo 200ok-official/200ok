@@ -2,6 +2,7 @@
 
 import React, { useRef } from "react";
 import { getProjectTypeHints } from "../config/projectTypeHints";
+import { LightBulbIcon } from "@heroicons/react/24/outline";
 
 interface Props {
   data: any;
@@ -105,8 +106,11 @@ export const Step2UsageScenario: React.FC<Props> = ({ data, updateData }) => {
 
       {/* 小提示 */}
       <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800">
-          <strong>💡 小提示：</strong> {hints.usageScenario.hint}
+        <p className="text-sm text-blue-800 flex items-start gap-1">
+          <LightBulbIcon className="w-5 h-5 shrink-0" />
+          <span>
+            <strong>小提示：</strong> {hints.usageScenario.hint}
+          </span>
         </p>
       </div>
     </div>

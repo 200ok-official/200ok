@@ -2,6 +2,7 @@
 
 import React from "react";
 import { getProjectTypeHints } from "../config/projectTypeHints";
+import { CheckCircleIcon } from "@heroicons/react/24/outline";
 
 interface Props {
   data: any;
@@ -80,8 +81,11 @@ export const Step3Goals: React.FC<Props> = ({ data, updateData }) => {
 
       {/* 小提示 */}
       <div className="mt-8 p-4 bg-green-50 border border-green-200 rounded-lg">
-        <p className="text-sm text-green-800">
-          <strong>✅ 小提示：</strong> {hints.goals.hint}
+        <p className="text-sm text-green-800 flex items-start gap-1">
+          <CheckCircleIcon className="w-5 h-5 shrink-0" />
+          <span>
+            <strong>小提示：</strong> {hints.goals.hint}
+          </span>
         </p>
       </div>
     </div>

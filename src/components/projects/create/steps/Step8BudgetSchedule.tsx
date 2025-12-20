@@ -3,6 +3,13 @@
 import React from "react";
 import { getProjectTypeHints } from "../config/projectTypeHints";
 import { DatePicker } from "@/components/ui/DatePicker";
+import {
+  CheckIcon,
+  LightBulbIcon,
+  ExclamationTriangleIcon,
+  ArrowsRightLeftIcon,
+  BanknotesIcon,
+} from "@heroicons/react/24/outline";
 
 interface Props {
   data: any;
@@ -92,18 +99,22 @@ export const Step8BudgetSchedule: React.FC<Props> = ({ data, updateData }) => {
             </label>
             <button
               onClick={() => updateData({ budgetEstimateOnly: !data.budgetEstimateOnly })}
-              className={`text-sm px-3 py-1.5 rounded-full transition-all ${
+              className={`text-sm px-3 py-1.5 rounded-full transition-all flex items-center gap-1 ${
                 data.budgetEstimateOnly
                   ? "bg-[#c5ae8c] text-white"
                   : "bg-gray-200 text-gray-600 hover:bg-gray-300"
               }`}
             >
-              {data.budgetEstimateOnly ? "✓ " : ""}先估型（讓接案者報價）
+              {data.budgetEstimateOnly && <CheckIcon className="w-4 h-4" />}
+              先估型（讓接案者報價）
             </button>
           </div>
           {!data.budgetEstimateOnly && (
-            <p className="text-xs text-[#c5ae8c]">
-              💡 建議：如果您已經在前面的步驟填寫詳細需求，可以選擇「先估型」讓接案者報價。如果需求細節還不夠清楚，建議先選擇一個預算區間。
+            <p className="text-xs text-[#c5ae8c] flex items-start gap-1">
+              <LightBulbIcon className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                建議：如果您已經在前面的步驟填寫詳細需求，可以選擇「先估型」讓接案者報價。如果需求細節還不夠清楚，建議先選擇一個預算區間。
+              </span>
             </p>
           )}
         </div>
@@ -246,7 +257,7 @@ export const Step8BudgetSchedule: React.FC<Props> = ({ data, updateData }) => {
               {/* 提示文字和預算標籤 */}
               <div className="flex items-center justify-between">
                 <p className="text-xs text-[#c5ae8c] flex items-center gap-1">
-                  <span>↔️</span>
+                  <ArrowsRightLeftIcon className="w-4 h-4" />
                   <span>拖動調整最低與最高預算</span>
                 </p>
                 <span className="inline-block px-3 py-1 bg-[#20263e] text-white rounded-full text-xs font-semibold">
@@ -260,8 +271,9 @@ export const Step8BudgetSchedule: React.FC<Props> = ({ data, updateData }) => {
         {data.budgetEstimateOnly && (
           <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
             <div className="space-y-3">
-              <p className="text-sm text-yellow-900 font-semibold">
-                ⚠️ 重要提示：選擇「先估型」模式
+              <p className="text-sm text-yellow-900 font-semibold flex items-center gap-2">
+                <ExclamationTriangleIcon className="w-5 h-5" />
+                重要提示：選擇「先估型」模式
               </p>
               <div className="text-sm text-yellow-800 space-y-2">
                 <p>
@@ -273,9 +285,12 @@ export const Step8BudgetSchedule: React.FC<Props> = ({ data, updateData }) => {
                   <li>提供參考案例或類似產品的連結</li>
                   <li>詳細描述技術需求和整合需求</li>
                 </ul>
-                <p className="mt-3 pt-3 border-t border-yellow-300">
-                  <strong>💡 如果您的需求細節還不夠清楚：</strong><br />
-                  建議您先<strong>選擇一個預算區間</strong>，這樣可以幫助接案者更快理解專案規模，也能吸引更多工程師查看您的案件。待需求更明確後，可以在後續溝通中調整預算。
+                <p className="mt-3 pt-3 border-t border-yellow-300 flex items-start gap-2">
+                  <LightBulbIcon className="w-5 h-5 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>如果您的需求細節還不夠清楚：</strong><br />
+                    建議您先<strong>選擇一個預算區間</strong>，這樣可以幫助接案者更快理解專案規模，也能吸引更多工程師查看您的案件。待需求更明確後，可以在後續溝通中調整預算。
+                  </span>
                 </p>
                 <div className="mt-4">
                   <button
@@ -366,7 +381,7 @@ export const Step8BudgetSchedule: React.FC<Props> = ({ data, updateData }) => {
                   <p className="text-sm text-[#c5ae8c]">{method.desc}</p>
                 </div>
                 {data.paymentMethod === method.value && (
-                  <span className="text-[#20263e] text-xl ml-2">✓</span>
+                  <CheckIcon className="w-6 h-6 text-[#20263e] ml-2" />
                 )}
               </div>
             </button>
@@ -376,8 +391,11 @@ export const Step8BudgetSchedule: React.FC<Props> = ({ data, updateData }) => {
 
       {/* 小提示 */}
       <div className="mt-8 p-4 bg-green-50 border border-green-200 rounded-lg">
-        <p className="text-sm text-green-800">
-          <strong>💰 建議：</strong> {hints.budgetSchedule.hint}
+        <p className="text-sm text-green-800 flex items-start gap-1">
+          <BanknotesIcon className="w-5 h-5 shrink-0" />
+          <span>
+            <strong>建議：</strong> {hints.budgetSchedule.hint}
+          </span>
         </p>
       </div>
     </div>

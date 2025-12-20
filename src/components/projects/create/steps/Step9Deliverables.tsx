@@ -2,6 +2,22 @@
 
 import React from "react";
 import { getProjectTypeHints } from "../config/projectTypeHints";
+import {
+  CommandLineIcon,
+  KeyIcon,
+  VideoCameraIcon,
+  BookOpenIcon,
+  WrenchScrewdriverIcon,
+  RocketLaunchIcon,
+  AcademicCapIcon,
+  ChatBubbleLeftRightIcon,
+  EnvelopeIcon,
+  PhoneIcon,
+  ChartBarIcon,
+  QuestionMarkCircleIcon,
+  CheckIcon,
+  LightBulbIcon,
+} from "@heroicons/react/24/outline";
 
 interface Props {
   data: any;
@@ -9,22 +25,37 @@ interface Props {
 }
 
 const DELIVERABLE_OPTIONS = [
-  { value: "source_code", label: "原始碼", icon: "💻" },
-  { value: "admin_credentials", label: "後台帳密", icon: "🔑" },
-  { value: "tutorial_video", label: "教學影片", icon: "🎥" },
-  { value: "documentation", label: "使用文件", icon: "📖" },
-  { value: "maintenance", label: "維護服務", icon: "🔧" },
-  { value: "deployment", label: "上線代辦", icon: "🚀" },
-  { value: "training", label: "操作培訓", icon: "👨‍🏫" },
+  { value: "source_code", label: "原始碼" },
+  { value: "admin_credentials", label: "後台帳密" },
+  { value: "tutorial_video", label: "教學影片" },
+  { value: "documentation", label: "使用文件" },
+  { value: "maintenance", label: "維護服務" },
+  { value: "deployment", label: "上線代辦" },
+  { value: "training", label: "操作培訓" },
 ];
 
 const COMMUNICATION_OPTIONS = [
-  { value: "line", label: "Line", icon: "💬" },
-  { value: "email", label: "Email", icon: "📧" },
-  { value: "phone", label: "語音通話", icon: "📞" },
-  { value: "video", label: "視訊會議", icon: "🎥" },
-  { value: "report", label: "定期進度報告", icon: "📊" },
+  { value: "line", label: "Line" },
+  { value: "email", label: "Email" },
+  { value: "phone", label: "語音通話" },
+  { value: "video", label: "視訊會議" },
+  { value: "report", label: "定期進度報告" },
 ];
+
+const ICON_MAP: Record<string, any> = {
+  source_code: CommandLineIcon,
+  admin_credentials: KeyIcon,
+  tutorial_video: VideoCameraIcon,
+  documentation: BookOpenIcon,
+  maintenance: WrenchScrewdriverIcon,
+  deployment: RocketLaunchIcon,
+  training: AcademicCapIcon,
+  line: ChatBubbleLeftRightIcon,
+  email: EnvelopeIcon,
+  phone: PhoneIcon,
+  video: VideoCameraIcon,
+  report: ChartBarIcon,
+};
 
 export const Step9Deliverables: React.FC<Props> = ({ data, updateData }) => {
   const hints = getProjectTypeHints(data.projectType);
@@ -79,29 +110,32 @@ export const Step9Deliverables: React.FC<Props> = ({ data, updateData }) => {
         </label>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {displayOptions.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => handleDeliverableToggle(option.value)}
-              className={`p-4 rounded-lg border-2 transition-all text-left hover:shadow-md ${
-                isDeliverableSelected(option.value)
-                  ? "border-[#20263e] bg-[#20263e] bg-opacity-5"
-                  : "border-[#c5ae8c] hover:border-[#20263e]"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{option.icon}</span>
-                  <span className="text-base font-semibold text-[#20263e]">
-                    {option.label}
-                  </span>
+          {displayOptions.map((option) => {
+            const Icon = ICON_MAP[option.value] || QuestionMarkCircleIcon;
+            return (
+              <button
+                key={option.value}
+                onClick={() => handleDeliverableToggle(option.value)}
+                className={`p-4 rounded-lg border-2 transition-all text-left hover:shadow-md ${
+                  isDeliverableSelected(option.value)
+                    ? "border-[#20263e] bg-[#20263e] bg-opacity-5"
+                    : "border-[#c5ae8c] hover:border-[#20263e]"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-8 h-8 text-[#20263e]" />
+                    <span className="text-base font-semibold text-[#20263e]">
+                      {option.label}
+                    </span>
+                  </div>
+                  {isDeliverableSelected(option.value) && (
+                    <CheckIcon className="w-6 h-6 text-[#20263e]" />
+                  )}
                 </div>
-                {isDeliverableSelected(option.value) && (
-                  <span className="text-[#20263e] text-xl">✓</span>
-                )}
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -112,36 +146,42 @@ export const Step9Deliverables: React.FC<Props> = ({ data, updateData }) => {
         </label>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {COMMUNICATION_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => handleCommunicationToggle(option.value)}
-              className={`p-4 rounded-lg border-2 transition-all text-left hover:shadow-md ${
-                isCommunicationSelected(option.value)
-                  ? "border-[#20263e] bg-[#20263e] bg-opacity-5"
-                  : "border-[#c5ae8c] hover:border-[#20263e]"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{option.icon}</span>
-                  <span className="text-base font-semibold text-[#20263e]">
-                    {option.label}
-                  </span>
+          {COMMUNICATION_OPTIONS.map((option) => {
+            const Icon = ICON_MAP[option.value] || QuestionMarkCircleIcon;
+            return (
+              <button
+                key={option.value}
+                onClick={() => handleCommunicationToggle(option.value)}
+                className={`p-4 rounded-lg border-2 transition-all text-left hover:shadow-md ${
+                  isCommunicationSelected(option.value)
+                    ? "border-[#20263e] bg-[#20263e] bg-opacity-5"
+                    : "border-[#c5ae8c] hover:border-[#20263e]"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-8 h-8 text-[#20263e]" />
+                    <span className="text-base font-semibold text-[#20263e]">
+                      {option.label}
+                    </span>
+                  </div>
+                  {isCommunicationSelected(option.value) && (
+                    <CheckIcon className="w-6 h-6 text-[#20263e]" />
+                  )}
                 </div>
-                {isCommunicationSelected(option.value) && (
-                  <span className="text-[#20263e] text-xl">✓</span>
-                )}
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* 小提示 */}
       <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800">
-          <strong>💡 小提示：</strong> {hints.deliverables.hint}
+        <p className="text-sm text-blue-800 flex items-start gap-1">
+          <LightBulbIcon className="w-5 h-5 shrink-0" />
+          <span>
+            <strong>小提示：</strong> {hints.deliverables.hint}
+          </span>
         </p>
       </div>
     </div>

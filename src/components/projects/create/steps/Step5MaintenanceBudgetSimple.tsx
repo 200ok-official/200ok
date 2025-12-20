@@ -1,6 +1,14 @@
 "use client";
 
 import React from "react";
+import {
+  ChartBarIcon,
+  FlagIcon,
+  CheckCircleIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
+  LightBulbIcon,
+  CheckIcon,
+} from "@heroicons/react/24/outline";
 
 interface Props {
   data: any;
@@ -58,7 +66,7 @@ export const Step5MaintenanceBudgetSimple: React.FC<Props> = ({ data, updateData
                   <div className="text-sm text-[#c5ae8c]">{range.desc}</div>
                 </div>
                 {data.budgetMin === range.min && data.budgetMax === range.max && (
-                  <span className="text-[#20263e] text-2xl">✓</span>
+                  <CheckIcon className="w-6 h-6 text-[#20263e]" />
                 )}
               </div>
             </button>
@@ -112,10 +120,10 @@ export const Step5MaintenanceBudgetSimple: React.FC<Props> = ({ data, updateData
         </label>
         <div className="space-y-3">
           {[
-            { value: "installment", label: "分期付款", desc: "例如：開始 50%，完成 50%", icon: "📊" },
-            { value: "milestone", label: "依進度付款", desc: "完成一個階段付一次", icon: "🎯" },
-            { value: "full_after", label: "完成後付款", desc: "全部做完後才付錢", icon: "✅" },
-            { value: "negotiable", label: "再討論", desc: "與接案者協商決定", icon: "💬" },
+            { value: "installment", label: "分期付款", desc: "例如：開始 50%，完成 50%", icon: ChartBarIcon },
+            { value: "milestone", label: "依進度付款", desc: "完成一個階段付一次", icon: FlagIcon },
+            { value: "full_after", label: "完成後付款", desc: "全部做完後才付錢", icon: CheckCircleIcon },
+            { value: "negotiable", label: "再討論", desc: "與接案者協商決定", icon: ChatBubbleOvalLeftEllipsisIcon },
           ].map((method) => (
             <button
               key={method.value}
@@ -127,7 +135,7 @@ export const Step5MaintenanceBudgetSimple: React.FC<Props> = ({ data, updateData
               }`}
             >
               <div className="flex items-start gap-3">
-                <span className="text-2xl">{method.icon}</span>
+                <method.icon className="w-6 h-6 text-[#20263e] shrink-0" />
                 <div className="flex-1">
                   <div className="font-semibold text-[#20263e] mb-1">
                     {method.label}
@@ -135,7 +143,7 @@ export const Step5MaintenanceBudgetSimple: React.FC<Props> = ({ data, updateData
                   <div className="text-sm text-[#c5ae8c]">{method.desc}</div>
                 </div>
                 {data.paymentMethod === method.value && (
-                  <span className="text-[#20263e] text-xl">✓</span>
+                  <CheckIcon className="w-6 h-6 text-[#20263e]" />
                 )}
               </div>
             </button>
@@ -145,8 +153,11 @@ export const Step5MaintenanceBudgetSimple: React.FC<Props> = ({ data, updateData
 
       {/* 小提示 */}
       <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800">
-          <strong>💡 小提示：</strong> 預算和付款方式都可以跟接案者討論調整，不用擔心！
+        <p className="text-sm text-blue-800 flex items-start gap-1">
+          <LightBulbIcon className="w-5 h-5 shrink-0" />
+          <span>
+            <strong>小提示：</strong> 預算和付款方式都可以跟接案者討論調整，不用擔心！
+          </span>
         </p>
       </div>
     </div>

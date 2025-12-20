@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { LightBulbIcon } from "@heroicons/react/24/outline";
 
 interface Props {
   data: any;
@@ -111,7 +112,7 @@ export const Step2MaintenanceSystem: React.FC<Props> = ({ data, updateData }) =>
 
       {/* 小提示 */}
       <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
-        <span className="text-lg">💡</span>
+        <LightBulbIcon className="w-5 h-5 text-blue-800 shrink-0" />
         <p className="text-xs text-blue-800 pt-1">
           <strong>小提示：</strong> 不用擔心描述得不夠專業，接案者會根據您提供的資訊進一步了解細節。
         </p>

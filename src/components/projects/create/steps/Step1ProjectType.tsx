@@ -2,6 +2,19 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import {
+  SparklesIcon,
+  WrenchScrewdriverIcon,
+  BuildingOfficeIcon,
+  ShoppingCartIcon,
+  ClipboardDocumentListIcon,
+  ChatBubbleLeftRightIcon,
+  DevicePhoneMobileIcon,
+  PlayCircleIcon,
+  PuzzlePieceIcon,
+  CheckIcon,
+  LightBulbIcon,
+} from "@heroicons/react/24/outline";
 
 interface Props {
   data: any;
@@ -12,27 +25,27 @@ const PROJECT_MODES = [
   { 
     value: "new_development", 
     label: "全新開發", 
-    icon: "✨", 
+    icon: SparklesIcon, 
     desc: "從零開始打造新的軟體或系統",
     color: "blue"
   },
   { 
     value: "maintenance_modification", 
     label: "修改/維護現有系統", 
-    icon: "🔧", 
+    icon: WrenchScrewdriverIcon, 
     desc: "調整、優化或擴充既有的軟體",
     color: "green"
   },
 ];
 
 const PROJECT_TYPES = [
-  { value: "website", label: "官方形象網站", icon: "🏢", desc: "公司介紹、聯絡表單" },
-  { value: "ecommerce", label: "電商平台", icon: "🛒", desc: "商品展示、購物車、金流" },
-  { value: "erp_crm", label: "ERP / CRM 系統", icon: "🧾", desc: "內部管理用" },
-  { value: "chatbot", label: "Line LIFF / Line 工具", icon: "💬", desc: "Line 官方帳號、LIFF 應用、Line 整合工具" },
-  { value: "mobile_app", label: "手機 App", icon: "📱", desc: "會員系統、預約系統" },
-  { value: "game", label: "手機遊戲 / 網頁遊戲", icon: "🎮", desc: "休閒或競技遊戲" },
-  { value: "other", label: "其他", icon: "🧩", desc: "需進一步說明" },
+  { value: "website", label: "官方形象網站", icon: BuildingOfficeIcon, desc: "公司介紹、聯絡表單" },
+  { value: "ecommerce", label: "電商平台", icon: ShoppingCartIcon, desc: "商品展示、購物車、金流" },
+  { value: "erp_crm", label: "ERP / CRM 系統", icon: ClipboardDocumentListIcon, desc: "內部管理用" },
+  { value: "chatbot", label: "Line LIFF / Line 工具", icon: ChatBubbleLeftRightIcon, desc: "Line 官方帳號、LIFF 應用、Line 整合工具" },
+  { value: "mobile_app", label: "手機 App", icon: DevicePhoneMobileIcon, desc: "會員系統、預約系統" },
+  { value: "game", label: "手機遊戲 / 網頁遊戲", icon: PlayCircleIcon, desc: "休閒或競技遊戲" },
+  { value: "other", label: "其他", icon: PuzzlePieceIcon, desc: "需進一步說明" },
 ];
 
 export const Step1ProjectType: React.FC<Props> = ({ data, updateData }) => {
@@ -72,14 +85,14 @@ export const Step1ProjectType: React.FC<Props> = ({ data, updateData }) => {
                   : "border-[#c5ae8c] hover:border-[#20263e]"
               }`}
             >
-              <div className="space-y-3">
-                <span className="text-5xl block">{mode.icon}</span>
+              <div className="space-y-3 flex flex-col items-center">
+                <mode.icon className="w-12 h-12 text-[#20263e]" />
                 <h3 className="text-xl font-semibold text-[#20263e]">
                   {mode.label}
                 </h3>
                 <p className="text-sm text-[#c5ae8c]">{mode.desc}</p>
                 {data.projectMode === mode.value && (
-                  <span className="text-[#20263e] text-2xl block">✓</span>
+                  <CheckIcon className="w-8 h-8 text-[#20263e] block mt-2" />
                 )}
               </div>
             </button>
@@ -111,7 +124,7 @@ export const Step1ProjectType: React.FC<Props> = ({ data, updateData }) => {
                 }`}
               >
                 <div className="flex items-start gap-4">
-                  <span className="text-4xl">{type.icon}</span>
+                  <type.icon className="w-10 h-10 text-[#20263e] shrink-0" />
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-[#20263e] mb-1">
                       {type.label}
@@ -119,7 +132,7 @@ export const Step1ProjectType: React.FC<Props> = ({ data, updateData }) => {
                     <p className="text-sm text-[#c5ae8c]">{type.desc}</p>
                   </div>
                   {data.projectType === type.value && (
-                    <span className="text-[#20263e] text-xl">✓</span>
+                    <CheckIcon className="w-6 h-6 text-[#20263e] shrink-0" />
                   )}
                 </div>
               </button>
@@ -145,8 +158,11 @@ export const Step1ProjectType: React.FC<Props> = ({ data, updateData }) => {
 
       {/* 小提示 */}
       <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800">
-          <strong>💡 小提示：</strong> 不確定選哪個？沒關係！選擇最接近的類型，我們後續會進一步了解您的需求。
+        <p className="text-sm text-blue-800 flex items-start gap-1">
+          <LightBulbIcon className="w-5 h-5 shrink-0" />
+          <span>
+            <strong>小提示：</strong> 不確定選哪個？沒關係！選擇最接近的類型，我們後續會進一步了解您的需求。
+          </span>
         </p>
       </div>
     </div>
