@@ -99,7 +99,6 @@ class Project(Base):
     # Relationships
     client = relationship("User", back_populates="projects", foreign_keys=[client_id])
     bids = relationship("Bid", back_populates="project", cascade="all, delete-orphan")
-    project_tags = relationship("ProjectTag", back_populates="project", cascade="all, delete-orphan")
     saved_by = relationship("SavedProject", back_populates="project", cascade="all, delete-orphan")
     
     def __repr__(self):

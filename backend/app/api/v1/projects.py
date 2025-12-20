@@ -17,6 +17,7 @@ from ...schemas.project import ProjectCreate, ProjectUpdate, ProjectResponse, Cl
 from ...schemas.common import SuccessResponse
 from ...dependencies import get_current_user, get_current_user_optional, PaginationParams
 from ...security import check_is_admin
+from ...services.gemini_service import gemini_service
 
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -254,7 +255,16 @@ async def create_project(
         )
     
     # 建立專案
-    project_data = data.model_dump(exclude={'tag_ids'})
+    project_data = data.model_dump()
+    
+    # 使用 AI 生成專案標題（如果有設定 Gemini API key）
+    try:
+        ai_generated_title = await gemini_service.generate_project_title(project_data)
+        if ai_generated_title:
+            project_data['title'] = ai_generated_title
+    except Exception as e:
+        # AI 生成失敗不影響主流程，使用原本的標題
+        print(f"AI 生成標題失敗: {str(e)}")
     
     # 補全缺失的欄位為 None，避免 SQLAlchemy 報錯
     all_fields = [
@@ -321,18 +331,6 @@ async def create_project(
     result = await db.execute(text(insert_sql), params)
     row = result.fetchone()
     project_id = row.id
-    
-    # 如果有標籤，建立關聯
-    if hasattr(data, 'tag_ids') and data.tag_ids:
-        for tag_id in data.tag_ids:
-            tag_sql = """
-                INSERT INTO project_tags (project_id, tag_id)
-                VALUES (:project_id, :tag_id)
-            """
-            await db.execute(text(tag_sql), {
-                'project_id': str(project_id),
-                'tag_id': str(tag_id)
-            })
     
     await db.commit()
     
@@ -693,7 +691,7 @@ async def update_project(
         )
     
     # 更新資料
-    update_dict = data.model_dump(exclude_unset=True, exclude={'tag_ids'})
+    update_dict = data.model_dump(exclude_unset=True)
     
     if not update_dict:
         raise HTTPException(

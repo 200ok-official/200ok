@@ -35,9 +35,9 @@ interface Project {
 
 export default function ProjectsPage() {
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [popularTags, setPopularTags] = useState<string[]>([]);
+  const [popularSkills, setPopularSkills] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -46,8 +46,8 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     fetchProjects();
-    fetchPopularTags();
-  }, [searchKeyword, selectedTags]);
+    fetchPopularSkills();
+  }, [searchKeyword, selectedSkills]);
 
   // Masonry 佈局：將專案分配到不同的列，保持從左到右的順序
   useEffect(() => {
@@ -108,8 +108,8 @@ export default function ProjectsPage() {
         params.keyword = searchKeyword;
       }
 
-      if (selectedTags.length > 0) {
-        params.tags = selectedTags.join(",");
+      if (selectedSkills.length > 0) {
+        params.skills = selectedSkills.join(",");
       }
 
       const data = await apiGet("/api/v1/projects", params);
@@ -132,26 +132,19 @@ export default function ProjectsPage() {
     }
   };
 
-  const fetchPopularTags = async () => {
-    try {
-      const data = await apiGet("/api/v1/tags", { category: "tech", limit: "10" });
-      const tags = data.data?.map((tag: any) => tag.name) || [];
-      setPopularTags(tags);
-    } catch (error) {
-      console.error("Failed to fetch popular tags:", error);
-      // 使用預設標籤作為後備
-      setPopularTags([
-        "React",
-        "Vue",
-        "Next.js",
-        "Node.js",
-        "Python",
-        "電商",
-        "App",
-        "LineBot",
-        "UI/UX",
-      ]);
-    }
+  const fetchPopularSkills = async () => {
+    // 不再從 API 取得 tags，直接使用預設的熱門技能
+    setPopularSkills([
+      "React",
+      "Vue",
+      "Next.js",
+      "Node.js",
+      "Python",
+      "電商",
+      "App",
+      "LineBot",
+      "UI/UX",
+    ]);
   };
 
   return (
@@ -194,26 +187,26 @@ export default function ProjectsPage() {
 
             <div>
               <h3 className="text-sm font-bold text-[#c5ae8c] mb-6 uppercase tracking-widest">
-                熱門標籤
+                熱門技能
               </h3>
               <div className="flex flex-wrap gap-3 justify-center">
-                {popularTags.map((tag) => (
+                {popularSkills.map((skill) => (
                   <button
-                    key={tag}
+                    key={skill}
                     className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                      selectedTags.includes(tag)
+                      selectedSkills.includes(skill)
                         ? "bg-white text-[#20263e] shadow-[0_0_15px_rgba(255,255,255,0.3)] transform scale-105"
                         : "bg-white/10 text-white border border-white/20 hover:bg-white/20 hover:border-white/40 backdrop-blur-sm"
                     }`}
                     onClick={() => {
-                      if (selectedTags.includes(tag)) {
-                        setSelectedTags(selectedTags.filter((t) => t !== tag));
+                      if (selectedSkills.includes(skill)) {
+                        setSelectedSkills(selectedSkills.filter((s) => s !== skill));
                       } else {
-                        setSelectedTags([...selectedTags, tag]);
+                        setSelectedSkills([...selectedSkills, skill]);
                       }
                     }}
                   >
-                    {tag}
+                    {skill}
                   </button>
                 ))}
               </div>
