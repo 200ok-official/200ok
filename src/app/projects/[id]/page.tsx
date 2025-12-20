@@ -62,9 +62,9 @@ export default function ProjectDetailPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
+      <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center pt-24">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#20263e] mx-auto mb-4"></div>
             <p className="text-[#20263e]">載入中...</p>
@@ -77,9 +77,9 @@ export default function ProjectDetailPage({
 
   if (error || !project) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
+      <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center pt-24">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-[#20263e] mb-4">
               {error || "案件不存在"}
@@ -98,10 +98,10 @@ export default function ProjectDetailPage({
   const isNewDevelopment = project.project_mode === "new_development";
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
+    <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
       <Navbar />
 
-      <main className="flex-1 py-10 px-4">
+      <main className="flex-1 pt-24 pb-10 px-4">
         <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
         {/* 頁首 */}
         <div className="mb-8">
@@ -163,7 +163,8 @@ export default function ProjectDetailPage({
           <div className="lg:col-span-2 space-y-8">
             {/* 合併所有內容到一個 Card */}
             <section>
-              <Card className="p-8">
+              <h2 className="text-2xl font-bold text-[#20263e] mb-4">專案概況</h2>
+              <Card className="p-8 border-2 border-[#c5ae8c] shadow-md">
                 <div className="space-y-8">
                   {/* 專案概況區塊 */}
                   <div>
@@ -350,7 +351,6 @@ export default function ProjectDetailPage({
                 </div>
               </Card>
             </section>
-
             {/* 投標列表（僅發案者可見） */}
             {isOwner && project.bids && project.bids.length > 0 && (
               <section>
@@ -359,7 +359,7 @@ export default function ProjectDetailPage({
                 </h2>
                 <div className="space-y-4">
                   {project.bids.map((bid: any) => (
-                    <Card key={bid.id} className="p-6">
+                    <Card key={bid.id} className="p-6 border-2 border-[#c5ae8c] shadow-md">
                       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 bg-[#c5ae8c] rounded-full flex items-center justify-center text-white font-bold text-xl">
@@ -424,7 +424,7 @@ export default function ProjectDetailPage({
           {/* 右側邊欄 */}
           <div className="space-y-6">
             {/* 主要行動卡片 */}
-            <Card className="p-6 border-t-4 border-t-[#20263e] shadow-lg">
+            <Card className="p-6 border-t-4 border-t-[#20263e] border-x-2 border-b-2 border-x-[#c5ae8c] border-b-[#c5ae8c] shadow-lg">
               <div className="mb-6">
                 <p className="text-sm text-[#20263e] mb-1 font-medium uppercase tracking-wide">專案預算</p>
                 <p className="text-2xl font-bold text-[#20263e]">
@@ -480,7 +480,7 @@ export default function ProjectDetailPage({
             </Card>
 
             {/* 發案者資訊 */}
-            <Card className="p-6">
+            <Card className="p-6 border-2 border-[#c5ae8c] shadow-md">
               <h3 className="text-lg font-bold text-[#20263e] mb-4">關於發案者</h3>
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-14 h-14 bg-[#20263e] rounded-full flex items-center justify-center text-white text-xl font-bold">

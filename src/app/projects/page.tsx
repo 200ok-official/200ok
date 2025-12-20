@@ -109,39 +109,51 @@ export default function ProjectsPage() {
     <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
       <Navbar />
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#20263e] mb-4">探索案件</h1>
-          <p className="text-gray-700">
-            瀏覽最新的軟體開發案件，找到適合您的專案
-          </p>
-        </div>
+      <main className="flex-1 w-full pt-24 px-4 pb-8">
+        {/* Full-width Rounded Hero Section */}
+        <div className="w-full max-w-[98%] mx-auto bg-[#20263e] rounded-[2.5rem] py-20 px-6 md:px-12 shadow-2xl overflow-hidden relative mb-12">
+          {/* Decorative Background Elements */}
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
+            <div className="absolute -top-24 -left-24 w-96 h-96 bg-white rounded-full blur-[100px]"></div>
+            <div className="absolute bottom-0 right-0 w-[30rem] h-[30rem] bg-[#c5ae8c] rounded-full blur-[120px]"></div>
+          </div>
 
-        {/* 搜尋與篩選 */}
-        <Card className="mb-6">
-          <div className="p-6">
-            <div className="mb-4">
+          <div className="relative z-10 max-w-4xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 tracking-tight">
+              探索案件
+            </h1>
+            <p className="text-lg md:text-xl text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed">
+              瀏覽最新的軟體開發案件，找到適合您的專案
+            </p>
+
+            {/* 搜尋與篩選 */}
+            <div className="mb-10 relative">
               <input
                 type="text"
                 placeholder="搜尋案件標題或描述..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#20263e]"
+                className="w-full px-8 py-5 text-lg border-none rounded-full focus:outline-none focus:ring-4 focus:ring-[#c5ae8c]/50 transition bg-white text-[#20263e] placeholder:text-gray-400 shadow-lg"
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
               />
+              <button className="absolute right-3 top-1/2 -translate-y-1/2 bg-[#20263e] text-white p-3 rounded-full hover:bg-[#2d3550] transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              <h3 className="text-sm font-bold text-[#c5ae8c] mb-6 uppercase tracking-widest">
                 熱門標籤
               </h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-3 justify-center">
                 {popularTags.map((tag) => (
                   <button
                     key={tag}
-                    className={`px-3 py-1 rounded-full text-sm ${
+                    className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
                       selectedTags.includes(tag)
-                        ? "bg-[#20263e] text-white"
-                        : "bg-white text-gray-700 border border-gray-300 hover:border-[#20263e]"
+                        ? "bg-white text-[#20263e] shadow-[0_0_15px_rgba(255,255,255,0.3)] transform scale-105"
+                        : "bg-white/10 text-white border border-white/20 hover:bg-white/20 hover:border-white/40 backdrop-blur-sm"
                     }`}
                     onClick={() => {
                       if (selectedTags.includes(tag)) {
@@ -157,9 +169,10 @@ export default function ProjectsPage() {
               </div>
             </div>
           </div>
-        </Card>
+        </div>
 
-        {/* 載入狀態 */}
+        <div className="max-w-7xl mx-auto px-4">
+          {/* 載入狀態 */}
         {loading && (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#20263e]"></div>
@@ -218,6 +231,7 @@ export default function ProjectsPage() {
             </Button>
           </div>
         )}
+        </div>
       </main>
 
       <Footer />
