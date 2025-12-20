@@ -30,7 +30,6 @@ async def list_projects(
     status_filter: Optional[str] = Query(None, alias="status"),
     project_mode: Optional[str] = Query(None),
     skills: Optional[str] = Query(None),
-    tags: Optional[str] = Query(None),
     budget_min: Optional[float] = Query(None),
     budget_max: Optional[float] = Query(None),
     project_type: Optional[str] = Query(None),
