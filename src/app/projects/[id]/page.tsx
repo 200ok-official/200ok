@@ -294,7 +294,7 @@ export default function ProjectDetailPage({
                   )}
 
                   {/* 專案預算與付款資訊 */}
-                  <hr className="border-[#20263e] border-2" />
+                  <hr className="border-[#20263e] border" />
                   
                   <div>
                     <div className="mb-6">
@@ -505,7 +505,7 @@ export default function ProjectDetailPage({
             )}
 
             {/* 關於發案者 */}
-            <hr className="border-[#20263e] border-2 my-6" />
+            <hr className="border-[#20263e] border my-6" />
             <section>
               <h3 className="text-lg font-bold text-[#20263e] mb-4">關於發案者</h3>
               <div className="flex items-center gap-4">

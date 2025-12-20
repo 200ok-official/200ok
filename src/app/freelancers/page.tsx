@@ -92,7 +92,7 @@ export default function FreelancersPage() {
       <Navbar />
 
       {/* Hero Section */}
-      <div className="bg-[#20263e] text-white py-16">
+      <div className="bg-[#20263e] text-white pb-16 pt-16 -mt-16">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             尋找專業接案者

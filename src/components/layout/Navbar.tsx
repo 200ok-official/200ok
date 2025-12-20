@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { apiGet, apiPost, clearAuth, isAuthenticated } from "@/lib/api";
 
 export const Navbar: React.FC = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string; id: string } | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -102,10 +103,10 @@ export const Navbar: React.FC = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#20263e] text-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-3xl font-bold text-[#c5ae8c] hidden md:inline"> 200 </span>
+            <span className="text-3xl font-bold text-[#f0ebe0] hidden md:inline" style={{ fontFamily: "'Noto Serif TC', serif" }}> 200 </span>
             <Image
               src="/200ok_logo_light.png"
               alt="200 OK Logo"
@@ -117,50 +118,47 @@ export const Navbar: React.FC = () => {
           </Link>
 
           {/* Navigation Links */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-6 ml-8">
             <Link
               href="/projects"
-              className="hover:text-[#c5ae8c] transition-colors"
+              className={`hover:text-[#c5ae8c] transition-colors relative ${
+                pathname === "/projects" || pathname?.startsWith("/projects/")
+                  ? "after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1px] after:bg-[#c5ae8c]"
+                  : ""
+              }`}
             >
               探索案件
             </Link>
             <Link
               href="/freelancers"
-              className="hover:text-[#c5ae8c] transition-colors"
+              className={`hover:text-[#c5ae8c] transition-colors relative ${
+                pathname === "/freelancers" || pathname?.startsWith("/freelancers/")
+                  ? "after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1px] after:bg-[#c5ae8c]"
+                  : ""
+              }`}
             >
               尋找接案工程師
             </Link>
             <Link
               href="/how-it-works"
-              className="hover:text-[#c5ae8c] transition-colors"
+              className={`hover:text-[#c5ae8c] transition-colors relative ${
+                pathname === "/how-it-works" || pathname?.startsWith("/how-it-works/")
+                  ? "after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1px] after:bg-[#c5ae8c]"
+                  : ""
+              }`}
             >
               如何運作
             </Link>
           </div>
 
           {/* Auth Section */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 ml-auto">
             {isLoggedIn ? (
               <>
-                {/* 代幣餘額 */}
-                <Link 
-                  href="/tokens" 
-                  className="hidden md:flex items-center space-x-2 px-3 py-1.5 bg-[#c5ae8c] text-[#20263e] rounded-full hover:bg-[#d4be9c] transition-colors"
-                  title="代幣管理"
-                >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
-                  </svg>
-                  <span className="font-semibold">
-                    {tokenBalance !== null ? tokenBalance.toLocaleString() : '...'} 
-                  </span>
-                </Link>
-
                 {/* 訊息通知 */}
                 <Link 
                   href="/conversations" 
-                  className="relative p-2 hover:text-[#c5ae8c] transition-colors"
+                  className="relative p-2 hover:text-[#c5ae8c] transition-all duration-300 hover:scale-110"
                   title="聊天室"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,11 +171,25 @@ export const Navbar: React.FC = () => {
                   )}
                 </Link>
 
-                {/* 發布案件按鈕 */}
-                <Link href="/projects/new" className="hidden md:inline-block">
-                  <Button variant="secondary" size="sm">
-                    發布案件
-                  </Button>
+                {/* 發布案件按鈕 - 加號圖標 */}
+                <Link 
+                  href="/projects/new" 
+                  className="hidden md:flex items-center justify-center p-2 text-white hover:text-[#c5ae8c] transition-all duration-300 hover:rotate-90"
+                  title="發布案件"
+                >
+                  <svg 
+                    className="w-6 h-6" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={3} 
+                      d="M12 4v16m8-8H4" 
+                    />
+                  </svg>
                 </Link>
 
                 {/* 使用者選單 */}
@@ -238,6 +250,19 @@ export const Navbar: React.FC = () => {
                           onClick={() => setShowDropdown(false)}
                         >
                           我的投標
+                        </Link>
+                        <hr className="my-2 border-[#c5ae8c]" />
+                        <Link
+                          href="/tokens"
+                          className="block px-4 py-2 text-[#20263e] hover:bg-[#f5f3ed] transition"
+                          onClick={() => setShowDropdown(false)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span>代幣餘額</span>
+                            <span className="font-semibold text-[#c5ae8c]">
+                              {tokenBalance !== null ? tokenBalance.toLocaleString() : '...'}
+                            </span>
+                          </div>
                         </Link>
                         <hr className="my-2 border-[#c5ae8c]" />
                         <button
