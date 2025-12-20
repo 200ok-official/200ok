@@ -7,10 +7,10 @@ import { CreateProjectWizard } from "@/components/projects/create/CreateProjectW
 
 export default function NewProjectPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
+    <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
       <Navbar />
       
-      <main className="flex-1 pt-24 pb-10 px-4">
+      <main className="flex-1 py-10 px-4">
         <div className="max-w-4xl mx-auto">
           {/* 頁面標題 */}
           <div id="new-project-header" className="text-center mb-6">

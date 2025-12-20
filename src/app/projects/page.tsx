@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -41,11 +41,60 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [columns, setColumns] = useState<Project[][]>([[], [], []]);
+  const masonryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchProjects();
     fetchPopularTags();
   }, [searchKeyword, selectedTags]);
+
+  // Masonry 佈局：將專案分配到不同的列，保持從左到右的順序
+  useEffect(() => {
+    if (projects.length === 0) {
+      setColumns([[], [], []]);
+      return;
+    }
+
+    const numColumns = typeof window !== 'undefined' 
+      ? window.innerWidth >= 1024 ? 3 : window.innerWidth >= 768 ? 2 : 1
+      : 3;
+    
+    const newColumns: Project[][] = Array.from({ length: numColumns }, () => []);
+    
+    // 按照順序將專案分配到最短的列
+    projects.forEach((project) => {
+      // 找到最短的列
+      const shortestColumnIndex = newColumns.reduce((minIndex, column, index) => 
+        column.length < newColumns[minIndex].length ? index : minIndex, 0
+      );
+      newColumns[shortestColumnIndex].push(project);
+    });
+    
+    setColumns(newColumns);
+  }, [projects]);
+
+  // 處理視窗大小變化
+  useEffect(() => {
+    const handleResize = () => {
+      if (projects.length === 0) return;
+      
+      const numColumns = window.innerWidth >= 1024 ? 3 : window.innerWidth >= 768 ? 2 : 1;
+      const newColumns: Project[][] = Array.from({ length: numColumns }, () => []);
+      
+      projects.forEach((project) => {
+        const shortestColumnIndex = newColumns.reduce((minIndex, column, index) => 
+          column.length < newColumns[minIndex].length ? index : minIndex, 0
+        );
+        newColumns[shortestColumnIndex].push(project);
+      });
+      
+      setColumns(newColumns);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [projects]);
 
   const fetchProjects = async (loadMore = false) => {
     try {
@@ -180,11 +229,17 @@ export default function ProjectsPage() {
           </div>
         )}
 
-        {/* 案件列表 */}
+        {/* 案件列表 - Masonry Layout (瀑布流，從左到右，從上到下) */}
         {!loading && projects.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-            {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
+          <div ref={masonryRef} className="flex gap-6">
+            {columns.map((column, columnIndex) => (
+              <div key={columnIndex} className="flex-1 flex flex-col gap-6">
+                {column.map((project) => (
+                  <div key={project.id}>
+                    <ProjectCard project={project} />
+                  </div>
+                ))}
+              </div>
             ))}
           </div>
         )}
