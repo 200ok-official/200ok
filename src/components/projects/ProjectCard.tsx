@@ -52,7 +52,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="hover:shadow-xl transition-all duration-300 border-2 border-[#c5ae8c] shadow-md bg-white">
       <CardContent>
         <div className="flex justify-between items-start mb-3">
           <Link href={`/projects/${project.id}`}>
