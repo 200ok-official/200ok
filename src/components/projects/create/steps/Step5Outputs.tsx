@@ -2,6 +2,7 @@
 
 import React from "react";
 import { getProjectTypeHints } from "../config/projectTypeHints";
+import { CheckIcon, LightBulbIcon } from "@heroicons/react/24/outline";
 
 interface Props {
   data: any;
@@ -67,7 +68,7 @@ export const Step5Outputs: React.FC<Props> = ({ data, updateData }) => {
                 <p className="text-sm text-[#c5ae8c]">{option.desc}</p>
               </div>
               {isOutputSelected(option.value) && (
-                <span className="text-[#20263e] text-xl">✓</span>
+                <CheckIcon className="w-6 h-6 text-[#20263e]" />
               )}
             </div>
           </button>
@@ -92,8 +93,11 @@ export const Step5Outputs: React.FC<Props> = ({ data, updateData }) => {
 
       {/* 小提示 */}
       <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800">
-          <strong>💡 小提示：</strong> {hints.outputs.hint}
+        <p className="text-sm text-blue-800 flex items-start gap-1">
+          <LightBulbIcon className="w-5 h-5 shrink-0" />
+          <span>
+            <strong>小提示：</strong> {hints.outputs.hint}
+          </span>
         </p>
       </div>
     </div>

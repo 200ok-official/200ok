@@ -13,6 +13,7 @@ import {
   PlayCircleIcon,
   PuzzlePieceIcon,
   CheckIcon,
+  LightBulbIcon,
 } from "@heroicons/react/24/outline";
 
 interface Props {
@@ -157,8 +158,11 @@ export const Step1ProjectType: React.FC<Props> = ({ data, updateData }) => {
 
       {/* 小提示 */}
       <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800">
-          <strong>💡 小提示：</strong> 不確定選哪個？沒關係！選擇最接近的類型，我們後續會進一步了解您的需求。
+        <p className="text-sm text-blue-800 flex items-start gap-1">
+          <LightBulbIcon className="w-5 h-5 shrink-0" />
+          <span>
+            <strong>小提示：</strong> 不確定選哪個？沒關係！選擇最接近的類型，我們後續會進一步了解您的需求。
+          </span>
         </p>
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { CheckCircleIcon } from "@heroicons/react/24/outline";
 
 interface Props {
   data: any;
@@ -65,7 +66,7 @@ export const Step3MaintenanceProblems: React.FC<Props> = ({ data, updateData }) 
 
       {/* 小提示 */}
       <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2">
-        <span className="text-lg">✅</span>
+        <CheckCircleIcon className="w-5 h-5 text-green-800 shrink-0" />
         <p className="text-xs text-green-800 pt-1">
           <strong>提示：</strong> 描述得越清楚，接案者就越能準確評估工作內容和報價。如果有截圖或範例會更好！
         </p>

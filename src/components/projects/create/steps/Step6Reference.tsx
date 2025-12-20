@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { getProjectTypeHints } from "../config/projectTypeHints";
+import { XMarkIcon, LightBulbIcon } from "@heroicons/react/24/outline";
 
 interface Props {
   data: any;
@@ -125,7 +126,7 @@ export const Step6Reference: React.FC<Props> = ({ data, updateData }) => {
                   onClick={() => handleRemoveLink(index)}
                   className="text-red-500 hover:text-red-700 px-2 ml-2"
                 >
-                  ✕
+                  <XMarkIcon className="w-5 h-5" />
                 </button>
               </div>
             ))}
@@ -198,10 +199,10 @@ export const Step6Reference: React.FC<Props> = ({ data, updateData }) => {
                       <span>{style}</span>
                       <button
                         onClick={() => handleRemoveStyle(style)}
-                        className="text-red-500 hover:text-red-700 text-xs ml-1"
+                        className="text-red-500 hover:text-red-700"
                         aria-label="移除風格"
                       >
-                        ✕
+                        <XMarkIcon className="w-4 h-4" />
                       </button>
                     </div>
                   ))}
@@ -215,8 +216,11 @@ export const Step6Reference: React.FC<Props> = ({ data, updateData }) => {
 
       {/* 小提示 */}
       <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800">
-          <strong>💡 小提示：</strong> {hints.reference.hint}
+        <p className="text-sm text-blue-800 flex items-start gap-1">
+          <LightBulbIcon className="w-5 h-5 shrink-0" />
+          <span>
+            <strong>小提示：</strong> {hints.reference.hint}
+          </span>
         </p>
       </div>
     </div>
