@@ -153,10 +153,10 @@ export default function ProjectsPage() {
       }
 
       if (budgetRange.min) {
-        params.min_budget = budgetRange.min;
+        params.budget_min = budgetRange.min;
       }
       if (budgetRange.max) {
-        params.max_budget = budgetRange.max;
+        params.budget_max = budgetRange.max;
       }
 
       const data = await apiGet("/api/v1/projects", params);
