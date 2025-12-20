@@ -155,16 +155,24 @@ export default function SubmitProposalPage() {
 ${proposalContent}`;
 
       // 提交提案並支付代幣
-      const data = await apiPost('/api/v1/conversations', {
-        type: 'project_proposal',
+      const totalDays = months * 30 + days;
+      const requestBody: {
+        project_id: string;
+        proposal: string;
+        bid_amount: number;
+        estimated_days?: number;
+      } = {
         project_id: projectId,
-        initial_message: fullMessage,
-        bid_data: {
-          amount: parseFloat(budgetAmount),
-          estimated_days: months * 30 + days, // 轉換為總天數供後端使用
-          proposal: proposalContent, // 保留原始提案內容
-        },
-      });
+        proposal: fullMessage, // 使用包含報價資訊的完整訊息
+        bid_amount: parseFloat(budgetAmount),
+      };
+      
+      // 只有在有預估天數時才添加
+      if (totalDays > 0) {
+        requestBody.estimated_days = totalDays;
+      }
+      
+      const data = await apiPost(`/api/v1/bids/projects/${projectId}/bids`, requestBody);
 
       if (data.success && data.data?.conversation_id) {
         const conversationId = data.data.conversation_id;
@@ -175,7 +183,25 @@ ${proposalContent}`;
       }
     } catch (error: any) {
       console.error('Submit proposal error:', error);
-      setError(error.message || '提交失敗，請稍後再試');
+      
+      // 提供更详细的错误信息
+      let errorMessage = '提交失敗，請稍後再試';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.detail) {
+        errorMessage = typeof error.detail === 'string' ? error.detail : '提交失敗';
+      }
+      
+      // 如果是认证错误，提示重新登录
+      if (errorMessage.includes('登入') || errorMessage.includes('Token') || errorMessage.includes('認證')) {
+        errorMessage = '登入已過期，請重新登入後再試';
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
+      }
+      
+      setError(errorMessage);
     } finally {
       setSubmitting(false);
     }

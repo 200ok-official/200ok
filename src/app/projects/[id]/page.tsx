@@ -163,7 +163,7 @@ export default function ProjectDetailPage({
           <div className="lg:col-span-2 space-y-8">
             {/* 合併所有內容到一個 Card */}
             <section>
-              <Card className="p-8">
+              <Card className="p-8 bg-transparent shadow-none border-0">
                 <div className="space-y-8">
                   {/* 專案概況區塊 */}
                   <div>
@@ -223,74 +223,6 @@ export default function ProjectDetailPage({
                     )}
                   </div>
 
-                  {/* 技術與規格區塊 */}
-                  {(project.required_skills?.length > 0 || project.new_design_style?.length > 0 || project.new_integrations?.length > 0 || project.maint_known_tech_stack?.length > 0) && (
-                    <>
-                      {/* 灰色分隔線 */}
-                      <hr className="border-[#e5e7eb]" />
-                      
-                      <div>
-                        <h3 className="text-xl font-bold text-[#20263e] mb-4">技術規格</h3>
-                        <div className="space-y-6">
-                          {/* 技能需求 */}
-                          {project.required_skills && project.required_skills.length > 0 && (
-                            <div>
-                              <h4 className="text-lg font-semibold text-[#20263e] mb-3">🛠️ 技能需求</h4>
-                              <div className="flex flex-wrap gap-2">
-                                {project.required_skills.map((skill: string) => (
-                                  <Badge key={skill} variant="info" className="text-sm py-1 px-3">
-                                    {skill}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 設計風格 (全新開發) */}
-                          {project.new_design_style && project.new_design_style.length > 0 && (
-                            <div>
-                              <h4 className="text-lg font-semibold text-[#20263e] mb-3">🎨 設計風格</h4>
-                              <div className="flex flex-wrap gap-2">
-                                {project.new_design_style.map((style: string) => (
-                                  <Badge key={style} variant="info" className="text-sm py-1 px-3">
-                                    {style}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 整合需求 (全新開發) */}
-                          {project.new_integrations && project.new_integrations.length > 0 && (
-                            <div>
-                              <h4 className="text-lg font-semibold text-[#20263e] mb-3">🔌 外部整合</h4>
-                              <div className="flex flex-wrap gap-2">
-                                {project.new_integrations.map((integration: string) => (
-                                  <Badge key={integration} variant="info" className="text-sm py-1 px-3">
-                                    {integration}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 已知技術棧 (修改維護) */}
-                          {project.maint_known_tech_stack && project.maint_known_tech_stack.length > 0 && (
-                            <div>
-                              <h4 className="text-lg font-semibold text-[#20263e] mb-3">🏗️ 現有技術棧</h4>
-                              <div className="flex flex-wrap gap-2">
-                                {project.maint_known_tech_stack.map((tech: string) => (
-                                  <Badge key={tech} variant="info" className="text-sm py-1 px-3">
-                                    {tech}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  )}
 
                   {/* 補充與參考資料 */}
                   {(project.reference_links?.length > 0 || project.new_special_requirements || project.new_concerns?.length > 0) && (
@@ -303,7 +235,7 @@ export default function ProjectDetailPage({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           {/* 參考資料 */}
                           {project.reference_links && project.reference_links.length > 0 && (
-                            <div>
+                            <div className="md:col-span-2">
                               <h4 className="text-lg font-semibold text-[#20263e] mb-3">🔗 參考資料</h4>
                               <ul className="space-y-2">
                                 {project.reference_links.map((link: string, index: number) => (
@@ -347,6 +279,62 @@ export default function ProjectDetailPage({
                       </div>
                     </>
                   )}
+
+                  {/* 專案預算與付款資訊 */}
+                  <hr className="border-[#20263e] border-2" />
+                  
+                  <div>
+                    <div className="mb-6">
+                      <div className="flex items-center justify-center gap-3 mb-2">
+                        <p className="text-3xl text-[#20263e] font-bold uppercase tracking-wide" style={{ fontFamily: "'Noto Serif TC', serif" }}>專案預算</p>
+                        <p className="text-3xl font-bold text-[#20263e]" style={{ fontFamily: "'Noto Serif TC', serif" }}>
+                          NT$ {project.budget_min.toLocaleString()} - {project.budget_max.toLocaleString()}
+                        </p>
+                      </div>
+                      {project.budget_estimate_only && (
+                        <p className="text-sm text-[#c5ae8c] mt-1 flex items-center justify-center gap-1">
+                          ℹ️ 預算僅供參考
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-4 mb-6 pt-6 border-t border-gray-100">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[#c5ae8c]">付款方式</span>
+                        <span className="font-medium text-[#20263e]">
+                          {project.payment_method === "installment"
+                            ? "分期付款"
+                            : project.payment_method === "milestone"
+                            ? "里程碑付款"
+                            : project.payment_method === "full_after"
+                            ? "完成後付款"
+                            : "待協商"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[#c5ae8c]">期望開始</span>
+                        <span className="font-medium text-[#20263e]">
+                          {project.start_date ? new Date(project.start_date).toLocaleDateString("zh-TW") : "可議"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[#c5ae8c]">期望完成</span>
+                        <span className="font-medium text-[#20263e]">
+                          {project.deadline ? new Date(project.deadline).toLocaleDateString("zh-TW") : "可議"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 提交提案按鈕 */}
+                    {!isOwner && (
+                      <ProjectDetailClient 
+                        projectId={project.id} 
+                        projectTitle={project.title}
+                        isOwner={false} 
+                        userId={userId || undefined} 
+                      />
+                    )}
+                  </div>
                 </div>
               </Card>
             </section>
@@ -419,103 +407,124 @@ export default function ProjectDetailPage({
                 </div>
               </section>
             )}
+
           </div>
 
           {/* 右側邊欄 */}
           <div className="space-y-6">
-            {/* 主要行動卡片 */}
-            <Card className="p-6 border-t-4 border-t-[#20263e] shadow-lg">
-              <div className="mb-6">
-                <p className="text-sm text-[#20263e] mb-1 font-medium uppercase tracking-wide">專案預算</p>
-                <p className="text-2xl font-bold text-[#20263e]">
-                  NT$ {project.budget_min.toLocaleString()} - {project.budget_max.toLocaleString()}
-                </p>
-                {project.budget_estimate_only && (
-                  <p className="text-sm text-[#c5ae8c] mt-1 flex items-center gap-1">
-                    ℹ️ 預算僅供參考
-                  </p>
-                )}
+
+            {/* 技術規格 */}
+            {(project.required_skills?.length > 0 || project.new_design_style?.length > 0 || project.new_integrations?.length > 0 || project.maint_known_tech_stack?.length > 0 || project.new_outputs?.length > 0) && (
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-[#20263e] mb-4" style={{ fontFamily: "'Noto Serif TC', serif" }}>技術規格</h3>
+                <div className="space-y-6">
+                  {/* 技能需求 */}
+                  {project.required_skills && project.required_skills.length > 0 && (
+                    <div>
+                      <h4 className="text-base font-semibold text-[#20263e] mb-3">🛠️ 技能需求</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {project.required_skills.map((skill: string) => (
+                          <Badge key={skill} variant="info" className="text-sm py-1 px-3">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 設計風格 (全新開發) */}
+                  {project.new_design_style && project.new_design_style.length > 0 && (
+                    <div>
+                      <h4 className="text-base font-semibold text-[#20263e] mb-3">🎨 設計風格</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {project.new_design_style.map((style: string) => (
+                          <Badge key={style} variant="info" className="text-sm py-1 px-3">
+                            {style}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 整合需求 (全新開發) */}
+                  {project.new_integrations && project.new_integrations.length > 0 && (
+                    <div>
+                      <h4 className="text-base font-semibold text-[#20263e] mb-3">🔌 外部整合</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {project.new_integrations.map((integration: string) => (
+                          <Badge key={integration} variant="info" className="text-sm py-1 px-3">
+                            {integration}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 已知技術棧 (修改維護) */}
+                  {project.maint_known_tech_stack && project.maint_known_tech_stack.length > 0 && (
+                    <div>
+                      <h4 className="text-base font-semibold text-[#20263e] mb-3">🏗️ 現有技術棧</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {project.maint_known_tech_stack.map((tech: string) => (
+                          <Badge key={tech} variant="info" className="text-sm py-1 px-3">
+                            {tech}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 預期交付項目 (全新開發) */}
+                  {project.new_outputs && project.new_outputs.length > 0 && (
+                    <div>
+                      <h4 className="text-base font-semibold text-[#20263e] mb-3">📦 預期交付項目</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {project.new_outputs.map((output: string, index: number) => (
+                          <Badge key={index} variant="info" className="text-sm py-1 px-3">
+                            {output}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
+            )}
 
-              <div className="space-y-4 mb-6 pt-6 border-t border-gray-100">
-                <div className="flex justify-between items-center">
-                  <span className="text-[#c5ae8c]">付款方式</span>
-                  <span className="font-medium text-[#20263e]">
-                    {project.payment_method === "installment"
-                      ? "分期付款"
-                      : project.payment_method === "milestone"
-                      ? "里程碑付款"
-                      : project.payment_method === "full_after"
-                      ? "完成後付款"
-                      : "待協商"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[#c5ae8c]">期望開始</span>
-                  <span className="font-medium text-[#20263e]">
-                    {project.start_date ? new Date(project.start_date).toLocaleDateString("zh-TW") : "可議"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[#c5ae8c]">期望完成</span>
-                  <span className="font-medium text-[#20263e]">
-                    {project.deadline ? new Date(project.deadline).toLocaleDateString("zh-TW") : "可議"}
-                  </span>
-                </div>
-              </div>
-
-              {isOwner ? (
-                <div className="bg-[#f0f9ff] p-4 rounded-lg text-center">
-                  <p className="text-blue-800 font-medium">這是您發布的案件</p>
-                  <p className="text-sm text-blue-600 mt-1">目前有 {project._count?.bids || 0} 個投標</p>
-                </div>
-              ) : (
-                <ProjectDetailClient 
-                  projectId={project.id} 
-                  projectTitle={project.title}
-                  isOwner={false} 
-                  userId={userId || undefined} 
-                />
-              )}
-            </Card>
-
-            {/* 發案者資訊 */}
-            <Card className="p-6">
+            {/* 關於發案者 */}
+            <hr className="border-[#20263e] border-2 my-6" />
+            <section>
               <h3 className="text-lg font-bold text-[#20263e] mb-4">關於發案者</h3>
-              <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-4">
                 <div className="w-14 h-14 bg-[#20263e] rounded-full flex items-center justify-center text-white text-xl font-bold">
                   {project.client.name[0]}
                 </div>
-                <div>
-                  <p className="font-bold text-lg text-[#20263e]">
-                    {project.client.name}
-                  </p>
-                  <div className="flex items-center gap-1 text-[#fbbf24]">
-                    {"★".repeat(Math.round(project.client.rating || 0))}
-                    <span className="text-[#c5ae8c] text-sm ml-1">
-                      ({project.client.rating || "尚無評分"})
-                    </span>
+                <div className="flex items-center gap-6">
+                  <div>
+                    <p className="font-bold text-lg text-[#20263e]">
+                      {project.client.name}
+                    </p>
+                    <div className="flex items-center gap-1 text-[#fbbf24]">
+                      {"★".repeat(Math.round(project.client.rating || 0))}
+                      <span className="text-[#c5ae8c] text-sm ml-1">
+                        ({project.client.rating || "尚無評分"})
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2 text-sm">
+                    <div className="flex items-center gap-2 text-[#20263e]">
+                      <span>📧</span>
+                      <span>Email 已驗證</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[#20263e]">
+                      <span>📱</span>
+                      <span>電話已驗證</span>
+                    </div>
                   </div>
                 </div>
               </div>
-              
-              <div className="space-y-3 text-sm">
-                <div className="flex items-center gap-2 text-[#20263e]">
-                  <span className="w-6 text-center">📧</span>
-                  <span>Email 已驗證</span>
-                </div>
-                <div className="flex items-center gap-2 text-[#20263e]">
-                  <span className="w-6 text-center">📱</span>
-                  <span>電話已驗證</span>
-                </div>
-              </div>
-
-              {!isOwner && (
-                <Button variant="outline" className="w-full mt-6">
-                  發送訊息
-                </Button>
-              )}
-            </Card>
+            </section>
           </div>
         </div>
         </div>
@@ -547,21 +556,6 @@ function NewDevelopmentDetails({ project }: { project: any }) {
         </div>
       )}
 
-      {/* 交付項目 */}
-      {project.new_outputs && project.new_outputs.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold text-[#20263e] mb-4 border-l-4 border-[#20263e] pl-3">
-            預期交付項目
-          </h3>
-          <div className="flex flex-wrap gap-3">
-            {project.new_outputs.map((output: string, index: number) => (
-              <span key={index} className="px-4 py-2 bg-[#fff] border border-[#e5e7eb] rounded-full text-[#20263e] shadow-sm">
-                📦 {output}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* 交付物清單 (檔案/文件) */}
       {project.new_deliverables && project.new_deliverables.length > 0 && (
