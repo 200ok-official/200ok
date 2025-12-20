@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { Button } from "@/components/ui/Button";
 import { apiGet, apiPost, clearAuth, isAuthenticated } from "@/lib/api";
 
 export const Navbar: React.FC = () => {
@@ -119,30 +118,30 @@ export const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center space-x-6 ml-8">
             <Link
               href="/projects"
-              className={`hover:text-[#c5ae8c] transition-colors relative ${
+              className={`hover:text-[#c5ae8c] transition-colors relative group ${
                 pathname === "/projects" || pathname?.startsWith("/projects/")
                   ? "after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1px] after:bg-[#c5ae8c]"
-                  : ""
+                  : "after:content-[''] after:absolute after:bottom-0 after:left-0 after:h-[1px] after:bg-[#c5ae8c] after:w-0 after:transition-all after:duration-300 hover:after:w-full"
               }`}
             >
               探索案件
             </Link>
             <Link
               href="/freelancers"
-              className={`hover:text-[#c5ae8c] transition-colors relative ${
+              className={`hover:text-[#c5ae8c] transition-colors relative group ${
                 pathname === "/freelancers" || pathname?.startsWith("/freelancers/")
                   ? "after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1px] after:bg-[#c5ae8c]"
-                  : ""
+                  : "after:content-[''] after:absolute after:bottom-0 after:left-0 after:h-[1px] after:bg-[#c5ae8c] after:w-0 after:transition-all after:duration-300 hover:after:w-full"
               }`}
             >
               尋找接案工程師
             </Link>
             <Link
               href="/how-it-works"
-              className={`hover:text-[#c5ae8c] transition-colors relative ${
+              className={`hover:text-[#c5ae8c] transition-colors relative group ${
                 pathname === "/how-it-works" || pathname?.startsWith("/how-it-works/")
                   ? "after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1px] after:bg-[#c5ae8c]"
-                  : ""
+                  : "after:content-[''] after:absolute after:bottom-0 after:left-0 after:h-[1px] after:bg-[#c5ae8c] after:w-0 after:transition-all after:duration-300 hover:after:w-full"
               }`}
             >
               如何運作
@@ -279,15 +278,18 @@ export const Navbar: React.FC = () => {
               </>
             ) : (
               <>
-                <Link href="/login">
-                  <Button variant="secondary" size="sm">
-                    登入
-                  </Button>
+                <Link 
+                  href="/login"
+                  className="hover:text-[#c5ae8c] transition-colors"
+                >
+                  登入
                 </Link>
-                <Link href="/register">
-                  <Button variant="secondary" size="sm">
-                    註冊
-                  </Button>
+                <div className="w-px h-5 bg-[#c5ae8c]"></div>
+                <Link 
+                  href="/register"
+                  className="hover:text-[#c5ae8c] transition-colors"
+                >
+                  註冊
                 </Link>
               </>
             )}
