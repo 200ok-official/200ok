@@ -158,9 +158,10 @@ export default function ProjectsPage() {
     <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
       <Navbar />
 
-      <main className="flex-1 w-full pt-24 px-4 pb-8">
-        {/* Full-width Rounded Hero Section */}
-        <div className="w-full max-w-[98%] mx-auto bg-[#20263e] rounded-[2.5rem] py-20 px-6 md:px-12 shadow-2xl overflow-hidden relative mb-12">
+      <main className="flex-1 w-full pt-24 pb-8 px-8 md:px-16 lg:px-40 xl:px-40 2xl:px-40">
+        {/* Hero Section - 與卡片列表同寬 */}
+        <div className="max-w-6xl mx-auto mb-12">
+          <div className="bg-[#20263e] rounded-[2.5rem] py-20 px-6 md:px-12 shadow-2xl overflow-hidden relative">
           {/* Decorative Background Elements */}
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
             <div className="absolute -top-24 -left-24 w-96 h-96 bg-white rounded-full blur-[100px]"></div>
@@ -218,9 +219,10 @@ export default function ProjectsPage() {
               </div>
             </div>
           </div>
+          </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto">
           {/* 載入狀態 */}
         {loading && (
           <div className="text-center py-12">
