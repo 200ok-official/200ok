@@ -17,6 +17,7 @@ interface Project {
   budget_max: number;
   status: string;
   created_at: string;
+  required_skills?: string[];
   client: {
     name: string;
     avatar_url?: string;

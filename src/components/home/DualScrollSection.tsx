@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { formatRelativeTime } from "@/lib/utils";
 
 // Interfaces copied from page.tsx to ensure type safety
 export interface Project {
@@ -18,6 +19,7 @@ export interface Project {
   client: {
     id: string;
     name: string;
+    avatar_url?: string;
   };
 }
 
@@ -173,29 +175,44 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
               ) : projects.length > 0 ? (
                 <>
                   {projects.slice(0, 5).map((project) => (
-                    <Card key={project.id} className="p-6 hover:shadow-lg transition-all border-2 border-[#c5ae8c] hover:border-[#20263e] flex-shrink-0 w-80 bg-white/90 backdrop-blur-sm">
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className="text-lg font-semibold text-[#20263e] line-clamp-2 h-14">
-                          {project.title}
-                        </h3>
-                        <Badge variant="default" className="bg-green-500 text-white text-xs shrink-0">
-                          開放中
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-[#c5ae8c] mb-3">
-                        由 {project.client?.name || '未知'} 發起
-                      </div>
-                      <div className="flex justify-between items-center mt-auto">
-                        <span className="text-lg font-bold text-[#20263e]">
-                          ${project.budget_min.toLocaleString()}
-                        </span>
-                        <Link href={`/projects/${project.id}`}>
-                          <Button size="sm" className="bg-[#20263e] hover:bg-[#2d3550] text-white">
-                            查看詳情
-                          </Button>
-                        </Link>
-                      </div>
-                    </Card>
+                    <Link key={project.id} href={`/projects/${project.id}`}>
+                      <Card className="p-6 transition-all duration-300 border-2 border-[#c5ae8c] hover:border-[#20263e] flex-shrink-0 w-80 bg-white/90 backdrop-blur-sm cursor-pointer hover:shadow-lg hover:-translate-y-1">
+                        <div className="mb-4">
+                          <h3 className="text-2xl font-bold text-[#20263e] line-clamp-2 h-20">
+                            {project.title}
+                          </h3>
+                        </div>
+                        
+                        <div className="flex justify-between items-end mt-auto">
+                          {/* Left side: Avatar and Time */}
+                          <div className="flex items-center gap-3">
+                            <div className="flex-shrink-0">
+                              {project.client?.avatar_url ? (
+                                <img
+                                  src={project.client.avatar_url}
+                                  alt={project.client.name}
+                                  className="w-10 h-10 rounded-full object-cover border border-[#c5ae8c]"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-[#20263e] flex items-center justify-center text-white font-medium border border-[#c5ae8c]">
+                                  {project.client?.name?.[0] || '?'}
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-sm text-[#c5ae8c]">
+                              {formatRelativeTime(project.created_at)}
+                            </span>
+                          </div>
+
+                          {/* Right side: Budget */}
+                          <div className="text-right">
+                            <span className="text-xl font-bold text-[#20263e]">
+                              ${project.budget_min.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      </Card>
+                    </Link>
                   ))}
                   {/* "See More" Card at the end */}
                   <div className="flex-shrink-0 w-48 h-48 flex items-center justify-center">

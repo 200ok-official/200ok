@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -20,6 +20,12 @@ export default function ProjectDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [sidebarPadding, setSidebarPadding] = useState(0);
+  
+  const leftColumnRef = useRef<HTMLDivElement>(null);
+  const budgetDividerRef = useRef<HTMLHRElement>(null);
+  const rightColumnRef = useRef<HTMLDivElement>(null);
+  const clientDividerRef = useRef<HTMLHRElement>(null);
 
   useEffect(() => {
     // 獲取當前登入用戶
@@ -38,6 +44,53 @@ export default function ProjectDetailPage({
     // 獲取案件數據
     fetchProject(token);
   }, [params.id]);
+
+  // 計算並對齊分隔線
+  useEffect(() => {
+    if (!project || !budgetDividerRef.current || !clientDividerRef.current || !leftColumnRef.current || !rightColumnRef.current) {
+      return;
+    }
+
+    const calculateAlignment = () => {
+      const budgetDivider = budgetDividerRef.current;
+      const clientDivider = clientDividerRef.current;
+      const leftColumn = leftColumnRef.current;
+      const rightColumn = rightColumnRef.current;
+
+      if (!budgetDivider || !clientDivider || !leftColumn || !rightColumn) return;
+
+      // 獲取分隔線相對於各自容器的位置
+      const leftRect = leftColumn.getBoundingClientRect();
+      const rightRect = rightColumn.getBoundingClientRect();
+      const budgetRect = budgetDivider.getBoundingClientRect();
+      const clientRect = clientDivider.getBoundingClientRect();
+
+      // 計算分隔線相對於容器頂部的距離
+      const budgetOffsetFromTop = budgetRect.top - leftRect.top;
+      const clientOffsetFromTop = clientRect.top - rightRect.top;
+
+      // 計算需要的底部填充
+      // 如果左側的分隔線位置更低，右側需要更多填充
+      const difference = budgetOffsetFromTop - clientOffsetFromTop;
+      
+      // 設定最小底部空間為 8rem (128px)
+      const minPadding = 128;
+      const calculatedPadding = Math.max(minPadding, difference > 0 ? difference : minPadding);
+      
+      setSidebarPadding(calculatedPadding);
+    };
+
+    // 延遲計算確保 DOM 完全渲染
+    const timer = setTimeout(calculateAlignment, 300);
+
+    // 監聽視窗大小變化
+    window.addEventListener('resize', calculateAlignment);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', calculateAlignment);
+    };
+  }, [project]);
 
   const fetchProject = async (token: string | null) => {
     try {
@@ -141,8 +194,8 @@ export default function ProjectDetailPage({
 
       <main className="flex-1 py-10 px-4">
         <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        {/* 頁首 */}
-        <div className="mb-8">
+          {/* 頁首 */}
+          <div className="mb-8">
           <div className="flex items-center gap-2 text-sm text-[#c5ae8c] mb-2">
             <a href="/projects" className="hover:text-[#20263e]">
               案件列表
@@ -163,7 +216,7 @@ export default function ProjectDetailPage({
                       : project.status === "draft"
                       ? "default"
                       : project.status === "in_progress"
-                      ? "info"
+                      ? "khaki"
                       : "danger"
                   }
                 >
@@ -173,7 +226,7 @@ export default function ProjectDetailPage({
                     ? "進行中"
                     : "已結案"}
                 </Badge>
-                <Badge variant={isNewDevelopment ? "default" : "info"}>
+                <Badge variant={isNewDevelopment ? "khaki" : "khaki"}>
                   {isNewDevelopment ? "全新開發" : "修改維護"}
                 </Badge>
               </div>
@@ -196,7 +249,7 @@ export default function ProjectDetailPage({
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 左側主要內容 */}
-          <div className="lg:col-span-2 space-y-8">
+          <div ref={leftColumnRef} className="lg:col-span-2 space-y-8">
             {/* 合併所有內容到一個 Card */}
             <section>
               <Card className="p-8 bg-transparent shadow-none border-0">
@@ -299,7 +352,7 @@ export default function ProjectDetailPage({
                                 href={link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                                        className="text-[#20263e] hover:text-[#c5ae8c] hover:underline"
                               >
                                         {linkText}
                               </a>
@@ -347,7 +400,7 @@ export default function ProjectDetailPage({
                   )}
 
                   {/* 專案預算與付款資訊 */}
-                  <hr className="border-[#20263e] border" />
+                  <hr ref={budgetDividerRef} className="border-[#20263e] border" />
                   
                   <div>
                     <div className="mb-6">
@@ -449,7 +502,7 @@ export default function ProjectDetailPage({
                           <Badge
                             variant={
                               bid.status === "pending"
-                                ? "info"
+                                ? "khaki"
                                 : bid.status === "accepted"
                                 ? "success"
                                 : "danger"
@@ -483,7 +536,8 @@ export default function ProjectDetailPage({
           </div>
 
           {/* 右側邊欄 */}
-          <div className="space-y-6">
+          <div ref={rightColumnRef} className="space-y-6 flex flex-col h-full">
+            <div className="sticky top-24 space-y-6">
 
             {/* 技術規格 */}
             {(project.required_skills?.length > 0 || project.new_design_style?.length > 0 || project.new_integrations?.length > 0 || project.maint_known_tech_stack?.length > 0 || project.new_outputs?.length > 0) && (
@@ -501,7 +555,7 @@ export default function ProjectDetailPage({
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {project.required_skills.map((skill: string) => (
-                          <Badge key={skill} variant="info" className="text-sm py-1 px-3">
+                          <Badge key={skill} variant="khaki" className="text-sm py-1 px-3">
                             {skill}
                           </Badge>
                         ))}
@@ -520,7 +574,7 @@ export default function ProjectDetailPage({
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {project.new_design_style.map((style: string) => (
-                          <Badge key={style} variant="info" className="text-sm py-1 px-3">
+                          <Badge key={style} variant="khaki" className="text-sm py-1 px-3">
                             {style}
                           </Badge>
                         ))}
@@ -539,7 +593,7 @@ export default function ProjectDetailPage({
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {project.new_integrations.map((integration: string) => (
-                          <Badge key={integration} variant="info" className="text-sm py-1 px-3">
+                          <Badge key={integration} variant="khaki" className="text-sm py-1 px-3">
                             {integration}
                           </Badge>
                         ))}
@@ -558,7 +612,7 @@ export default function ProjectDetailPage({
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {project.maint_known_tech_stack.map((tech: string) => (
-                          <Badge key={tech} variant="info" className="text-sm py-1 px-3">
+                          <Badge key={tech} variant="khaki" className="text-sm py-1 px-3">
                             {tech}
                           </Badge>
                         ))}
@@ -577,7 +631,7 @@ export default function ProjectDetailPage({
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {project.new_outputs.map((output: string, index: number) => (
-                          <Badge key={index} variant="info" className="text-sm py-1 px-3">
+                          <Badge key={index} variant="khaki" className="text-sm py-1 px-3">
                             {output}
                           </Badge>
                         ))}
@@ -589,7 +643,7 @@ export default function ProjectDetailPage({
             )}
 
             {/* 關於發案者 */}
-            <hr className="border-[#20263e] border my-6" />
+            <hr ref={clientDividerRef} className="border-[#20263e] border my-6" />
             <section>
               <h3 className="text-lg font-bold text-[#20263e] mb-4">關於發案者</h3>
               <div className="flex items-center gap-4">
@@ -640,6 +694,10 @@ export default function ProjectDetailPage({
                 </div>
               </div>
             </section>
+            </div>
+            
+            {/* 底部填充，用於對齊 */}
+            <div className="flex-1" style={{ minHeight: `${sidebarPadding}px` }}></div>
           </div>
         </div>
         </div>

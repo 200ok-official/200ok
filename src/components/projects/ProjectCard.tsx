@@ -16,6 +16,12 @@ interface ProjectCardProps {
     status: string;
     created_at: string;
     required_skills?: string[];
+    tags?: Array<{
+      tag: {
+        name: string;
+        color: string;
+      };
+    }>;
     client: {
       name: string;
       avatar_url?: string;
@@ -65,26 +71,36 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               </span>
             </div>
 
-            {/* Body: Description & Skills */}
+            {/* Body: Description & Skills/Tags */}
             <div className="flex-1 mb-8">
-              <p className="text-gray-600 text-lg mb-6 leading-relaxed">
+              <p className="text-gray-600 text-lg mb-6 leading-relaxed line-clamp-3">
                 {project.description}
               </p>
 
-              {project.required_skills && project.required_skills.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {project.required_skills.slice(0, 5).map((skill, index) => (
-                    <Badge key={index} variant="default" className="bg-[#e6dfcf] text-[#20263e] hover:bg-[#d6c2a3] border-none px-3 py-1">
-                      {skill}
+              <div className="flex flex-wrap gap-2">
+                {/* 優先顯示 tags (如果有) */}
+                {project.tags && project.tags.length > 0 ? (
+                  project.tags.slice(0, 5).map((t, index) => (
+                    <Badge key={index} variant="khaki" className="border-none px-3 py-1">
+                      {t.tag.name}
                     </Badge>
-                  ))}
-                  {project.required_skills.length > 5 && (
-                    <Badge variant="default" className="bg-[#e6dfcf] text-[#20263e] hover:bg-[#d6c2a3] border-none px-3 py-1">
-                      +{project.required_skills.length - 5}
-                    </Badge>
-                  )}
-                </div>
-              )}
+                  ))
+                ) : project.required_skills && project.required_skills.length > 0 ? (
+                  /* 否則顯示 required_skills */
+                  <>
+                    {project.required_skills.slice(0, 5).map((skill, index) => (
+                      <Badge key={index} variant="khaki" className="border-none px-3 py-1">
+                        {skill}
+                      </Badge>
+                    ))}
+                    {project.required_skills.length > 5 && (
+                      <Badge variant="khaki" className="border-none px-3 py-1">
+                        +{project.required_skills.length - 5}
+                      </Badge>
+                    )}
+                  </>
+                ) : null}
+              </div>
             </div>
 
             {/* Footer: Client Info */}
