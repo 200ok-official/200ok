@@ -61,7 +61,7 @@ export default function ProjectDetailClient({
             localStorage.setItem('returnUrl', `/projects/${projectId}/submit-proposal`);
             router.push('/login');
           }}
-          className="w-auto mx-auto py-4 text-lg shadow-md hover:shadow-lg transition-all"
+          className="w-full shadow-md hover:shadow-lg transition-all"
           variant="secondary"
         >
           請先登入以提交提案

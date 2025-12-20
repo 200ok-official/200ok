@@ -131,8 +131,6 @@ export default function ProjectDetailPage({
                 >
                   {project.status === "open"
                     ? "開放中"
-                    : project.status === "draft"
-                    ? "草稿"
                     : project.status === "in_progress"
                     ? "進行中"
                     : "已結案"}
@@ -238,18 +236,33 @@ export default function ProjectDetailPage({
                             <div className="md:col-span-2">
                               <h4 className="text-lg font-semibold text-[#20263e] mb-3">🔗 參考資料</h4>
                               <ul className="space-y-2">
-                                {project.reference_links.map((link: string, index: number) => (
-                                  <li key={index}>
-                                    <a
-                                      href={link}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-blue-600 hover:text-blue-800 hover:underline break-all"
-                                    >
-                                      {link}
-                                    </a>
-                                  </li>
-                                ))}
+                                {project.reference_links.map((link: string, index: number) => {
+                                  // 从 URL 提取域名作为显示文字
+                                  const getLinkText = (url: string): string => {
+                                    try {
+                                      const urlObj = new URL(url);
+                                      return urlObj.hostname.replace('www.', '');
+                                    } catch {
+                                      // 如果不是有效 URL，返回原字符串
+                                      return url;
+                                    }
+                                  };
+
+                                  const linkText = getLinkText(link);
+                                  
+                                  return (
+                                    <li key={index}>
+                                      <a
+                                        href={link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                                      >
+                                        {linkText}
+                                      </a>
+                                    </li>
+                                  );
+                                })}
                               </ul>
                             </div>
                           )}
@@ -542,13 +555,13 @@ function NewDevelopmentDetails({ project }: { project: any }) {
       {/* 功能需求列表 */}
       {project.new_features && project.new_features.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-[#20263e] mb-4 border-l-4 border-[#20263e] pl-3">
+          <h3 className="text-lg font-semibold text-[#20263e] mb-3 border-l-4 border-[#20263e] pl-3">
             功能需求
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {project.new_features.map((feature: string, index: number) => (
-              <div key={index} className="flex items-start gap-3 p-3">
-                <span className="text-[#20263e] mt-1">✅</span>
+              <div key={index} className="flex items-center gap-2">
+                <span className="text-[#20263e]">✅</span>
                 <span className="text-[#20263e]">{feature}</span>
               </div>
             ))}
