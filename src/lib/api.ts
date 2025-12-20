@@ -277,12 +277,19 @@ export function isAuthenticated(): boolean {
 
 /**
  * 登出（清除本地認證資訊）
+ * 
+ * 注意：不清除 remember_me_data，讓使用者下次登入時仍能自動填入 email
+ * 如果需要在登出時也清除「記住我」，請取消註解下方的 clearRememberMe() 呼叫
  */
 export function clearAuth(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
   localStorage.removeItem('user');
+  
+  // 保留「記住我」的 email（推薦）
+  // 如果想在登出時也清除記住的 email，取消下一行的註解：
+  // clearRememberMe();
 }
 
 // Export API_BASE_URL for direct use if needed
