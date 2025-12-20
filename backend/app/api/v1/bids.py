@@ -14,6 +14,7 @@ from ...db import get_db, parse_pg_array
 from ...models.user import User
 from ...models.project import ProjectStatus
 from ...models.bid import BidStatus
+from ...models.conversation import ConversationType
 from ...models.notification import NotificationType
 from ...schemas.bid import BidCreate, BidResponse
 from ...schemas.common import SuccessResponse
