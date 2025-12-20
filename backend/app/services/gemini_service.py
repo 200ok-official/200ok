@@ -13,7 +13,7 @@ class GeminiService:
     def __init__(self):
         self.api_key = settings.GEMINI_API_KEY
         self.base_url = "https://generativelanguage.googleapis.com/v1beta"
-        self.model = "gemini-pro"  # 或使用 "gemini-pro-vision" 如果支援圖片
+        self.model = "gemini-2.5-flash"  # 或使用 "gemini-pro-vision" 如果支援圖片
     
     def _get_headers(self) -> dict:
         """取得 API 請求 headers"""
@@ -100,6 +100,60 @@ class GeminiService:
 請生成摘要："""
         
         return await self.generate_text(prompt, max_tokens=200, temperature=0.5)
+    
+    async def generate_project_title(self, project_data: dict) -> Optional[str]:
+        """
+        根據專案類型和內容生成合適的專案標題
+        
+        Args:
+            project_data: 專案資料字典，包含 project_type, description 等
+            
+        Returns:
+            生成的專案標題（10-30字）
+        """
+        project_type = project_data.get('project_type', '')
+        description = project_data.get('description', '')
+        usage_scenario = project_data.get('new_usage_scenario', '')
+        goals = project_data.get('new_goals', '')
+        system_name = project_data.get('maint_system_name', '')
+        
+        # 構建提示詞
+        if system_name:
+            # 修改維護專案
+            prompt = f"""請為以下系統維護專案生成一個簡潔明確的標題（5-15字），標題應該：
+1. 包含系統名稱
+2. 簡要說明維護/改善的重點
+
+系統名稱：{system_name}
+專案類型：{project_type}
+專案描述：{description[:200]}
+
+請只輸出標題，不要有其他說明："""
+        else:
+            # 全新開發專案
+            prompt = f"""請為以下軟體開發專案生成一個簡潔明確的標題（5-15字），標題應該：
+1. 體現專案類型（{project_type}）
+2. 說明核心功能或目標
+3. 專業且清楚明瞭
+
+專案類型：{project_type}
+使用場景：{usage_scenario[:150]}
+專案目標：{goals[:150]}
+專案描述：{description[:200]}
+
+請只輸出標題，不要有其他說明或引號："""
+        
+        result = await self.generate_text(prompt, max_tokens=50, temperature=0.7)
+        
+        if result:
+            # 清理結果，移除可能的引號和多餘空白
+            title = result.strip().strip('"').strip("'").strip()
+            # 限制長度
+            if len(title) > 50:
+                title = title[:47] + "..."
+            return title
+        
+        return None
     
     async def extract_skills(self, project_description: str) -> List[str]:
         """

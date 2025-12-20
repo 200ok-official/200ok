@@ -15,17 +15,12 @@ interface ProjectCardProps {
     budget_max: number;
     status: string;
     created_at: string;
+    required_skills?: string[];
     client: {
       name: string;
       avatar_url?: string;
       rating: number | null;
     };
-    tags?: Array<{
-      tag: {
-        name: string;
-        color?: string;
-      };
-    }>;
     bids_count?: number;
   };
   showActions?: boolean;
@@ -70,22 +65,22 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               </span>
             </div>
 
-            {/* Body: Description & Tags */}
+            {/* Body: Description & Skills */}
             <div className="flex-1 mb-8">
               <p className="text-gray-600 text-lg mb-6 leading-relaxed">
                 {project.description}
               </p>
 
-              {project.tags && project.tags.length > 0 && (
+              {project.required_skills && project.required_skills.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {project.tags.slice(0, 5).map((pt, index) => (
+                  {project.required_skills.slice(0, 5).map((skill, index) => (
                     <Badge key={index} variant="default" className="bg-[#e6dfcf] text-[#20263e] hover:bg-[#d6c2a3] border-none px-3 py-1">
-                      {pt.tag.name}
+                      {skill}
                     </Badge>
                   ))}
-                  {project.tags.length > 5 && (
+                  {project.required_skills.length > 5 && (
                     <Badge variant="default" className="bg-[#e6dfcf] text-[#20263e] hover:bg-[#d6c2a3] border-none px-3 py-1">
-                      +{project.tags.length - 5}
+                      +{project.required_skills.length - 5}
                     </Badge>
                   )}
                 </div>

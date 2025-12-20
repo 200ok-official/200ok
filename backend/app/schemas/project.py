@@ -26,7 +26,6 @@ class ProjectBase(BaseModel):
     required_skills: Optional[List[str]] = None
     reference_links: Optional[List[str]] = None
     special_requirements: Optional[str] = None
-    tag_ids: Optional[List[UUID]] = None
 
 
 class ProjectCreateNewDev(ProjectBase):
@@ -87,7 +86,6 @@ class ProjectUpdate(BaseModel):
     deadline_flexible: Optional[bool] = None
     required_skills: Optional[List[str]] = None
     status: Optional[ProjectStatus] = None
-    tag_ids: Optional[List[UUID]] = None
     # ... 其他可更新欄位
 
 

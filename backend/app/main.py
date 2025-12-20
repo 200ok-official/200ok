@@ -18,7 +18,6 @@ from .api.v1 import (
     bids,
     conversations,
     tokens,
-    tags,
     reviews,
     saved_projects,
     connections,
@@ -183,7 +182,6 @@ app.include_router(users.router, prefix="/api/v1", tags=["users"])
 app.include_router(bids.router, prefix="/api/v1", tags=["bids"])
 app.include_router(conversations.router, prefix="/api/v1", tags=["conversations"])
 app.include_router(tokens.router, prefix="/api/v1", tags=["tokens"])
-app.include_router(tags.router, prefix="/api/v1", tags=["tags"])
 app.include_router(reviews.router, prefix="/api/v1", tags=["reviews"])
 app.include_router(saved_projects.router, prefix="/api/v1", tags=["saved-projects"])
 app.include_router(connections.router, prefix="/api/v1", tags=["connections"])
