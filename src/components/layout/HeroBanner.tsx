@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { cubicBezier } from "framer-motion";
@@ -9,6 +9,7 @@ export const HeroBanner: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const leftShapeRef = useRef<HTMLDivElement>(null);
   const rightShapeRef = useRef<HTMLDivElement>(null);
+  const [textProgress, setTextProgress] = useState(0);
 
   // Define easing curve (Standard Ease-In-Out)
   // This curve starts slow, speeds up in the middle, and slows down at the end
@@ -20,7 +21,7 @@ export const HeroBanner: React.FC = () => {
     // 動畫距離倍數（相對於視窗高度）
     // 例如：1.5 表示需要滾動 1.5 個視窗高度才會完成動畫
     // 數值越大，動畫時間越長
-    animationDistanceMultiplier: 2,
+    animationDistanceMultiplier: 3,
     
     // 初始偏移量（像素）
     // 兩個圖形初始位置的間距，數值越大，初始分開越遠
@@ -47,6 +48,9 @@ export const HeroBanner: React.FC = () => {
       
       // Apply easing to the progress
       const progress = ease(linearProgress);
+
+      // 更新文字顯示進度
+      setTextProgress(progress);
 
       // 計算圖形移動距離（從中間向兩側滑開）
       // 左邊圖形：從 -initialOffset 開始，向左移動到 -(initialOffset + maxTranslate)
@@ -86,6 +90,18 @@ export const HeroBanner: React.FC = () => {
 
   // 計算容器高度（與動畫距離一致）
   const containerHeight = `${animationConfig.animationDistanceMultiplier * 100}vh`;
+
+  // 文字內容
+  const subtitleText = "透過 AI 輔助與引導式流程，讓需求更清晰，合作更順暢";
+  
+  // 計算需要顯示的文字數量（降低倍數讓動畫更慢）
+  // 使用 Math.min 確保最大值為 1
+  const textDisplayProgress = Math.min(1, textProgress * 1.5);
+  const visibleCharCount = Math.floor(textDisplayProgress * subtitleText.length);
+  const displayText = subtitleText.slice(0, visibleCharCount);
+
+  // 按鈕出現進度（延遲到文字進度 40% 後才開始出現，讓按鈕更晚出現）
+  const buttonProgress = Math.max(0, Math.min(1, (textProgress - 0.4) / 0.6));
 
   return (
     <div 
@@ -173,12 +189,60 @@ export const HeroBanner: React.FC = () => {
               歡迎來到 200 OK
             </h1>
             <p className="text-xl md:text-2xl text-[#20263e] mb-4 opacity-90">
-              專為軟體工程設計的接案平台
+              專為
+              <span className="relative inline-block mx-1">
+                <span 
+                  className="absolute inset-0 bg-[#c5ae8c] opacity-40"
+                  style={{ 
+                    width: `${textDisplayProgress * 100}%`,
+                    left: 0
+                  }}
+                />
+                <span className="relative">
+                  {['軟', '體', '工', '程'].map((char, index) => {
+                    // 每個字佔據 25% 的範圍
+                    const charStart = index * 0.25;
+                    const charEnd = (index + 1) * 0.25;
+                    // 計算該字的粗體進度（0-1）
+                    const charProgress = Math.min(1, Math.max(0, (textDisplayProgress - charStart) / 0.25));
+                    // 當螢光筆進入該字的範圍就開始變粗
+                    const isBold = textDisplayProgress > (charStart+charEnd)/2;
+                    return (
+                      <span
+                        key={index}
+                        className="transition-all duration-200"
+                        style={{
+                          fontWeight: isBold ? 700 : 400
+                        }}
+                      >
+                        {char}
+                      </span>
+                    );
+                  })}
+                </span>
+              </span>
+              設計的接案平台
             </p>
-            <p className="text-lg md:text-xl text-[#c5ae8c] mb-8 max-w-2xl mx-auto">
-              透過 AI 輔助與引導式流程，讓需求更清晰，合作更順暢
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <div className="relative mb-8">
+              {/* 底線 - 根據文字進度顯示 */}
+              <div 
+                className="absolute left-1/2 transform -translate-x-1/2 h-0.5 bg-[#c5ae8c] transition-all duration-300"
+                style={{ 
+                  width: `${textDisplayProgress * 100}%`,
+                  bottom: '-8px'
+                }}
+              />
+              <p className="text-lg md:text-xl text-[#c5ae8c] max-w-2xl mx-auto min-h-[2em]">
+                {displayText}
+              </p>
+            </div>
+            <div 
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center origin-center"
+              style={{
+                transform: `scale(${buttonProgress})`,
+                opacity: buttonProgress
+              }}
+            >
               <Link href="/projects/new">
                 <Button
                   size="lg"

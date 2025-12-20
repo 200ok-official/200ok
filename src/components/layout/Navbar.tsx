@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { apiGet, apiPost, clearAuth, isAuthenticated } from "@/lib/api";
@@ -104,7 +105,15 @@ export const Navbar: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold">200 OK</span>
+            <span className="text-3xl font-bold text-[#c5ae8c] hidden md:inline"> 200 </span>
+            <Image
+              src="/200ok_logo_light.png"
+              alt="200 OK Logo"
+              width={120}
+              height={120}
+              className="h-8 w-auto"
+            />
+
           </Link>
 
           {/* Navigation Links */}
