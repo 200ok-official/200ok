@@ -23,8 +23,9 @@ class Settings(BaseSettings):
     # JWT 設定
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
-    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
-    JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    # 設定為 365 天，幾乎等於永久登入
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 小時（24 * 60）
+    JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 1  # 1 天
     
     # CORS 設定
     CORS_ORIGINS: Union[str, List[str]] = ["http://localhost:3000", "http://localhost:3001"]
