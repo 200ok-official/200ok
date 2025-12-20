@@ -123,9 +123,15 @@ export const HeroBanner: React.FC = () => {
   
   // 計算需要顯示的文字數量（降低倍數讓動畫更慢）
   // 使用 Math.min 確保最大值為 1
-  const textDisplayProgress = Math.min(1, textProgress * 1.5);
-  const visibleCharCount = Math.floor(textDisplayProgress * subtitleText.length);
+  const rawProgress = Math.min(1, textProgress * 1.5);
+  const visibleCharCount = Math.floor(rawProgress * subtitleText.length);
   const displayText = subtitleText.slice(0, visibleCharCount);
+  
+  // 打字机风格的文字显示进度（用于"軟體工程"和游标）
+  // 将平滑进度转换为离散的步骤，每个字符占一个步骤，模拟打字机效果
+  const typingSteps = 4; // "軟體工程"有4个字符
+  const typingStepProgress = Math.floor(rawProgress * typingSteps);
+  const textDisplayProgress = typingStepProgress / typingSteps;
 
   // 按鈕出現進度（延遲到文字進度 40% 後才開始出現，在 85% 時完全顯示）
   const buttonProgress = Math.max(0, Math.min(1, (textProgress - 0.4) / 0.45));
@@ -194,16 +200,15 @@ export const HeroBanner: React.FC = () => {
                     // 每個字佔據 25% 的範圍
                     const charStart = index * 0.25;
                     const charEnd = (index + 1) * 0.25;
-                    // 計算該字的粗體進度（0-1）
-                    const charProgress = Math.min(1, Math.max(0, (textDisplayProgress - charStart) / 0.25));
-                    // 當螢光筆進入該字的範圍就開始變粗
-                    const isBold = textDisplayProgress > (charStart+charEnd)/2;
+                    // 當游標到達該字的右邊時才顯示（游標經過後才出現）
+                    const isVisible = textDisplayProgress >= charEnd;
                     return (
                       <span
                         key={index}
                         className="transition-all duration-200"
                         style={{
-                          fontWeight: isBold ? 700 : 400
+                          fontWeight: 700, // 直接顯示為粗體
+                          opacity: isVisible ? 1 : 0
                         }}
                       >
                         {char}
@@ -211,6 +216,14 @@ export const HeroBanner: React.FC = () => {
                     );
                   })}
                 </span>
+                {/* 打字游標效果 */}
+                <span
+                  className="absolute top-0 bottom-0 w-0.5 bg-[#20263e] opacity-80"
+                  style={{
+                    left: `${textDisplayProgress * 100}%`,
+                    animation: 'blink 1s infinite'
+                  }}
+                />
               </span>
               設計的接案平台
             </p>
@@ -236,8 +249,8 @@ export const HeroBanner: React.FC = () => {
             >
               <Link href="/projects/new">
                 <Button
-                  size="lg"
-                  className="bg-[#20263e] hover:bg-[#2d3550] text-white px-8 py-4 text-lg"
+                  size="md"
+                  className="bg-[#20263e] hover:bg-[#2d3550] text-white px-8 py-3 text-lg"
                 >
                   發布案件
                 </Button>
@@ -245,10 +258,10 @@ export const HeroBanner: React.FC = () => {
               <Link href="/projects">
                 <Button
                   variant="outline"
-                  size="lg"
-                  className="border-2 border-[#20263e] text-[#20263e] hover:bg-[#20263e] hover:text-white px-8 py-4 text-lg"
+                  size="md"
+                  className="border-2 border-[#20263e] text-[#20263e] px-8 py-3 text-lg hover:bg-transparent hover:text-[#20263e]"
                 >
-                  瀏覽案件
+                  探索案件
                 </Button>
               </Link>
             </div>

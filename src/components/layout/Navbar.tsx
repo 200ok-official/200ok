@@ -106,15 +106,13 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-3xl font-bold text-[#f0ebe0] hidden md:inline" style={{ fontFamily: "'Noto Serif TC', serif" }}> 200 </span>
             <Image
               src="/200ok_logo_light.png"
               alt="200 OK Logo"
-              width={120}
-              height={120}
-              className="h-8 w-auto"
+              width={140}
+              height={140}
+              className="h-10 w-auto"
             />
-
           </Link>
 
           {/* Navigation Links */}

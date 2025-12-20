@@ -106,6 +106,12 @@
     animation: manual-shake 0.5s cubic-bezier(.36,.07,.19,.97) both !important;
     transition: none !important; /* 震動時停用 transition 以免衝突 */
   }
+
+  /* 打字游標閃爍動畫 */
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
 }
 
 @layer utilities {

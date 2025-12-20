@@ -74,8 +74,8 @@ export const CTASection = () => {
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button 
                   variant="secondary" 
-                  size="lg" 
-                  className="px-8 py-6 text-lg bg-[#c5ae8c] hover:bg-[#b09b7c] text-[#20263e] font-bold border-none shadow-[0_0_20px_rgba(197,174,140,0.3)] hover:shadow-[0_0_30px_rgba(197,174,140,0.5)] transition-all"
+                  size="md" 
+                  className="px-8 py-3 text-lg bg-[#c5ae8c] hover:bg-[#b09b7c] text-[#20263e] font-bold border-none transition-all"
                 >
                   發布案件
                 </Button>
@@ -86,10 +86,10 @@ export const CTASection = () => {
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button 
                   variant="outline" 
-                  size="lg" 
-                  className="px-8 py-6 text-lg border-2 border-white/20 text-white hover:bg-white hover:text-[#20263e] backdrop-blur-sm"
+                  size="md" 
+                  className="px-8 py-3 text-lg border-2 border-white/20 text-white backdrop-blur-sm hover:bg-transparent hover:text-white"
                 >
-                  查看案件
+                  探索案件
                 </Button>
               </motion.div>
             </Link>
