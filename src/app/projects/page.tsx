@@ -52,14 +52,59 @@ export default function ProjectsPage() {
   // Animation states
   const { scrollY } = useScroll();
   const [isCompact, setIsCompact] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
-    // 當滾動超過 50px 時切換為緊湊模式
-    // 添加一些緩衝以避免頻繁切換
-    if (latest > 100 && !isCompact) {
+    // 如果動畫正在進行中，忽略所有滾動事件，確保動畫完整執行
+    if (isAnimating) {
+      return;
+    }
+
+    // 雙閾值控制 (Hysteresis)：
+    // collapseThreshold: 下滑超過此值 -> 變小 (Compact)
+    // expandThreshold: 上滑回到此值以內 -> 變大 (Expand)
+    
+    // 下滑：只要滑一點點 (100px) 就變小，讓用戶專注於內容
+    const collapseThreshold = 100;
+    
+    // 上滑：必須滑到非常接近頂部 (10px) 才展開 Hero，
+    // 這樣在中間往上滑看舊內容時，Hero 不會突然變大擋路
+    const expandThreshold = 10;
+    
+    if (latest > collapseThreshold && !isCompact) {
       setIsCompact(true);
-    } else if (latest < 50 && isCompact) {
+      setIsAnimating(true);
+      
+      // 清除之前的 timeout（如果有的話）
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+      
+      // 動畫持續時間 300ms，加上一點 buffer（50ms）確保完全結束
+      animationTimeoutRef.current = setTimeout(() => {
+        setIsAnimating(false);
+      }, 350);
+      
+    } else if (latest < expandThreshold && isCompact) {
+      // 展開時，強制滾動到頂部，避免佈局變化導致的滾動位置改變
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      
       setIsCompact(false);
+      setIsAnimating(true);
+      
+      // 清除之前的 timeout（如果有的話）
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+      
+      // 展開動畫需要更長的鎖定時間（600ms），因為：
+      // 1. 動畫本身需要 300ms
+      // 2. 佈局變化（hero section 變大）會影響頁面高度
+      // 3. 需要額外時間讓瀏覽器穩定滾動位置
+      animationTimeoutRef.current = setTimeout(() => {
+        setIsAnimating(false);
+      }, 600);
     }
   });
 
@@ -67,6 +112,15 @@ export default function ProjectsPage() {
     fetchProjects();
     fetchPopularSkills();
   }, [searchKeyword, selectedSkills, budgetRange]);
+
+  // 清理 animation timeout
+  useEffect(() => {
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -200,7 +254,7 @@ export default function ProjectsPage() {
 
       <main className="flex-1 w-full pt-16 pb-8 px-8 md:px-16 lg:px-40 xl:px-40 2xl:px-40">
         {/* Sticky Hero Section Container */}
-        <div className="sticky top-16 z-30 mb-8 -mx-4 md:-mx-8 lg:-mx-12 transition-all duration-300 pointer-events-none">
+        <div className="sticky top-20 z-30 mb-12 transition-all duration-300 pointer-events-none">
           {/* 
             pointer-events-none on container to let clicks pass through to content below when not hovering the card,
             but we need to re-enable pointer-events on the card itself.
@@ -209,27 +263,26 @@ export default function ProjectsPage() {
             layout
             className={`
               mx-auto bg-[#20263e] shadow-2xl relative pointer-events-auto
-              ${isCompact ? 'rounded-b-2xl shadow-lg' : 'rounded-[2.5rem] mt-8'}
+              ${isCompact ? 'rounded-[2rem] shadow-lg max-w-6xl' : 'rounded-[2.5rem] mt-8 max-w-6xl'}
             `}
             style={{ overflow: isCompact ? 'visible' : 'hidden' }}
             initial={false}
             animate={{
-              width: isCompact ? "100%" : "100%", // 可以根據需要調整寬度，這裡保持全寬但 padding 不同
-              maxWidth: isCompact ? "100%" : "72rem", // max-w-6xl = 72rem
-              paddingTop: isCompact ? "1rem" : "5rem",
-              paddingBottom: isCompact ? "1rem" : "5rem",
+              width: "100%", 
+              paddingTop: isCompact ? "0.75rem" : "5rem",
+              paddingBottom: isCompact ? "0.75rem" : "5rem",
               paddingLeft: isCompact ? "1.5rem" : "3rem",
               paddingRight: isCompact ? "1.5rem" : "3rem",
             }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
           >
             {/* Decorative Background Elements - Fade out in compact mode */}
             <motion.div 
               className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none"
               animate={{ opacity: isCompact ? 0 : 0.1 }}
             >
-              <div className="absolute -top-24 -left-24 w-96 h-96 bg-white rounded-full blur-[100px]"></div>
-              <div className="absolute bottom-0 right-0 w-[30rem] h-[30rem] bg-[#c5ae8c] rounded-full blur-[120px]"></div>
+            <div className="absolute -top-24 -left-24 w-96 h-96 bg-white rounded-full blur-[100px]"></div>
+            <div className="absolute bottom-0 right-0 w-[30rem] h-[30rem] bg-[#c5ae8c] rounded-full blur-[120px]"></div>
             </motion.div>
 
             <div className={`relative z-10 mx-auto ${isCompact ? 'max-w-7xl flex items-center gap-6' : 'max-w-4xl text-center'}`}>
@@ -242,12 +295,12 @@ export default function ProjectsPage() {
                     exit={{ opacity: 0, height: 0, overflow: "hidden" }}
                     transition={{ duration: 0.2 }}
                   >
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 tracking-tight">
-                      探索案件
-                    </h1>
-                    <p className="text-lg md:text-xl text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed">
-                      瀏覽最新的軟體開發案件，找到適合您的專案
-                    </p>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 tracking-tight">
+              探索案件
+            </h1>
+            <p className="text-lg md:text-xl text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed">
+              瀏覽最新的軟體開發案件，找到適合您的專案
+            </p>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -263,15 +316,15 @@ export default function ProjectsPage() {
                     layout
                     className={`relative ${isCompact ? 'w-full' : 'w-full'}`}
                   >
-                    <input
-                      type="text"
+              <input
+                type="text"
                       placeholder={isCompact ? "搜尋案件..." : "搜尋案件標題或描述..."}
                       className={`w-full border-none focus:outline-none focus:ring-4 focus:ring-[#c5ae8c]/50 transition bg-white text-[#20263e] placeholder:text-gray-400
                         ${isCompact ? 'py-2.5 px-5 rounded-full text-sm' : 'px-8 py-5 text-lg rounded-full shadow-lg'}
                       `}
-                      value={searchKeyword}
-                      onChange={(e) => setSearchKeyword(e.target.value)}
-                    />
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+              />
                     
                     <div className={`absolute top-1/2 -translate-y-1/2 flex items-center gap-2 ${isCompact ? 'right-1.5' : 'right-3'}`}>
                        {/* Budget Filter Button */}
@@ -300,10 +353,10 @@ export default function ProjectsPage() {
                         ${isCompact ? 'p-1.5' : 'p-3'}
                       `}>
                         <svg className={`${isCompact ? 'w-4 h-4' : 'w-6 h-6'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                      </button>
-                    </div>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+            </div>
 
                     {/* Budget Filter Popup */}
                     <AnimatePresence>
@@ -392,27 +445,27 @@ export default function ProjectsPage() {
                    </AnimatePresence>
                   
                   <div className={`flex ${isCompact ? 'gap-2 items-center pr-4' : 'flex-wrap gap-3 justify-center'}`}>
-                    {popularSkills.map((skill) => (
-                      <button
-                        key={skill}
+                {popularSkills.map((skill) => (
+                  <button
+                    key={skill}
                         className={`font-medium transition-all duration-300 whitespace-nowrap
                           ${isCompact 
                             ? `px-3 py-1.5 rounded-full text-xs ${selectedSkills.includes(skill) ? "bg-white text-[#20263e]" : "bg-white/10 text-white hover:bg-white/20"}`
                             : `px-5 py-2.5 rounded-full text-sm ${selectedSkills.includes(skill) ? "bg-white text-[#20263e] shadow-[0_0_15px_rgba(255,255,255,0.3)] transform scale-105" : "bg-white/10 text-white border border-white/20 hover:bg-white/20 hover:border-white/40 backdrop-blur-sm"}`
                           }
                         `}
-                        onClick={() => {
-                          if (selectedSkills.includes(skill)) {
-                            setSelectedSkills(selectedSkills.filter((s) => s !== skill));
-                          } else {
-                            setSelectedSkills([...selectedSkills, skill]);
-                          }
-                        }}
-                      >
-                        {skill}
-                      </button>
-                    ))}
-                  </div>
+                    onClick={() => {
+                      if (selectedSkills.includes(skill)) {
+                        setSelectedSkills(selectedSkills.filter((s) => s !== skill));
+                      } else {
+                        setSelectedSkills([...selectedSkills, skill]);
+                      }
+                    }}
+                  >
+                    {skill}
+                  </button>
+                ))}
+              </div>
                 </motion.div>
               </motion.div>
             </div>
