@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { confirmPayment, paymentPresets } from '@/utils/paymentConfirm';
@@ -68,106 +67,118 @@ export default function ConversationPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isComposing, setIsComposing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fetchingConversationRef = useRef(false);
+  const isInitialLoad = useRef(true);
 
+  // 初始化並載入資料
   useEffect(() => {
-    // 檢查登入狀態（NextAuth 或 localStorage）
-    if (status === 'authenticated' && session?.user) {
-      setUserId((session.user as any).id);
-      fetchConversation();
-      fetchMessages();
-    } else if (status !== 'loading') {
-      // 檢查 localStorage
-      const token = localStorage.getItem('access_token');
-      const userData = localStorage.getItem('user');
-      
-      if (token && userData) {
-        try {
-          const parsedUser = JSON.parse(userData);
-          setUserId(parsedUser.id);
-          fetchConversation();
-          fetchMessages();
-        } catch (e) {
-          console.error('Failed to parse user data:', e);
+    const initPage = async () => {
+      let currentUserId: string | null = null;
+
+      // 1. 處理使用者身分驗證
+      if (status === 'authenticated' && session?.user) {
+        currentUserId = (session.user as any).id;
+      } else if (status !== 'loading') {
+        const token = localStorage.getItem('access_token');
+        const userData = localStorage.getItem('user');
+        if (token && userData) {
+          try {
+            const parsedUser = JSON.parse(userData);
+            currentUserId = parsedUser.id;
+          } catch (e) {
+            router.push('/login');
+            return;
+          }
+        } else {
           router.push('/login');
+          return;
         }
       } else {
-        router.push('/login');
+        return; // 等待 session loading
       }
-    }
+
+      setUserId(currentUserId);
+
+      // 2. 並行載入資料 (優化效能)
+      if (currentUserId && isInitialLoad.current) {
+        isInitialLoad.current = false;
+        try {
+          if (!isAuthenticated()) {
+            router.push('/login');
+            return;
+          }
+
+          // 定義請求
+          const fetchConvPromise = apiGet(`/api/v1/conversations/${params.id}`);
+          const fetchMsgsPromise = apiGet(`/api/v1/conversations/${params.id}/messages`);
+
+          // 等待所有請求完成
+          const [convRes, msgsRes] = await Promise.all([
+            fetchConvPromise.catch(async (err) => {
+              // 特殊處理：如果是剛建立的對話可能會有 404 延遲，這裡做一次簡單的重試
+              if (err.message?.includes('404') || err.message?.includes('not found')) {
+                await new Promise(r => setTimeout(r, 1000));
+                return apiGet(`/api/v1/conversations/${params.id}`);
+              }
+              throw err;
+            }),
+            fetchMsgsPromise
+          ]);
+
+          setConversation(convRes.data);
+          setMessages(msgsRes.data);
+        } catch (error: any) {
+          console.error('Failed to load conversation data:', error);
+          if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+            alert('登入已過期，請重新登入');
+            clearAuth();
+            router.push('/login');
+          } else {
+            // 只有在真的失敗時才顯示錯誤，避免過度打擾
+            console.error('Loading error:', error);
+          }
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    initPage();
   }, [status, session, params.id, router]);
 
   useEffect(() => {
-    scrollToBottom();
+    // 移除自動滾動
+    // scrollToBottom();
   }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const fetchConversation = async (silent = false, retryCount = 0) => {
-    // 防止重複調用
-    if (fetchingConversationRef.current) {
-      return;
-    }
-
-    fetchingConversationRef.current = true;
+  // 重新獲取訊息 (用於發送後更新)
+  const refreshMessages = async () => {
     try {
-      if (!isAuthenticated()) {
-        router.push('/login');
-        return;
-      }
-
-      const { data } = await apiGet(`/api/v1/conversations/${params.id}`);
-      setConversation(data);
-    } catch (error: any) {
-      console.error('Failed to fetch conversation:', error);
-      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-        if (!silent) {
-          alert('登入已過期，請重新登入');
-        }
-        clearAuth();
-        router.push('/login');
-      } else {
-        // 如果是 404 或對話不存在，且是第一次嘗試，等待後重試一次（可能是剛建立的對話）
-        if ((error.message?.includes('404') || error.message?.includes('not found')) && retryCount === 0 && silent) {
-          fetchingConversationRef.current = false;
-          setTimeout(() => {
-            fetchConversation(true, 1);
-          }, 1000);
-          return;
-        }
-        // 只有在非靜默模式下才顯示錯誤
-        if (!silent) {
-          alert('無法載入對話');
-          router.push('/conversations');
-        }
-      }
-    } finally {
-      setLoading(false);
-      fetchingConversationRef.current = false;
+      const { data } = await apiGet(`/api/v1/conversations/${params.id}/messages`);
+      setMessages(data);
+    } catch (error) {
+      console.error('Failed to refresh messages', error);
     }
   };
 
-  const fetchMessages = async () => {
+  // 重新獲取對話詳情 (用於解鎖後更新)
+  const refreshConversation = async () => {
     try {
-      if (!isAuthenticated()) return;
-
-      const { data } = await apiGet(`/api/v1/conversations/${params.id}/messages`);
-      setMessages(data);
-    } catch (error: any) {
-      console.error('Failed to fetch messages:', error);
-      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-        clearAuth();
-        router.push('/login');
-      }
+      const { data } = await apiGet(`/api/v1/conversations/${params.id}`);
+      setConversation(data);
+    } catch (error) {
+      console.error('Failed to refresh conversation', error);
     }
   };
 
   const handleUnlock = async () => {
     if (!conversation) return;
 
-    const otherUser = getOtherUser();
+    const isInitiator = conversation.initiator_id === userId;
+    const otherUser = isInitiator ? conversation.recipient : conversation.initiator;
     const confirmed = await confirmPayment(
       paymentPresets.viewProposal(otherUser.name)
     );
@@ -177,20 +188,19 @@ export default function ConversationPage() {
     setUnlocking(true);
     try {
       if (!isAuthenticated()) {
-        alert('請先登入');
         router.push('/login');
         return;
       }
 
       await apiPost('/api/v1/conversations/unlock-proposal', { conversation_id: conversation.id });
       alert('✅ 提案已解鎖！已扣除 100 代幣');
-      // 通知 Navbar 更新代幣餘額
       triggerTokenBalanceUpdate();
-      // 延遲一下再重新載入，確保後端已更新
-      setTimeout(() => {
-        fetchConversation(true); // 靜默模式，避免顯示錯誤
-        fetchMessages();
-      }, 500);
+      
+      // 並行更新
+      await Promise.all([
+        refreshConversation(),
+        refreshMessages()
+      ]);
     } catch (error: any) {
       alert(`❌ 解鎖失敗：${error.message || '請稍後再試'}`);
     } finally {
@@ -205,17 +215,15 @@ export default function ConversationPage() {
     setSending(true);
     try {
       if (!isAuthenticated()) {
-        alert('請先登入');
         router.push('/login');
         return;
       }
 
       await apiPost(`/api/v1/conversations/${params.id}/messages`, { content: newMessage });
       setNewMessage('');
-      fetchMessages();
+      refreshMessages();
     } catch (error: any) {
-      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-        alert('登入已過期，請重新登入');
+      if (error.message?.includes('401')) {
         clearAuth();
         router.push('/login');
       } else {
@@ -226,239 +234,334 @@ export default function ConversationPage() {
     }
   };
 
-  if (loading || (status === 'loading' && !userId) || !conversation) {
+  if (loading || (status === 'loading' && !userId)) {
     return (
       <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
-          <p className="text-[#20263e]">載入中...</p>
+          <div className="flex flex-col items-center gap-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#20263e]"></div>
+            <p className="text-[#20263e] text-sm">載入對話中...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!conversation) {
+     return (
+      <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center">
+          <p className="text-[#20263e]">無法載入對話，請稍後再試。</p>
         </main>
         <Footer />
       </div>
     );
   }
+
   const isInitiator = conversation.initiator_id === userId;
+  
+  function getOtherUser() {
+    return isInitiator ? conversation!.recipient : conversation!.initiator;
+  }
+  
   const otherUser = getOtherUser();
   const needsUnlock = conversation.type === 'project_proposal' && !conversation.recipient_paid && !isInitiator;
   const canSend = conversation.is_unlocked || (conversation.type === 'project_proposal' && isInitiator && messages.length === 0);
 
-  function getOtherUser() {
-    return isInitiator ? conversation!.recipient : conversation!.initiator;
-  }
-
   return (
-    <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
-      <Navbar />
+    <div className="flex flex-col h-screen bg-[#f5f3ed] overflow-hidden">
+      {/* 頂部導航列 - 固定高度 */}
+      <div className="flex-none z-20">
+        <Navbar />
+      </div>
 
-      <main className="flex-1 py-6">
-        <div className="max-w-5xl mx-auto px-4 h-full flex flex-col">
-          {/* 標題欄 */}
-          <Card className="p-4 mb-4">
-            <div className="flex items-center justify-between">
+      {/* 主要內容區 - 使用固定高度佈局 */}
+      <div className="flex-1 flex flex-col w-full max-w-5xl mx-auto bg-white shadow-sm md:border-x border-gray-100 overflow-hidden">
+        
+        {/* 頂部資訊欄 - 固定，更清楚的設計 */}
+        <div className="flex-none bg-white z-10 border-b border-gray-200 shadow-sm">
+          {/* 返回按鈕 */}
+          <div className="px-4 md:px-6 pt-4 pb-2">
+            <button
+              onClick={() => router.push('/conversations')}
+              className="text-gray-500 hover:text-[#20263e] transition-colors flex items-center gap-2 text-sm font-medium"
+              aria-label="返回對話列表"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                <path fillRule="evenodd" d="M11.03 3.97a.75.75 0 010 1.06l-6.22 6.22H21a.75.75 0 010 1.5H4.81l6.22 6.22a.75.75 0 11-1.06 1.06l-7.5-7.5a.75.75 0 010-1.06l7.5-7.5a.75.75 0 011.06 0z" clipRule="evenodd" />
+              </svg>
+              返回對話列表
+            </button>
+          </div>
+
+          {/* 對話資訊卡片 */}
+          <div className="px-4 md:px-6 pb-4">
+            <div className="bg-gradient-to-r from-[#f5f3ed] to-white rounded-xl p-4 md:p-5 border border-gray-100">
               <div className="flex items-center gap-4">
-                <button
-                  onClick={() => router.push('/conversations')}
-                  className="text-[#c5ae8c] hover:text-[#20263e]"
-                >
-                  ← 返回
-                </button>
+                {/* 頭像 */}
                 {otherUser.avatar_url ? (
                   <img
                     src={otherUser.avatar_url}
                     alt={otherUser.name}
-                    className="w-12 h-12 rounded-full object-cover"
+                    className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-3 border-white shadow-md flex-shrink-0"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-[#20263e] text-white flex items-center justify-center text-lg font-bold">
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#20263e] text-white flex items-center justify-center text-2xl font-bold flex-shrink-0 shadow-md">
                     {otherUser.name[0]}
                   </div>
                 )}
-                <div>
-                  <h2 className="text-xl font-bold text-[#20263e]">{otherUser.name}</h2>
-                  {conversation.project && (
-                    <p className="text-sm text-gray-600">案件：{conversation.project.title}</p>
+                
+                {/* 標題與資訊 */}
+                <div className="flex-1 min-w-0">
+                  {/* 專案標題或對話標題 */}
+                  {conversation.project ? (
+                    <div>
+                      <h1 className="text-xl md:text-2xl font-bold text-[#20263e] leading-tight mb-1 truncate">
+                        {conversation.project.title}
+                      </h1>
+                      <p className="text-sm text-gray-600 flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                          <path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
+                        </svg>
+                        與 <span className="font-semibold">{otherUser.name}</span> 的對話
+                      </p>
+                    </div>
+                  ) : (
+                    <h1 className="text-xl md:text-2xl font-bold text-[#20263e] leading-tight">
+                      與 {otherUser.name} 的對話
+                    </h1>
+                  )}
+                  
+                  {/* 狀態標籤 */}
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-gray-200 rounded-full text-xs text-gray-700">
+                      {conversation.type === 'direct' ? '💬 直接聯絡' : '📝 提案對話'}
+                    </span>
+                    {conversation.is_unlocked && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 border border-green-200 rounded-full text-xs text-green-700 font-medium">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                          <path fillRule="evenodd" d="M16.403 12.652a3 3 0 000-5.304 3 3 0 00-3.75-3.751 3 3 0 00-5.305 0 3 3 0 00-3.751 3.75 3 3 0 000 5.305 3 3 0 003.75 3.751 3 3 0 005.305 0 3 3 0 003.751-3.75zm-2.546-4.46a.75.75 0 00-1.214-.883l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+                        </svg>
+                        已解鎖
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 聯絡資訊 (已解鎖時顯示) */}
+                  {conversation.is_unlocked && (otherUser.email || otherUser.phone) && (
+                    <div className="mt-2 flex items-center gap-3 text-xs text-gray-600">
+                      {otherUser.email && (
+                        <a href={`mailto:${otherUser.email}`} className="flex items-center gap-1 hover:text-[#20263e]">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                            <path d="M3 4a2 2 0 00-2 2v1.161l8.441 4.221a1.25 1.25 0 001.118 0L19 7.162V6a2 2 0 00-2-2H3z" />
+                            <path d="M19 8.839l-7.77 3.885a2.75 2.75 0 01-2.46 0L1 8.839V14a2 2 0 002 2h14a2 2 0 002-2V8.839z" />
+                          </svg>
+                          {otherUser.email}
+                        </a>
+                      )}
+                      {otherUser.phone && (
+                        <a href={`tel:${otherUser.phone}`} className="flex items-center gap-1 hover:text-[#20263e]">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                            <path fillRule="evenodd" d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 006.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 012.43 8.326 13.019 13.019 0 012 5V3.5z" clipRule="evenodd" />
+                          </svg>
+                          {otherUser.phone}
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant={conversation.type === 'direct' ? 'info' : 'default'}>
-                  {conversation.type === 'direct' ? '直接聯絡' : '提案聯絡'}
-                </Badge>
-                {conversation.is_unlocked && (
-                  <Badge variant="success">✓ 已解鎖</Badge>
-                )}
-              </div>
             </div>
-          </Card>
+          </div>
+        </div>
 
-          {/* 聯絡資訊（已解鎖） */}
-          {conversation.is_unlocked && (otherUser.email || otherUser.phone) && (
-            <Card className="p-4 mb-4 bg-blue-50 border-blue-200">
-              <h3 className="font-semibold text-blue-900 mb-2">📞 聯絡資訊</h3>
-              <div className="text-sm text-blue-800 space-y-1">
-                {otherUser.email && <p>Email：{otherUser.email}</p>}
-                {otherUser.phone && <p>電話：{otherUser.phone}</p>}
-              </div>
-            </Card>
+        {/* 訊息列表區 - 可滾動 */}
+        <div className="flex-1 overflow-y-auto bg-[#fafaf8] px-4 md:px-6 py-4">
+          
+          {/* 提示橫幅 */}
+          {(needsUnlock || (conversation.type === 'project_proposal' && isInitiator && !conversation.recipient_paid)) && (
+            <div className="mb-4 space-y-3">
+              {/* 解鎖提示 */}
+              {needsUnlock && (
+                <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4 text-center shadow-sm">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-yellow-600">
+                      <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-base text-yellow-900 font-bold">此提案尚未解鎖</p>
+                  </div>
+                  <p className="text-sm text-yellow-700 mb-3">解鎖後可查看完整提案內容並開始聊天</p>
+                  <Button onClick={handleUnlock} disabled={unlocking} size="sm" className="bg-[#20263e] text-white hover:bg-[#353e5e] shadow-md">
+                    {unlocking ? '處理中...' : '🔓 解鎖提案 (100 代幣)'}
+                  </Button>
+                </div>
+              )}
+
+              {/* 等待回應提示 */}
+              {conversation.type === 'project_proposal' && isInitiator && !conversation.recipient_paid && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
+                  <p className="text-sm text-blue-700 flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clipRule="evenodd" />
+                    </svg>
+                    等待發案者回應中 (7日內無回應將自動退回代幣)
+                  </p>
+                </div>
+              )}
+            </div>
           )}
 
-          {/* 解鎖提示（提案對話，發案者未付費） */}
-          {needsUnlock && (
-            <Card className="p-6 mb-4 bg-yellow-50 border-yellow-200">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-yellow-900 mb-2">
-                  🔒 此提案尚未解鎖
-                </h3>
-                <p className="text-sm text-yellow-800 mb-4">
-                  解鎖後可查看完整提案內容、開通聊天功能，並查看對方聯絡資訊
-                </p>
-                <Button
-                  onClick={handleUnlock}
-                  disabled={unlocking}
-                  className="mx-auto"
-                >
-                  {unlocking ? '解鎖中...' : '解鎖提案 (100 代幣)'}
-                </Button>
-              </div>
-            </Card>
-          )}
+          {/* 訊息內容 */}
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-16 h-16 mb-3 opacity-40">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+              </svg>
+              <p className="text-sm">尚無訊息</p>
+              <p className="text-xs mt-1">開始對話吧！</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {messages.map((message, index) => {
+                const isMine = message.sender_id === userId;
+                
+                // 日期顯示邏輯
+                const currentDate = new Date(message.created_at);
+                const prevMessage = index > 0 ? messages[index - 1] : null;
+                const prevDate = prevMessage ? new Date(prevMessage.created_at) : null;
+                
+                let showDateDivider = false;
+                if (!prevDate) {
+                  showDateDivider = true;
+                } else if (
+                  currentDate.getDate() !== prevDate.getDate() ||
+                  currentDate.getMonth() !== prevDate.getMonth() ||
+                  currentDate.getFullYear() !== prevDate.getFullYear()
+                ) {
+                  showDateDivider = true;
+                }
 
-          {/* 等待回應提示（工程師發送提案後） */}
-          {conversation.type === 'project_proposal' && isInitiator && !conversation.recipient_paid && (
-            <Card className="p-4 mb-4 bg-blue-50 border-blue-200">
-              <div className="text-center">
-                <p className="text-sm text-blue-800">
-                  ⏳ 提案已發送，等待發案者回應...
-                  <br />
-                  <span className="text-xs text-blue-600">
-                    7日內無回應將自動退回 100 代幣
-                  </span>
-                </p>
-              </div>
-            </Card>
-          )}
-
-          {/* 訊息區域 */}
-          <Card className="flex-1 p-6 overflow-y-auto mb-4" style={{ maxHeight: 'calc(100vh - 400px)' }}>
-            {messages.length === 0 ? (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-gray-400">尚無訊息</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {messages.map((message) => {
-                  const isMine = message.sender_id === userId;
-                  const isProposal = messages.indexOf(message) === 0 && conversation.type === 'project_proposal';
-
-                  return (
-                    <div
-                      key={message.id}
-                      className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[70%] rounded-lg p-4 ${
-                          isMine
-                            ? 'bg-[#f5f3ed] text-[#20263e] border border-gray-200'
-                            : 'bg-gray-100 text-[#20263e] border border-gray-200'
-                        }`}
-                      >
+                return (
+                  <div key={message.id}>
+                    {showDateDivider && (
+                      <div className="flex justify-center my-6">
+                         <span className="text-xs text-gray-500 bg-white px-4 py-1.5 rounded-full border border-gray-200 shadow-sm font-medium">
+                           {currentDate.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })}
+                         </span>
+                      </div>
+                    )}
+                    <div className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`flex flex-col max-w-[85%] md:max-w-[75%] ${isMine ? 'items-end' : 'items-start'}`}>
+                      
                         {!isMine && (
-                          <p className="text-xs font-semibold mb-1 text-gray-600">
-                            {message.sender.name}
-                          </p>
+                          <span className="text-xs text-gray-500 mb-1.5 ml-1 font-medium">{message.sender.name}</span>
                         )}
-                        <div className="prose prose-sm max-w-none text-[#20263e] 
-                          [&>*]:text-[#20263e] 
-                          [&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:text-[#20263e]
-                          [&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-2 [&_h2]:text-[#20263e]
-                          [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_h3]:text-[#20263e]
-                          [&_h4]:text-sm [&_h4]:font-semibold [&_h4]:mt-2 [&_h4]:mb-1 [&_h4]:text-[#20263e]
-                          [&_p]:text-sm [&_p]:leading-relaxed [&_p]:mb-2 [&_p]:text-[#20263e]
-                          [&_ul]:text-sm [&_ul]:my-2 [&_ul]:pl-5 [&_ul]:list-disc
-                          [&_ol]:text-sm [&_ol]:my-2 [&_ol]:pl-5 [&_ol]:list-decimal
-                          [&_li]:text-sm [&_li]:mb-1 [&_li]:text-[#20263e]
-                          [&_strong]:font-semibold [&_strong]:text-[#20263e]
-                          [&_em]:italic [&_em]:text-[#20263e]
-                          [&_a]:text-[#c5ae8c] [&_a]:underline [&_a]:hover:text-[#a08a6f]
-                          [&_code]:text-xs [&_code]:bg-gray-200 [&_code]:text-[#20263e] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono
-                          [&_pre]:bg-gray-200 [&_pre]:text-[#20263e] [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:my-2 [&_pre]:border [&_pre]:border-gray-300
-                          [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-xs
-                          [&_blockquote]:border-l-4 [&_blockquote]:border-[#c5ae8c] [&_blockquote]:pl-3 [&_blockquote]:my-2 [&_blockquote]:text-[#20263e] [&_blockquote]:italic
-                          [&_table]:w-full [&_table]:my-3 [&_table]:border-collapse [&_table]:border [&_table]:border-gray-300
-                          [&_th]:bg-gray-200 [&_th]:text-[#20263e] [&_th]:font-semibold [&_th]:text-sm [&_th]:px-3 [&_th]:py-2 [&_th]:border [&_th]:border-gray-300 [&_th]:text-left
-                          [&_td]:text-sm [&_td]:text-[#20263e] [&_td]:px-3 [&_td]:py-2 [&_td]:border [&_td]:border-gray-300
-                          [&_hr]:my-4 [&_hr]:border-gray-300">
-                          <ReactMarkdown
-                            remarkPlugins={[remarkGfm]}
-                            rehypePlugins={[rehypeSanitize]}
+
+                        <div
+                          className={`rounded-2xl px-5 py-3.5 shadow-sm ${
+                            isMine
+                              ? 'bg-[#20263e] text-white rounded-tr-sm'
+                              : 'bg-white text-[#20263e] border border-gray-200 rounded-tl-sm'
+                          }`}
+                        >
+                          <div className="prose prose-sm max-w-none prose-invert
+                              [&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-3 [&_h1]:mb-2
+                              [&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-2 [&_h2]:mb-1.5
+                              [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1
+                              [&_p]:text-sm [&_p]:leading-relaxed [&_p]:mb-2
+                              [&_ul]:text-sm [&_ul]:my-2 [&_ul]:pl-5 [&_ul]:list-disc
+                              [&_ol]:text-sm [&_ol]:my-2 [&_ol]:pl-5 [&_ol]:list-decimal
+                              [&_li]:text-sm [&_li]:mb-1
+                              [&_strong]:font-semibold
+                              [&_em]:italic
+                              [&_a]:underline [&_a]:hover:opacity-80
+                              [&_code]:text-xs [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono
+                              [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:my-2 [&_pre]:border
+                              [&_pre_code]:p-0 [&_pre_code]:text-xs
+                              [&_blockquote]:border-l-4 [&_blockquote]:pl-3 [&_blockquote]:my-2 [&_blockquote]:italic
+                              [&_table]:w-full [&_table]:my-3 [&_table]:border-collapse
+                              [&_th]:font-semibold [&_th]:text-sm [&_th]:px-3 [&_th]:py-2 [&_th]:border [&_th]:text-left
+                              [&_td]:text-sm [&_td]:px-3 [&_td]:py-2 [&_td]:border
+                              [&_hr]:my-3"
                           >
-                            {message.content}
-                          </ReactMarkdown>
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              rehypePlugins={[rehypeSanitize]}
+                            >
+                              {message.content}
+                            </ReactMarkdown>
+                          </div>
                         </div>
-                        <p className="text-xs mt-2 text-gray-500">
+                        
+                        <span className="text-[10px] mt-1 mx-1 text-gray-400">
                           {new Date(message.created_at).toLocaleString('zh-TW', {
-                            month: 'numeric',
-                            day: 'numeric',
                             hour: '2-digit',
                             minute: '2-digit',
                           })}
-                        </p>
+                        </span>
                       </div>
                     </div>
-                  );
-                })}
-                <div ref={messagesEndRef} />
-              </div>
-            )}
-          </Card>
-
-          {/* 輸入區域 */}
-          <Card className="p-4">
-            {canSend ? (
-              <form onSubmit={handleSendMessage} className="space-y-2">
-                <div className="flex gap-2">
-                  <textarea
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="輸入訊息...（支援 Markdown 語法）"
-                    rows={3}
-                    className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-transparent resize-none font-mono text-sm"
-                    disabled={sending}
-                    onCompositionStart={() => setIsComposing(true)}
-                    onCompositionEnd={() => setIsComposing(false)}
-                    onKeyDown={(e) => {
-                      // 如果正在進行中文輸入（IME），不觸發發送
-                      if (isComposing) {
-                        return;
-                      }
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage(e);
-                      }
-                    }}
-                  />
-                  <Button
-                    type="submit"
-                    disabled={sending || !newMessage.trim()}
-                    className="self-end"
-                  >
-                    {sending ? '發送中...' : '發送'}
-                  </Button>
-                </div>
-              </form>
-            ) : (
-              <div className="text-center text-gray-500 py-4">
-                {needsUnlock
-                  ? '請先解鎖提案才能發送訊息'
-                  : '等待對方解鎖提案...'}
-              </div>
-            )}
-          </Card>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <div ref={messagesEndRef} />
         </div>
-      </main>
 
-      <Footer />
+        {/* 底部輸入區 - 固定在視窗底部 */}
+        <div className="flex-none p-4 md:p-5 bg-white border-t border-gray-200">
+          {canSend ? (
+            <form onSubmit={handleSendMessage} className="flex flex-col gap-2">
+              <div className="relative">
+                <textarea
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="輸入訊息... (支援 Markdown)"
+                  rows={1}
+                  style={{ minHeight: '48px', maxHeight: '120px' }}
+                  className="w-full pl-4 pr-14 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e] resize-none text-sm transition-all placeholder:text-gray-400"
+                  disabled={sending}
+                  onCompositionStart={() => setIsComposing(true)}
+                  onCompositionEnd={() => setIsComposing(false)}
+                  onKeyDown={(e) => {
+                    if (isComposing) return;
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(e);
+                    }
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={sending || !newMessage.trim()}
+                  className={
+                    !newMessage.trim() || sending 
+                      ? 'absolute right-2 bottom-2 p-2 rounded-lg transition-all text-gray-300 bg-gray-100' 
+                      : 'absolute right-2 bottom-2 p-2 rounded-lg transition-all text-white bg-[#20263e] hover:bg-[#353e5e] shadow-md hover:shadow-lg'
+                  }
+                  aria-label="發送訊息"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                    <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                  </svg>
+                </button>
+              </div>
+              <div className="text-[10px] text-gray-400 text-center">
+                 Enter 發送 • Shift + Enter 換行
+              </div>
+            </form>
+          ) : (
+             <div className="text-center py-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+               <span className="text-sm text-gray-500 font-medium">
+                 {needsUnlock ? '🔒 請先解鎖提案以開始對話' : '⏳ 等待對方解鎖...'}
+               </span>
+             </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
-
