@@ -300,7 +300,7 @@ export default function ProjectDetailPage({
                       
                       <div>
                         <h3 className="text-xl font-bold text-[#20263e] mb-4">其他資訊</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-6">
                           {/* 參考資料 */}
                           {project.reference_links && project.reference_links.length > 0 && (
                             <div>
@@ -334,7 +334,7 @@ export default function ProjectDetailPage({
 
                           {/* 擔憂事項 */}
                           {project.new_concerns && project.new_concerns.length > 0 && (
-                            <div className="md:col-span-2">
+                            <div>
                               <h4 className="text-lg font-semibold text-[#20263e] mb-3">😟 擔憂與顧慮</h4>
                               <ul className="list-disc list-inside space-y-1 text-[#20263e]">
                                 {project.new_concerns.map((concern: string, index: number) => (
