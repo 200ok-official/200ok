@@ -3,6 +3,13 @@
 import React from "react";
 import { getProjectTypeHints } from "../config/projectTypeHints";
 import { DatePicker } from "@/components/ui/DatePicker";
+import {
+  CheckIcon,
+  LightBulbIcon,
+  ExclamationTriangleIcon,
+  ArrowsRightLeftIcon,
+  BanknotesIcon,
+} from "@heroicons/react/24/outline";
 
 interface Props {
   data: any;
@@ -92,18 +99,22 @@ export const Step8BudgetSchedule: React.FC<Props> = ({ data, updateData }) => {
             </label>
             <button
               onClick={() => updateData({ budgetEstimateOnly: !data.budgetEstimateOnly })}
-              className={`text-sm px-3 py-1.5 rounded-full transition-all ${
+              className={`text-sm px-3 py-1.5 rounded-full transition-all flex items-center gap-1 ${
                 data.budgetEstimateOnly
                   ? "bg-[#c5ae8c] text-white"
                   : "bg-gray-200 text-gray-600 hover:bg-gray-300"
               }`}
             >
-              {data.budgetEstimateOnly ? "✓ " : ""}先估型（讓接案者報價）
+              {data.budgetEstimateOnly && <CheckIcon className="w-4 h-4" />}
+              先估型（讓接案者報價）
             </button>
           </div>
           {!data.budgetEstimateOnly && (
-            <p className="text-xs text-[#c5ae8c]">
-              💡 建議：如果您已經在前面的步驟填寫詳細需求，可以選擇「先估型」讓接案者報價。如果需求細節還不夠清楚，建議先選擇一個預算區間。
+            <p className="text-xs text-[#c5ae8c] flex items-start gap-1">
+              <LightBulbIcon className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                建議：如果您已經在前面的步驟填寫詳細需求，可以選擇「先估型」讓接案者報價。如果需求細節還不夠清楚，建議先選擇一個預算區間。
+              </span>
             </p>
           )}
         </div>

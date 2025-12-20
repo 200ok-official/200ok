@@ -1,6 +1,20 @@
 "use client";
 
 import React from "react";
+import {
+  CommandLineIcon,
+  CodeBracketIcon,
+  PencilSquareIcon,
+  ShoppingBagIcon,
+  QuestionMarkCircleIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  DocumentTextIcon,
+  DocumentMinusIcon,
+  LockOpenIcon,
+  LockClosedIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/outline";
 
 interface Props {
   data: any;
@@ -8,16 +22,16 @@ interface Props {
 }
 
 const TECH_OPTIONS = [
-  { value: "php", label: "PHP", icon: "🐘" },
-  { value: "python", label: "Python", icon: "🐍" },
-  { value: "nodejs", label: "Node.js", icon: "🟢" },
-  { value: "java", label: "Java", icon: "☕" },
-  { value: "csharp", label: "C# / .NET", icon: "🔷" },
-  { value: "wordpress", label: "WordPress", icon: "📝" },
-  { value: "shopify", label: "Shopify", icon: "🛍️" },
-  { value: "react", label: "React", icon: "⚛️" },
-  { value: "vue", label: "Vue.js", icon: "🟩" },
-  { value: "not_sure", label: "不確定", icon: "❓" },
+  { value: "php", label: "PHP", icon: CommandLineIcon },
+  { value: "python", label: "Python", icon: CommandLineIcon },
+  { value: "nodejs", label: "Node.js", icon: CommandLineIcon },
+  { value: "java", label: "Java", icon: CommandLineIcon },
+  { value: "csharp", label: "C# / .NET", icon: CommandLineIcon },
+  { value: "wordpress", label: "WordPress", icon: PencilSquareIcon },
+  { value: "shopify", label: "Shopify", icon: ShoppingBagIcon },
+  { value: "react", label: "React", icon: CodeBracketIcon },
+  { value: "vue", label: "Vue.js", icon: CodeBracketIcon },
+  { value: "not_sure", label: "不確定", icon: QuestionMarkCircleIcon },
 ];
 
 export const Step4MaintenanceTech: React.FC<Props> = ({ data, updateData }) => {
@@ -59,8 +73,8 @@ export const Step4MaintenanceTech: React.FC<Props> = ({ data, updateData }) => {
                   : "border-[#e5e7eb] hover:border-[#c5ae8c]"
               }`}
             >
-              <div className="text-center space-y-1.5">
-                <span className="text-xl block">{tech.icon}</span>
+              <div className="text-center space-y-1.5 flex flex-col items-center">
+                <tech.icon className="w-8 h-8 text-[#20263e]" />
                 <span className="text-xs font-medium text-[#20263e] block whitespace-nowrap">
                   {tech.label}
                 </span>
@@ -85,7 +99,7 @@ export const Step4MaintenanceTech: React.FC<Props> = ({ data, updateData }) => {
                   : "border-[#e5e7eb] hover:border-[#20263e]"
               }`}
             >
-              <span className="text-lg block mb-1">✅</span>
+              <CheckCircleIcon className="w-6 h-6 text-[#20263e] mx-auto mb-1" />
               <span className="text-xs font-medium text-[#20263e]">有</span>
             </button>
             <button
@@ -96,7 +110,7 @@ export const Step4MaintenanceTech: React.FC<Props> = ({ data, updateData }) => {
                   : "border-[#e5e7eb] hover:border-[#20263e]"
               }`}
             >
-              <span className="text-lg block mb-1">❌</span>
+              <XCircleIcon className="w-6 h-6 text-[#20263e] mx-auto mb-1" />
               <span className="text-xs font-medium text-[#20263e]">沒有</span>
             </button>
           </div>
@@ -116,7 +130,7 @@ export const Step4MaintenanceTech: React.FC<Props> = ({ data, updateData }) => {
                   : "border-[#e5e7eb] hover:border-[#20263e]"
               }`}
             >
-              <span className="text-lg block mb-1">📄</span>
+              <DocumentTextIcon className="w-6 h-6 text-[#20263e] mx-auto mb-1" />
               <span className="text-xs font-medium text-[#20263e]">有</span>
             </button>
             <button
@@ -127,7 +141,7 @@ export const Step4MaintenanceTech: React.FC<Props> = ({ data, updateData }) => {
                   : "border-[#e5e7eb] hover:border-[#20263e]"
               }`}
             >
-              <span className="text-lg block mb-1">📭</span>
+              <DocumentMinusIcon className="w-6 h-6 text-[#20263e] mx-auto mb-1" />
               <span className="text-xs font-medium text-[#20263e]">沒有</span>
             </button>
           </div>
@@ -147,7 +161,7 @@ export const Step4MaintenanceTech: React.FC<Props> = ({ data, updateData }) => {
                   : "border-[#e5e7eb] hover:border-[#20263e]"
               }`}
             >
-              <span className="text-lg block mb-1">🔓</span>
+              <LockOpenIcon className="w-6 h-6 text-[#20263e] mx-auto mb-1" />
               <span className="text-xs font-medium text-[#20263e]">可以</span>
             </button>
             <button
@@ -158,7 +172,7 @@ export const Step4MaintenanceTech: React.FC<Props> = ({ data, updateData }) => {
                   : "border-[#e5e7eb] hover:border-[#20263e]"
               }`}
             >
-              <span className="text-lg block mb-1">🔒</span>
+              <LockClosedIcon className="w-6 h-6 text-[#20263e] mx-auto mb-1" />
               <span className="text-xs font-medium text-[#20263e]">不便</span>
             </button>
           </div>
@@ -181,7 +195,7 @@ export const Step4MaintenanceTech: React.FC<Props> = ({ data, updateData }) => {
 
       {/* 小提示 */}
       <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
-        <span className="text-lg">⚠️</span>
+        <ExclamationTriangleIcon className="w-5 h-5 text-yellow-800 shrink-0" />
         <p className="text-xs text-yellow-800 pt-1">
           <strong>注意：</strong> 如果沒有原始碼或無法提供系統存取，接案者可能需要「重新開發」而非「修改維護」。
         </p>

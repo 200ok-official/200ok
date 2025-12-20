@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { SparklesIcon } from "@heroicons/react/24/outline";
 
 interface Props {
   data: any;
@@ -109,7 +110,7 @@ export const Step6MaintenanceExpectations: React.FC<Props> = ({ data, updateData
       {/* 完成提示 */}
       <div className="mt-8 p-6 bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-lg">
         <div className="flex items-start gap-3">
-          <span className="text-3xl">🎉</span>
+          <SparklesIcon className="w-8 h-8 text-green-600 shrink-0" />
           <div>
             <h3 className="font-semibold text-[#20263e] mb-2">即將完成！</h3>
             <p className="text-sm text-[#20263e]">

@@ -2,6 +2,26 @@
 
 import React from "react";
 import { getProjectTypeHints } from "../config/projectTypeHints";
+import {
+  TableCellsIcon,
+  ChatBubbleLeftRightIcon,
+  GlobeAltIcon,
+  CameraIcon,
+  CreditCardIcon,
+  UserGroupIcon,
+  EnvelopeIcon,
+  CpuChipIcon,
+  MapIcon,
+  CalendarIcon,
+  ChartPieIcon,
+  LinkIcon,
+  XMarkIcon,
+  CheckIcon,
+  BoltIcon,
+  WrenchScrewdriverIcon,
+  LightBulbIcon,
+  QuestionMarkCircleIcon,
+} from "@heroicons/react/24/outline";
 
 interface Props {
   data: any;
@@ -9,20 +29,36 @@ interface Props {
 }
 
 const INTEGRATION_OPTIONS = [
-  { value: "google_sheets", label: "Google Sheets", icon: "📊" },
-  { value: "line", label: "LINE", icon: "💬" },
-  { value: "facebook", label: "Facebook", icon: "📘" },
-  { value: "instagram", label: "Instagram", icon: "📷" },
-  { value: "payment", label: "金流串接", icon: "💳" },
-  { value: "crm", label: "CRM", icon: "👥" },
-  { value: "email", label: "Email", icon: "📧" },
-  { value: "openai", label: "OpenAI/ChatGPT", icon: "🤖" },
-  { value: "maps", label: "Google Maps", icon: "🗺️" },
-  { value: "calendar", label: "行事曆", icon: "📅" },
-  { value: "analytics", label: "GA/分析", icon: "📈" },
-  { value: "other", label: "其他", icon: "🔗" },
-  { value: "none", label: "不需要", icon: "✕" },
+  { value: "google_sheets", label: "Google Sheets" },
+  { value: "line", label: "LINE" },
+  { value: "facebook", label: "Facebook" },
+  { value: "instagram", label: "Instagram" },
+  { value: "payment", label: "金流串接" },
+  { value: "crm", label: "CRM" },
+  { value: "email", label: "Email" },
+  { value: "openai", label: "OpenAI/ChatGPT" },
+  { value: "maps", label: "Google Maps" },
+  { value: "calendar", label: "行事曆" },
+  { value: "analytics", label: "GA/分析" },
+  { value: "other", label: "其他" },
+  { value: "none", label: "不需要" },
 ];
+
+const ICON_MAP: Record<string, any> = {
+  google_sheets: TableCellsIcon,
+  line: ChatBubbleLeftRightIcon,
+  facebook: GlobeAltIcon,
+  instagram: CameraIcon,
+  payment: CreditCardIcon,
+  crm: UserGroupIcon,
+  email: EnvelopeIcon,
+  openai: CpuChipIcon,
+  maps: MapIcon,
+  calendar: CalendarIcon,
+  analytics: ChartPieIcon,
+  other: LinkIcon,
+  none: XMarkIcon,
+};
 
 const TECH_OPTIONS = [
   { value: "php", label: "PHP" },
@@ -95,29 +131,35 @@ export const Step7Integrations: React.FC<Props> = ({ data, updateData }) => {
 
       {/* 外部工具整合 */}
       <div className="space-y-3">
-        <label className="block text-base font-semibold text-[#20263e]">
-          🔌 需要整合哪些外部工具？
+        <label className="block text-base font-semibold text-[#20263e] flex items-center gap-2">
+          <BoltIcon className="w-5 h-5" />
+          需要整合哪些外部工具？
         </label>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-          {displayOptions.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => handleIntegrationToggle(option.value)}
-              className={`p-2.5 rounded-lg border transition-all flex flex-col items-center justify-center gap-1.5 hover:shadow-sm ${
-                isIntegrationSelected(option.value)
-                  ? "border-[#20263e] bg-[#20263e] bg-opacity-5"
-                  : "border-[#e5e7eb] hover:border-[#c5ae8c]"
-              }`}
-            >
-              <span className="text-xl">{option.icon}</span>
-              <span className="text-xs font-medium text-[#20263e] whitespace-nowrap">
-                {option.label}
-              </span>
-              {isIntegrationSelected(option.value) && (
-                <span className="absolute top-1 right-1 text-[#20263e] text-xs">✓</span>
-              )}
-            </button>
-          ))}
+          {displayOptions.map((option) => {
+            const Icon = ICON_MAP[option.value] || QuestionMarkCircleIcon;
+            return (
+              <button
+                key={option.value}
+                onClick={() => handleIntegrationToggle(option.value)}
+                className={`p-2.5 rounded-lg border transition-all flex flex-col items-center justify-center gap-1.5 hover:shadow-sm ${
+                  isIntegrationSelected(option.value)
+                    ? "border-[#20263e] bg-[#20263e] bg-opacity-5"
+                    : "border-[#e5e7eb] hover:border-[#c5ae8c]"
+                }`}
+              >
+                <Icon className="w-8 h-8 text-[#20263e]" />
+                <span className="text-xs font-medium text-[#20263e] whitespace-nowrap">
+                  {option.label}
+                </span>
+                {isIntegrationSelected(option.value) && (
+                  <span className="absolute top-1 right-1 text-[#20263e]">
+                    <CheckIcon className="w-3 h-3" />
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* 其他整合說明 */}
@@ -137,8 +179,9 @@ export const Step7Integrations: React.FC<Props> = ({ data, updateData }) => {
       {/* 技術需求 */}
       <div className="space-y-3 pt-4 border-t border-[#e5e7eb]">
         <div className="flex items-center justify-between">
-          <label className="block text-base font-semibold text-[#20263e]">
-            🛠️ 有指定的技術需求嗎？（選填）
+          <label className="block text-base font-semibold text-[#20263e] flex items-center gap-2">
+            <WrenchScrewdriverIcon className="w-5 h-5" />
+            有指定的技術需求嗎？（選填）
           </label>
           <span className="text-xs text-[#c5ae8c]">可複選</span>
         </div>
@@ -175,7 +218,7 @@ export const Step7Integrations: React.FC<Props> = ({ data, updateData }) => {
 
       {/* 小提示 */}
       <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
-        <span className="text-lg">💡</span>
+        <LightBulbIcon className="w-5 h-5 text-blue-800 shrink-0" />
         <p className="text-xs text-blue-800 pt-1">
           <strong>技術建議：</strong> {hints.integrations.hint}
         </p>
