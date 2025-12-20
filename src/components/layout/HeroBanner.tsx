@@ -39,8 +39,14 @@ export const HeroBanner: React.FC = () => {
     // 初始縮放大小（1 = 100%）
     initialScale: 1.2,
     
+    // 右圖初始縮放大小（比左圖小）
+    rightInitialScale: 0.9,
+    
     // 滾動後的最終縮放大小
     finalScale: 0.8,
+    
+    // 左圖向下偏移（像素）- 讓左圖初始位置更靠下
+    leftDownOffset: 80,
     
     // 初始透明度
     initialOpacity: 0.25,
@@ -75,18 +81,19 @@ export const HeroBanner: React.FC = () => {
       const totalRightTranslate = animationConfig.initialOffset + progress * animationConfig.maxTranslate + animationConfig.leftOffset;
 
       // 計算縮放和透明度（從大到小，從不透明到透明）
-      const scale = animationConfig.initialScale - (progress * (animationConfig.initialScale - animationConfig.finalScale));
+      const leftScale = animationConfig.initialScale - (progress * (animationConfig.initialScale - animationConfig.finalScale));
+      const rightScale = animationConfig.rightInitialScale - (progress * (animationConfig.rightInitialScale - animationConfig.finalScale));
       const opacity = animationConfig.initialOpacity - (progress * (animationConfig.initialOpacity - animationConfig.finalOpacity));
 
-      // 左邊圖形：從中間偏左位置向左滑動，同時縮小和變透明
+      // 左邊圖形：從中間偏左位置向左滑動，同時縮小和變透明，並向下偏移
       if (leftShapeRef.current) {
-        leftShapeRef.current.style.transform = `translate(${totalLeftTranslate}px, -50%) scale(${scale})`;
+        leftShapeRef.current.style.transform = `translate(${totalLeftTranslate}px, calc(-50% + ${animationConfig.leftDownOffset}px)) scale(${leftScale})`;
         leftShapeRef.current.style.opacity = `${opacity}`;
       }
 
       // 右邊圖形：從中間偏右位置向右滑動，同時縮小和變透明
       if (rightShapeRef.current) {
-        rightShapeRef.current.style.transform = `translate(${totalRightTranslate}px, -50%) scale(${scale})`;
+        rightShapeRef.current.style.transform = `translate(${totalRightTranslate}px, -50%) scale(${rightScale})`;
         rightShapeRef.current.style.opacity = `${opacity}`;
       }
     };
@@ -132,12 +139,12 @@ export const HeroBanner: React.FC = () => {
       {/* Sticky 容器：在滾動時固定在畫面上，從 Navbar 下方開始 */}
       <div className="sticky top-16 h-[calc(100vh-4rem)] w-full overflow-hidden bg-gradient-to-br from-[#e6dfcf] via-[#f0ebe0] to-[#e6dfcf]">
         
-        {/* 背景幾何圖形 - 左邊（初始在中間偏左，較大尺寸） */}
+        {/* 背景幾何圖形 - 左邊（初始在中間偏左，較大尺寸，向下偏移） */}
         <div
           ref={leftShapeRef}
           className="absolute left-1/2 top-1/2 w-96 h-96 md:w-[32rem] md:h-[32rem]"
           style={{ 
-            transform: `translate(${-animationConfig.initialOffset + animationConfig.leftOffset}px, -50%) scale(${animationConfig.initialScale})`,
+            transform: `translate(${-animationConfig.initialOffset + animationConfig.leftOffset}px, calc(-50% + ${animationConfig.leftDownOffset}px)) scale(${animationConfig.initialScale})`,
             opacity: animationConfig.initialOpacity,
             willChange: "transform, opacity"
           }}
@@ -149,12 +156,12 @@ export const HeroBanner: React.FC = () => {
             />
         </div>
 
-        {/* 背景幾何圖形 - 右邊（初始在中間偏右，較大尺寸） */}
+        {/* 背景幾何圖形 - 右邊（初始在中間偏右，較小尺寸） */}
         <div
           ref={rightShapeRef}
           className="absolute left-1/2 top-1/2 w-96 h-96 md:w-[32rem] md:h-[32rem]"
           style={{ 
-            transform: `translate(${animationConfig.initialOffset + animationConfig.leftOffset}px, -50%) scale(${animationConfig.initialScale})`,
+            transform: `translate(${animationConfig.initialOffset + animationConfig.leftOffset}px, -50%) scale(${animationConfig.rightInitialScale})`,
             opacity: animationConfig.initialOpacity,
             willChange: "transform, opacity"
           }}

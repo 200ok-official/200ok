@@ -112,7 +112,7 @@ npm run dev
 - **GOOGLE_CLIENT_ID/SECRET**: Google OAuth 認證
 - **CLOUD_STORAGE_***: 雲端儲存設定
 - **STRIPE_***: Stripe 支付設定
-- **OPENAI_API_KEY**: OpenAI API 金鑰
+- **GEMINI_API_KEY**: Google Gemini API 金鑰
 
 ## 🧪 測試
 

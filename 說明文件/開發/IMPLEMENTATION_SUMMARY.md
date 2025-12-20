@@ -311,7 +311,7 @@ npm run dev
 - [ ] 檔案上傳（Cloud Storage 整合）
 - [ ] Email 通知（SendGrid / AWS SES）
 - [ ] SMS 驗證（Twilio）
-- [ ] AI 功能（OpenAI API）
+- [ ] AI 功能（Google Gemini API）
 - [ ] 付款整合（Stripe / 綠界）
 
 ### 2. 測試

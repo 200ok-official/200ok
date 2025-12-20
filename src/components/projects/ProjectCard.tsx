@@ -58,14 +58,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           <div className="flex flex-col">
             {/* Header: Title */}
             <div className="mb-4">
-              <h3 className="text-2xl font-bold text-[#20263e] hover:text-[#2d3550] tracking-tight leading-tight">
+              <h3 className="text-2xl font-bold text-[#20263e] hover:text-[#2d3550] tracking-tight leading-tight" style={{ fontFamily: "'Noto Serif TC', serif" }}>
                 {project.title}
               </h3>
             </div>
 
             {/* Price - Moved under title */}
             <div className="mb-6">
-              <span className="text-xl font-bold text-[#20263e]">
+              <span className="text-xl font-bold text-[#20263e]" style={{ fontFamily: "'Noto Serif TC', serif" }}>
                 ${project.budget_min.toLocaleString()} - ${project.budget_max.toLocaleString()}
               </span>
             </div>
