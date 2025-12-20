@@ -70,7 +70,7 @@ export default function ProjectsPage() {
     
     // 上滑：必須滑到非常接近頂部 (10px) 才展開 Hero，
     // 這樣在中間往上滑看舊內容時，Hero 不會突然變大擋路
-    const expandThreshold = 10;
+    const expandThreshold = 1;
     
     if (latest > collapseThreshold && !isCompact) {
       setIsCompact(true);
@@ -254,7 +254,7 @@ export default function ProjectsPage() {
 
       <main className="flex-1 w-full pt-16 pb-8 px-8 md:px-16 lg:px-40 xl:px-40 2xl:px-40">
         {/* Sticky Hero Section Container */}
-        <div className="sticky top-20 z-30 mb-12 transition-all duration-300 pointer-events-none">
+        <div className="sticky top-20 z-30 pointer-events-none">
           {/* 
             pointer-events-none on container to let clicks pass through to content below when not hovering the card,
             but we need to re-enable pointer-events on the card itself.
@@ -472,7 +472,17 @@ export default function ProjectsPage() {
           </motion.div>
         </div>
 
-        <div className="max-w-6xl mx-auto">
+        {/* 
+          動態間距：
+          - 當 hero section 未縮小時，需要足夠的頂部間距來容納完整的 hero section
+          - 當 hero section 縮小後，減少間距讓 project cards 剛好對齊到 search bar 下方
+        */}
+        <div 
+          className="max-w-6xl mx-auto transition-all duration-300 ease-in-out"
+          style={{ 
+            paddingTop: isCompact ? '6rem' : '32rem' // compact: 對齊到縮小的 hero 下方, expanded: 足夠空間給完整 hero
+          }}
+        >
           {/* 載入狀態 */}
         {loading && (
           <div className="text-center py-12">
