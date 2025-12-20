@@ -7,7 +7,6 @@ from .project import Project, ProjectStatus, ProjectMode, SavedProject
 from .bid import Bid, BidStatus
 from .conversation import Conversation, ConversationType, Message, UserConnection, ConnectionStatus
 from .token import UserToken, TokenTransaction, TransactionType
-from .tag import Tag, TagCategory, ProjectTag, UserTag
 from .review import Review
 from .payment import Payment, PaymentStatus
 from .notification import Notification, NotificationType
@@ -40,12 +39,6 @@ __all__ = [
     "UserToken",
     "TokenTransaction",
     "TransactionType",
-    
-    # Tag models
-    "Tag",
-    "TagCategory",
-    "ProjectTag",
-    "UserTag",
     
     # Review & Payment
     "Review",
