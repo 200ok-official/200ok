@@ -55,7 +55,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
       transition: { 
         duration: 0.5, 
-        ease: [0.4, 0, 0.2, 1] 
+        ease: [0.4, 0, 0.2, 1] as const
       }
     }
   };
