@@ -264,13 +264,34 @@ async def update_my_profile(
             detail="沒有要更新的欄位"
         )
     
+    # 驗證 roles（如果有的話）
+    if 'roles' in update_dict:
+        roles = update_dict['roles']
+        if not roles or len(roles) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="至少需要保留一個身份"
+            )
+        # 確保 roles 是 list 格式（psycopg 需要）
+        if not isinstance(roles, list):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="roles 必須是陣列格式"
+            )
+    
     # 建立 UPDATE SQL
     set_clauses = []
     params = {'user_id': str(current_user.id)}
     
     for key, value in update_dict.items():
-        set_clauses.append(f"{key} = :{key}")
-        params[key] = value
+        # 對於數組字段，確保格式正確
+        if key in ['roles', 'skills', 'portfolio_links'] and isinstance(value, list):
+            # psycopg 會自動處理 Python list 到 PostgreSQL array 的轉換
+            set_clauses.append(f"{key} = :{key}")
+            params[key] = value
+        else:
+            set_clauses.append(f"{key} = :{key}")
+            params[key] = value
     
     set_clauses.append("updated_at = NOW()")
     
@@ -278,11 +299,23 @@ async def update_my_profile(
         UPDATE users
         SET {', '.join(set_clauses)}
         WHERE id = :user_id
-        RETURNING id, name, email, phone, bio, skills, avatar_url, portfolio_links, updated_at
+        RETURNING id, name, email, phone, bio, skills, avatar_url, portfolio_links, roles, updated_at
     """
     
-    result = await db.execute(text(sql), params)
-    row = result.fetchone()
+    try:
+        result = await db.execute(text(sql), params)
+        row = result.fetchone()
+    except Exception as e:
+        # 記錄詳細錯誤以便除錯
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Update profile error: {str(e)}")
+        logger.error(f"SQL: {sql}")
+        logger.error(f"Params: {params}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"更新失敗：{str(e)}"
+        )
     
     return {
         "success": True,
@@ -296,6 +329,7 @@ async def update_my_profile(
             "skills": parse_pg_array(row.skills),
             "avatar_url": row.avatar_url,
             "portfolio_links": parse_pg_array(row.portfolio_links),
+            "roles": parse_pg_array(row.roles),
             "updated_at": row.updated_at
         }
     }

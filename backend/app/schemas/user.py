@@ -94,6 +94,7 @@ class UpdateUserRequest(BaseModel):
     bio: Optional[str] = None
     skills: Optional[List[str]] = None
     portfolio_links: Optional[List[str]] = None
+    roles: Optional[List[str]] = None  # 新增 roles 字段
 
 
 class UpdatePasswordRequest(BaseModel):
