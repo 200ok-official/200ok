@@ -8,27 +8,40 @@ import { Footer } from "@/components/layout/Footer";
 import { Badge } from "@/components/ui/Badge";
 import { apiGet } from "@/lib/api";
 
-interface MyProject {
+interface MyBid {
   id: string;
-  title: string;
+  project_id: string;
+  proposal: string;
+  bid_amount: number | null;
+  estimated_days: number | null;
   status: string;
-  budget_min: number | null;
-  budget_max: number | null;
   created_at: string;
-  bids_count: number;
+  project: {
+    id: string;
+    title: string;
+    status: string;
+    budget_min: number | null;
+    budget_max: number | null;
+    client: {
+      id: string;
+      name: string;
+      avatar_url: string | null;
+      rating: number | null;
+    } | null;
+  } | null;
 }
 
-export default function MyProjectsPage() {
+export default function MyBidsPage() {
   const router = useRouter();
-  const [projects, setProjects] = useState<MyProject[]>([]);
+  const [bids, setBids] = useState<MyBid[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchMyProjects();
+    fetchMyBids();
   }, []);
 
-  const fetchMyProjects = async () => {
+  const fetchMyBids = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -39,26 +52,42 @@ export default function MyProjectsPage() {
         return;
       }
 
-      const response = await apiGet("/api/v1/projects/me/list");
+      const response = await apiGet("/api/v1/bids/me");
       
       if (response.success && response.data) {
-        setProjects(response.data.projects || []);
+        setBids(response.data.bids || []);
       } else {
-        setError("無法載入案件列表");
+        setError("無法載入投標列表");
       }
     } catch (err: any) {
-      console.error("Failed to fetch my projects:", err);
+      console.error("Failed to fetch my bids:", err);
       if (err.message?.includes("401") || err.message?.includes("Unauthorized")) {
         router.push("/login");
       } else {
-        setError(err.message || "載入案件時發生錯誤");
+        setError(err.message || "載入投標時發生錯誤");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getBidStatusBadge = (status: string) => {
+    const statusMap: Record<string, { label: string; className: string }> = {
+      pending: { label: "待審核", className: "bg-yellow-100 text-yellow-800" },
+      accepted: { label: "已接受", className: "bg-green-100 text-green-800" },
+      rejected: { label: "已拒絕", className: "bg-red-100 text-red-800" },
+      withdrawn: { label: "已撤回", className: "bg-gray-100 text-gray-800" },
+    };
+    
+    const statusInfo = statusMap[status] || { label: status, className: "bg-gray-100 text-gray-800" };
+    return (
+      <Badge className={statusInfo.className}>
+        {statusInfo.label}
+      </Badge>
+    );
+  };
+
+  const getProjectStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; className: string }> = {
       draft: { label: "草稿", className: "bg-gray-100 text-gray-800" },
       open: { label: "開放中", className: "bg-green-100 text-green-800" },
@@ -84,15 +113,9 @@ export default function MyProjectsPage() {
     });
   };
 
-  const formatBudget = (min: number | null, max: number | null) => {
-    if (!min && !max) return "待議";
-    if (min && max) {
-      return `NT$ ${min.toLocaleString()} - ${max.toLocaleString()}`;
-    }
-    if (min) {
-      return `NT$ ${min.toLocaleString()} 以上`;
-    }
-    return `NT$ ${max?.toLocaleString()} 以下`;
+  const formatAmount = (amount: number | null) => {
+    if (!amount) return "待議";
+    return `NT$ ${amount.toLocaleString()}`;
   };
 
   if (loading) {
@@ -130,36 +153,48 @@ export default function MyProjectsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* 頁面標題 */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-[#20263e] mb-2">我的案件</h1>
-            <p className="text-[#c5ae8c]">管理您發起的所有專案</p>
+            <h1 className="text-3xl font-bold text-[#20263e] mb-2">我的投標</h1>
+            <p className="text-[#c5ae8c]">查看您投標的所有案件</p>
           </div>
 
-          {/* 案件列表 */}
-          {projects.length === 0 ? (
+          {/* 投標列表 */}
+          {bids.length === 0 ? (
             <div className="text-center py-20">
-              <p className="text-[#c5ae8c] text-lg mb-4">目前還沒有發起任何案件，按右上角的加號來發起第一則案件吧！</p>
+              <p className="text-[#c5ae8c] text-lg mb-4">目前還沒有投標任何案件，去探索案件開始投標吧！</p>
+              <Link
+                href="/projects"
+                className="inline-block px-6 py-3 bg-[#20263e] text-white rounded-lg hover:bg-[#2a3450] transition-colors"
+              >
+                探索案件
+              </Link>
             </div>
           ) : (
             <div>
-              {projects.map((project, index) => (
-                <React.Fragment key={project.id}>
+              {bids.map((bid, index) => (
+                <React.Fragment key={bid.id}>
                   <Link
-                    href={`/projects/${project.id}`}
+                    href={`/projects/${bid.project_id}`}
                     className="block py-6 group"
                   >
                     <div className="flex items-center justify-between">
-                      {/* 左側：案件資訊 */}
+                      {/* 左側：投標資訊 */}
                       <div className="flex-1">
                         <div className="flex items-center gap-4 mb-2">
                           <h2 className="text-xl font-bold text-[#20263e]">
-                            {project.title}
+                            {bid.project?.title || "案件已刪除"}
                           </h2>
-                          {getStatusBadge(project.status)}
+                          {getBidStatusBadge(bid.status)}
+                          {bid.project && getProjectStatusBadge(bid.project.status)}
                         </div>
                         <div className="flex items-center gap-6 text-sm text-[#c5ae8c]">
-                          <span>預算：{formatBudget(project.budget_min, project.budget_max)}</span>
-                          <span>提案數：{project.bids_count}</span>
-                          <span>建立時間：{formatDate(project.created_at)}</span>
+                          <span>投標金額：{formatAmount(bid.bid_amount)}</span>
+                          {bid.estimated_days && (
+                            <span>預計天數：{bid.estimated_days} 天</span>
+                          )}
+                          {bid.project?.client && (
+                            <span>發案者：{bid.project.client.name}</span>
+                          )}
+                          <span>投標時間：{formatDate(bid.created_at)}</span>
                         </div>
                       </div>
                       {/* 右側：箭頭 */}
@@ -181,7 +216,7 @@ export default function MyProjectsPage() {
                     </div>
                   </Link>
                   {/* 深藍色分隔線 */}
-                  {index < projects.length - 1 && (
+                  {index < bids.length - 1 && (
                     <div className="border-b-2 border-[#20263e]"></div>
                   )}
                 </React.Fragment>

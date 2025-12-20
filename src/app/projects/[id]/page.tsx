@@ -97,6 +97,44 @@ export default function ProjectDetailPage({
   const isOwner = userId && userId === project.client_id;
   const isNewDevelopment = project.project_mode === "new_development";
 
+  // 映射英文值到中文标签（用于需交付文件和擔憂與顧慮）
+  const DELIVERABLE_MAP: Record<string, string> = {
+    "source_code": "原始碼",
+    "admin_credentials": "後台帳密",
+    "tutorial_video": "教學影片",
+    "documentation": "使用文件",
+    "maintenance": "維護服務",
+    "deployment": "上線代辦",
+    "training": "操作培訓",
+  };
+
+  const CONCERN_MAP: Record<string, string> = {
+    "security": "擔心資料安全",
+    "complexity": "怕操作太難",
+    "scalability": "想之後能持續擴充功能",
+    "nda": "需要簽署保密協議（NDA）",
+    "copyright": "版權歸屬需求",
+    "modification_limit": "修改次數限制",
+    "warranty": "保固服務",
+  };
+
+  // 將英文值轉換為中文（如果數據庫中是英文值）
+  const translateDeliverable = (value: string): string => {
+    // 如果已經是中文（不在映射表中），直接返回
+    if (!DELIVERABLE_MAP[value]) {
+      return value;
+    }
+    return DELIVERABLE_MAP[value];
+  };
+
+  const translateConcern = (value: string): string => {
+    // 如果已經是中文（不在映射表中），直接返回
+    if (!CONCERN_MAP[value]) {
+      return value;
+    }
+    return CONCERN_MAP[value];
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
       <Navbar />
@@ -298,7 +336,7 @@ export default function ProjectDetailPage({
                               </h4>
                         <ul className="list-disc list-inside space-y-1 text-[#20263e]">
                           {project.new_concerns.map((concern: string, index: number) => (
-                            <li key={index}>{concern}</li>
+                            <li key={index}>{translateConcern(concern)}</li>
                           ))}
                         </ul>
                       </div>
@@ -555,7 +593,7 @@ export default function ProjectDetailPage({
             <section>
               <h3 className="text-lg font-bold text-[#20263e] mb-4">關於發案者</h3>
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-[#20263e] rounded-full flex items-center justify-center text-white text-xl font-bold">
+                <div className="w-12 h-12 bg-[#20263e] rounded-full flex items-center justify-center text-white text-lg font-bold">
                   {project.client.name[0]}
                 </div>
                 <div className="flex items-center gap-6">
@@ -612,6 +650,44 @@ export default function ProjectDetailPage({
   );
 }
 
+// 映射英文值到中文标签（用于需交付文件和擔憂與顧慮）
+const DELIVERABLE_MAP: Record<string, string> = {
+  "source_code": "原始碼",
+  "admin_credentials": "後台帳密",
+  "tutorial_video": "教學影片",
+  "documentation": "使用文件",
+  "maintenance": "維護服務",
+  "deployment": "上線代辦",
+  "training": "操作培訓",
+};
+
+const CONCERN_MAP: Record<string, string> = {
+  "security": "擔心資料安全",
+  "complexity": "怕操作太難",
+  "scalability": "想之後能持續擴充功能",
+  "nda": "需要簽署保密協議（NDA）",
+  "copyright": "版權歸屬需求",
+  "modification_limit": "修改次數限制",
+  "warranty": "保固服務",
+};
+
+// 將英文值轉換為中文（如果數據庫中是英文值）
+const translateDeliverable = (value: string): string => {
+  // 如果已經是中文（不在映射表中），直接返回
+  if (!DELIVERABLE_MAP[value]) {
+    return value;
+  }
+  return DELIVERABLE_MAP[value];
+};
+
+const translateConcern = (value: string): string => {
+  // 如果已經是中文（不在映射表中），直接返回
+  if (!CONCERN_MAP[value]) {
+    return value;
+  }
+  return CONCERN_MAP[value];
+};
+
 // 全新開發專案詳細內容
 function NewDevelopmentDetails({ project }: { project: any }) {
   return (
@@ -644,7 +720,7 @@ function NewDevelopmentDetails({ project }: { project: any }) {
           </h3>
           <ul className="list-disc list-inside space-y-1 text-[#20263e] ml-2">
             {project.new_deliverables.map((item: string, index: number) => (
-              <li key={index}>{item}</li>
+              <li key={index}>{translateDeliverable(item)}</li>
             ))}
           </ul>
         </div>
