@@ -10,7 +10,7 @@ export default function HowItWorksPage() {
       <Navbar />
 
       {/* Hero Section */}
-      <div className="bg-[#20263e] pb-20 pt-16 -mt-16">
+      <div className="bg-[#20263e] pb-20 pt-24">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-5xl font-bold mb-6 text-white">如何使用 200 OK</h1>
           <p className="text-xl text-[#c5ae8c] max-w-3xl mx-auto mb-4">
