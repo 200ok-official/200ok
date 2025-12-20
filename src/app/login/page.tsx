@@ -81,7 +81,7 @@ function LoginForm() {
 
     try {
       const data = await apiPost("/api/v1/auth/login", formData);
-      
+
       // 儲存 token
       localStorage.setItem("access_token", data.data.access_token);
       localStorage.setItem("refresh_token", data.data.refresh_token);
@@ -220,10 +220,10 @@ function LoginForm() {
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
               <Checkbox
-                id="rememberMe"
-                name="rememberMe"
-                checked={formData.rememberMe}
-                onChange={handleChange}
+                    id="rememberMe"
+                    name="rememberMe"
+                    checked={formData.rememberMe}
+                    onChange={handleChange}
                 label="記住電子郵件"
               />
 

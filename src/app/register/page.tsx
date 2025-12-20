@@ -436,30 +436,30 @@ export default function RegisterPage() {
                   error={!!fieldErrors.terms}
                   label={
                     <>
-                      我同意{" "}
-                      <a
-                        href="#"
-                        className="text-[#20263e] hover:text-[#c5ae8c] transition underline font-semibold"
+                  我同意{" "}
+                  <a
+                    href="#"
+                    className="text-[#20263e] hover:text-[#c5ae8c] transition underline font-semibold"
                         onClick={(e) => e.stopPropagation()}
-                      >
-                        服務條款
-                      </a>{" "}
-                      和{" "}
-                      <a
-                        href="#"
-                        className="text-[#20263e] hover:text-[#c5ae8c] transition underline font-semibold"
+                  >
+                    服務條款
+                  </a>{" "}
+                  和{" "}
+                  <a
+                    href="#"
+                    className="text-[#20263e] hover:text-[#c5ae8c] transition underline font-semibold"
                         onClick={(e) => e.stopPropagation()}
-                      >
-                        隱私政策
-                      </a>
+                  >
+                    隱私政策
+                  </a>
                     </>
                   }
                 />
-                {fieldErrors.terms && (
-                  <div className="mt-3 bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded">
-                    <p className="font-medium">{fieldErrors.terms}</p>
-                  </div>
-                )}
+              {fieldErrors.terms && (
+                <div className="mt-3 bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded">
+                  <p className="font-medium">{fieldErrors.terms}</p>
+                </div>
+              )}
               </div>
 
               {/* Submit Button */}

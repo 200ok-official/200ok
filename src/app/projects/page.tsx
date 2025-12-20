@@ -6,8 +6,8 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { apiGet } from "@/lib/api";
+import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion";
 
 interface Project {
   id: string;
@@ -44,6 +44,20 @@ export default function ProjectsPage() {
   const [hasMore, setHasMore] = useState(true);
   const [columns, setColumns] = useState<Project[][]>([[], [], []]);
   const masonryRef = useRef<HTMLDivElement>(null);
+  
+  // Animation states
+  const { scrollY } = useScroll();
+  const [isCompact, setIsCompact] = useState(false);
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    // 當滾動超過 50px 時切換為緊湊模式
+    // 添加一些緩衝以避免頻繁切換
+    if (latest > 100 && !isCompact) {
+      setIsCompact(true);
+    } else if (latest < 50 && isCompact) {
+      setIsCompact(false);
+    }
+  });
 
   useEffect(() => {
     fetchProjects();
@@ -152,68 +166,134 @@ export default function ProjectsPage() {
     <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
       <Navbar />
 
-      <main className="flex-1 w-full pt-24 pb-8 px-8 md:px-16 lg:px-40 xl:px-40 2xl:px-40">
-        {/* Hero Section - 與卡片列表同寬 */}
-        <div className="max-w-6xl mx-auto mb-12">
-          <div className="bg-[#20263e] rounded-[2.5rem] py-20 px-6 md:px-12 shadow-2xl overflow-hidden relative">
-          {/* Decorative Background Elements */}
-          <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
-            <div className="absolute -top-24 -left-24 w-96 h-96 bg-white rounded-full blur-[100px]"></div>
-            <div className="absolute bottom-0 right-0 w-[30rem] h-[30rem] bg-[#c5ae8c] rounded-full blur-[120px]"></div>
-          </div>
+      <main className="flex-1 w-full pt-16 pb-8 px-8 md:px-16 lg:px-40 xl:px-40 2xl:px-40">
+        {/* Sticky Hero Section Container */}
+        <div className="sticky top-16 z-30 mb-8 -mx-4 md:-mx-8 lg:-mx-12 transition-all duration-300 pointer-events-none">
+          {/* 
+            pointer-events-none on container to let clicks pass through to content below when not hovering the card,
+            but we need to re-enable pointer-events on the card itself.
+          */}
+          <motion.div 
+            layout
+            className={`
+              mx-auto bg-[#20263e] shadow-2xl relative overflow-hidden pointer-events-auto
+              ${isCompact ? 'rounded-b-2xl shadow-lg' : 'rounded-[2.5rem] mt-8'}
+            `}
+            initial={false}
+            animate={{
+              width: isCompact ? "100%" : "100%", // 可以根據需要調整寬度，這裡保持全寬但 padding 不同
+              maxWidth: isCompact ? "100%" : "72rem", // max-w-6xl = 72rem
+              paddingTop: isCompact ? "1rem" : "5rem",
+              paddingBottom: isCompact ? "1rem" : "5rem",
+              paddingLeft: isCompact ? "1.5rem" : "3rem",
+              paddingRight: isCompact ? "1.5rem" : "3rem",
+            }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
+            {/* Decorative Background Elements - Fade out in compact mode */}
+            <motion.div 
+              className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none"
+              animate={{ opacity: isCompact ? 0 : 0.1 }}
+            >
+              <div className="absolute -top-24 -left-24 w-96 h-96 bg-white rounded-full blur-[100px]"></div>
+              <div className="absolute bottom-0 right-0 w-[30rem] h-[30rem] bg-[#c5ae8c] rounded-full blur-[120px]"></div>
+            </motion.div>
 
-          <div className="relative z-10 max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 tracking-tight">
-              探索案件
-            </h1>
-            <p className="text-lg md:text-xl text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed">
-              瀏覽最新的軟體開發案件，找到適合您的專案
-            </p>
-
-            {/* 搜尋與篩選 */}
-            <div className="mb-10 relative">
-              <input
-                type="text"
-                placeholder="搜尋案件標題或描述..."
-                className="w-full px-8 py-5 text-lg border-none rounded-full focus:outline-none focus:ring-4 focus:ring-[#c5ae8c]/50 transition bg-white text-[#20263e] placeholder:text-gray-400 shadow-lg"
-                value={searchKeyword}
-                onChange={(e) => setSearchKeyword(e.target.value)}
-              />
-              <button className="absolute right-3 top-1/2 -translate-y-1/2 bg-[#20263e] text-white p-3 rounded-full hover:bg-[#2d3550] transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-bold text-[#c5ae8c] mb-6 uppercase tracking-widest">
-                熱門技能
-              </h3>
-              <div className="flex flex-wrap gap-3 justify-center">
-                {popularSkills.map((skill) => (
-                  <button
-                    key={skill}
-                    className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                      selectedSkills.includes(skill)
-                        ? "bg-white text-[#20263e] shadow-[0_0_15px_rgba(255,255,255,0.3)] transform scale-105"
-                        : "bg-white/10 text-white border border-white/20 hover:bg-white/20 hover:border-white/40 backdrop-blur-sm"
-                    }`}
-                    onClick={() => {
-                      if (selectedSkills.includes(skill)) {
-                        setSelectedSkills(selectedSkills.filter((s) => s !== skill));
-                      } else {
-                        setSelectedSkills([...selectedSkills, skill]);
-                      }
-                    }}
+            <div className={`relative z-10 mx-auto ${isCompact ? 'max-w-7xl flex items-center gap-6' : 'max-w-4xl text-center'}`}>
+              
+              {/* Title & Description - Hide in compact mode */}
+              <AnimatePresence>
+                {!isCompact && (
+                  <motion.div
+                    initial={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0, overflow: "hidden" }}
+                    transition={{ duration: 0.2 }}
                   >
-                    {skill}
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 tracking-tight">
+                      探索案件
+                    </h1>
+                    <p className="text-lg md:text-xl text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed">
+                      瀏覽最新的軟體開發案件，找到適合您的專案
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* 搜尋與篩選區域 */}
+              <motion.div 
+                layout 
+                className={`flex-1 ${isCompact ? 'flex items-center gap-4' : 'w-full'}`}
+              >
+                {/* Search Bar */}
+                <motion.div 
+                  layout
+                  className={`relative ${isCompact ? 'flex-1 max-w-xl' : 'mb-10 w-full'}`}
+                >
+                  <input
+                    type="text"
+                    placeholder={isCompact ? "搜尋案件..." : "搜尋案件標題或描述..."}
+                    className={`w-full border-none focus:outline-none focus:ring-4 focus:ring-[#c5ae8c]/50 transition bg-white text-[#20263e] placeholder:text-gray-400
+                      ${isCompact ? 'py-2.5 px-5 rounded-full text-sm' : 'px-8 py-5 text-lg rounded-full shadow-lg'}
+                    `}
+                    value={searchKeyword}
+                    onChange={(e) => setSearchKeyword(e.target.value)}
+                  />
+                  <button className={`absolute right-1 top-1/2 -translate-y-1/2 bg-[#20263e] text-white rounded-full hover:bg-[#2d3550] transition-colors
+                    ${isCompact ? 'p-1.5 right-1.5' : 'p-3 right-3'}
+                  `}>
+                    <svg className={`${isCompact ? 'w-4 h-4' : 'w-6 h-6'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
                   </button>
-                ))}
-              </div>
+                </motion.div>
+
+                {/* Filter Tags */}
+                <motion.div 
+                  layout
+                  className={`${isCompact ? 'flex-1 overflow-x-auto no-scrollbar mask-gradient-right' : ''}`}
+                >
+                   <AnimatePresence>
+                    {!isCompact && (
+                      <motion.h3 
+                        initial={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                        className="text-sm font-bold text-[#c5ae8c] mb-6 uppercase tracking-widest"
+                      >
+                        熱門技能
+                      </motion.h3>
+                    )}
+                   </AnimatePresence>
+                  
+                  <motion.div 
+                    layout
+                    className={`flex ${isCompact ? 'gap-2 items-center pr-4' : 'flex-wrap gap-3 justify-center'}`}
+                  >
+                    {popularSkills.map((skill) => (
+                      <motion.button
+                        layout
+                        key={skill}
+                        className={`font-medium transition-all duration-300 whitespace-nowrap
+                          ${isCompact 
+                            ? `px-3 py-1.5 rounded-full text-xs ${selectedSkills.includes(skill) ? "bg-white text-[#20263e]" : "bg-white/10 text-white hover:bg-white/20"}`
+                            : `px-5 py-2.5 rounded-full text-sm ${selectedSkills.includes(skill) ? "bg-white text-[#20263e] shadow-[0_0_15px_rgba(255,255,255,0.3)] transform scale-105" : "bg-white/10 text-white border border-white/20 hover:bg-white/20 hover:border-white/40 backdrop-blur-sm"}`
+                          }
+                        `}
+                        onClick={() => {
+                          if (selectedSkills.includes(skill)) {
+                            setSelectedSkills(selectedSkills.filter((s) => s !== skill));
+                          } else {
+                            setSelectedSkills([...selectedSkills, skill]);
+                          }
+                        }}
+                      >
+                        {skill}
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                </motion.div>
+              </motion.div>
             </div>
-          </div>
-          </div>
+          </motion.div>
         </div>
 
         <div className="max-w-6xl mx-auto">
@@ -289,4 +369,3 @@ export default function ProjectsPage() {
     </div>
   );
 }
-

@@ -289,7 +289,7 @@ export const Step8BudgetSchedule: React.FC<Props> = ({ data, updateData }) => {
                   <LightBulbIcon className="w-5 h-5 shrink-0 mt-0.5" />
                   <span>
                     <strong>如果您的需求細節還不夠清楚：</strong><br />
-                    建議您先<strong>選擇一個預算區間</strong>，這樣可以幫助接案者更快理解專案規模，也能吸引更多工程師查看您的案件。待需求更明確後，可以在後續溝通中調整預算。
+                  建議您先<strong>選擇一個預算區間</strong>，這樣可以幫助接案者更快理解專案規模，也能吸引更多工程師查看您的案件。待需求更明確後，可以在後續溝通中調整預算。
                   </span>
                 </p>
                 <div className="mt-4">

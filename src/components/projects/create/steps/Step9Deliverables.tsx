@@ -113,27 +113,27 @@ export const Step9Deliverables: React.FC<Props> = ({ data, updateData }) => {
           {displayOptions.map((option) => {
             const Icon = ICON_MAP[option.value] || QuestionMarkCircleIcon;
             return (
-              <button
-                key={option.value}
-                onClick={() => handleDeliverableToggle(option.value)}
-                className={`p-4 rounded-lg border-2 transition-all text-left hover:shadow-md ${
-                  isDeliverableSelected(option.value)
-                    ? "border-[#20263e] bg-[#20263e] bg-opacity-5"
-                    : "border-[#c5ae8c] hover:border-[#20263e]"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+            <button
+              key={option.value}
+              onClick={() => handleDeliverableToggle(option.value)}
+              className={`p-4 rounded-lg border-2 transition-all text-left hover:shadow-md ${
+                isDeliverableSelected(option.value)
+                  ? "border-[#20263e] bg-[#20263e] bg-opacity-5"
+                  : "border-[#c5ae8c] hover:border-[#20263e]"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
                     <Icon className="w-8 h-8 text-[#20263e]" />
-                    <span className="text-base font-semibold text-[#20263e]">
-                      {option.label}
-                    </span>
-                  </div>
-                  {isDeliverableSelected(option.value) && (
-                    <CheckIcon className="w-6 h-6 text-[#20263e]" />
-                  )}
+                  <span className="text-base font-semibold text-[#20263e]">
+                    {option.label}
+                  </span>
                 </div>
-              </button>
+                {isDeliverableSelected(option.value) && (
+                    <CheckIcon className="w-6 h-6 text-[#20263e]" />
+                )}
+              </div>
+            </button>
             );
           })}
         </div>
@@ -149,27 +149,27 @@ export const Step9Deliverables: React.FC<Props> = ({ data, updateData }) => {
           {COMMUNICATION_OPTIONS.map((option) => {
             const Icon = ICON_MAP[option.value] || QuestionMarkCircleIcon;
             return (
-              <button
-                key={option.value}
-                onClick={() => handleCommunicationToggle(option.value)}
-                className={`p-4 rounded-lg border-2 transition-all text-left hover:shadow-md ${
-                  isCommunicationSelected(option.value)
-                    ? "border-[#20263e] bg-[#20263e] bg-opacity-5"
-                    : "border-[#c5ae8c] hover:border-[#20263e]"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+            <button
+              key={option.value}
+              onClick={() => handleCommunicationToggle(option.value)}
+              className={`p-4 rounded-lg border-2 transition-all text-left hover:shadow-md ${
+                isCommunicationSelected(option.value)
+                  ? "border-[#20263e] bg-[#20263e] bg-opacity-5"
+                  : "border-[#c5ae8c] hover:border-[#20263e]"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
                     <Icon className="w-8 h-8 text-[#20263e]" />
-                    <span className="text-base font-semibold text-[#20263e]">
-                      {option.label}
-                    </span>
-                  </div>
-                  {isCommunicationSelected(option.value) && (
-                    <CheckIcon className="w-6 h-6 text-[#20263e]" />
-                  )}
+                  <span className="text-base font-semibold text-[#20263e]">
+                    {option.label}
+                  </span>
                 </div>
-              </button>
+                {isCommunicationSelected(option.value) && (
+                    <CheckIcon className="w-6 h-6 text-[#20263e]" />
+                )}
+              </div>
+            </button>
             );
           })}
         </div>
