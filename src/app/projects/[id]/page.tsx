@@ -161,189 +161,195 @@ export default function ProjectDetailPage({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 左側主要內容 */}
           <div className="lg:col-span-2 space-y-8">
-            {/* 專案概況區塊 */}
+            {/* 合併所有內容到一個 Card */}
             <section>
-              <h2 className="text-2xl font-bold text-[#20263e] mb-4">專案概況</h2>
               <Card className="p-8">
                 <div className="space-y-8">
-                  {/* 專案描述 */}
+                  {/* 專案概況區塊 */}
                   <div>
-                    <h3 className="text-lg font-semibold text-[#20263e] mb-3 flex items-center gap-2">
-                      <span className="text-xl">📝</span> 專案描述
-                    </h3>
-                    <p className="text-[#20263e] leading-relaxed whitespace-pre-line text-lg">
-                      {project.description}
-                    </p>
+                    <div className="space-y-6">
+                      {/* 專案描述 */}
+                      <div>
+                        <h3 className="text-xl font-bold text-[#20263e] mb-4">專案描述</h3>
+                        <p className="text-[#20263e] leading-relaxed whitespace-pre-line text-lg">
+                          {project.description}
+                        </p>
+                      </div>
+
+                      {/* 根據專案模式顯示核心資訊 */}
+                      {isNewDevelopment ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          {project.new_usage_scenario && (
+                            <div>
+                              <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">使用場景</h4>
+                              <p className="text-[#20263e] leading-relaxed">{project.new_usage_scenario}</p>
+                            </div>
+                          )}
+                          {project.new_goals && (
+                            <div>
+                              <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">專案目標</h4>
+                              <p className="text-[#20263e] leading-relaxed">{project.new_goals}</p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          {project.maint_system_name && (
+                            <div>
+                              <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">系統名稱</h4>
+                              <p className="text-[#20263e] font-medium text-lg">{project.maint_system_name}</p>
+                            </div>
+                          )}
+                          {project.maint_system_purpose && (
+                            <div>
+                              <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">系統用途</h4>
+                              <p className="text-[#20263e] leading-relaxed">{project.maint_system_purpose}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
+                  {/* 灰色分隔線 */}
                   <hr className="border-[#e5e7eb]" />
 
-                  {/* 根據專案模式顯示核心資訊 */}
-                  {isNewDevelopment ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      {project.new_usage_scenario && (
-                        <div>
-                          <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">使用場景</h4>
-                          <p className="text-[#20263e] leading-relaxed">{project.new_usage_scenario}</p>
+                  {/* 詳細需求區塊 */}
+                  <div>
+                    {isNewDevelopment ? (
+                      <NewDevelopmentDetails project={project} />
+                    ) : (
+                      <MaintenanceDetails project={project} />
+                    )}
+                  </div>
+
+                  {/* 技術與規格區塊 */}
+                  {(project.required_skills?.length > 0 || project.new_design_style?.length > 0 || project.new_integrations?.length > 0 || project.maint_known_tech_stack?.length > 0) && (
+                    <>
+                      {/* 灰色分隔線 */}
+                      <hr className="border-[#e5e7eb]" />
+                      
+                      <div>
+                        <h3 className="text-xl font-bold text-[#20263e] mb-4">技術規格</h3>
+                        <div className="space-y-6">
+                          {/* 技能需求 */}
+                          {project.required_skills && project.required_skills.length > 0 && (
+                            <div>
+                              <h4 className="text-lg font-semibold text-[#20263e] mb-3">🛠️ 技能需求</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {project.required_skills.map((skill: string) => (
+                                  <Badge key={skill} variant="info" className="text-sm py-1 px-3">
+                                    {skill}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 設計風格 (全新開發) */}
+                          {project.new_design_style && project.new_design_style.length > 0 && (
+                            <div>
+                              <h4 className="text-lg font-semibold text-[#20263e] mb-3">🎨 設計風格</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {project.new_design_style.map((style: string) => (
+                                  <Badge key={style} variant="info" className="text-sm py-1 px-3">
+                                    {style}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 整合需求 (全新開發) */}
+                          {project.new_integrations && project.new_integrations.length > 0 && (
+                            <div>
+                              <h4 className="text-lg font-semibold text-[#20263e] mb-3">🔌 外部整合</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {project.new_integrations.map((integration: string) => (
+                                  <Badge key={integration} variant="info" className="text-sm py-1 px-3">
+                                    {integration}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 已知技術棧 (修改維護) */}
+                          {project.maint_known_tech_stack && project.maint_known_tech_stack.length > 0 && (
+                            <div>
+                              <h4 className="text-lg font-semibold text-[#20263e] mb-3">🏗️ 現有技術棧</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {project.maint_known_tech_stack.map((tech: string) => (
+                                  <Badge key={tech} variant="info" className="text-sm py-1 px-3">
+                                    {tech}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {project.new_goals && (
-                        <div>
-                          <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">專案目標</h4>
-                          <p className="text-[#20263e] leading-relaxed">{project.new_goals}</p>
+                      </div>
+                    </>
+                  )}
+
+                  {/* 補充與參考資料 */}
+                  {(project.reference_links?.length > 0 || project.new_special_requirements || project.new_concerns?.length > 0) && (
+                    <>
+                      {/* 灰色分隔線 */}
+                      <hr className="border-[#e5e7eb]" />
+                      
+                      <div>
+                        <h3 className="text-xl font-bold text-[#20263e] mb-4">其他資訊</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          {/* 參考資料 */}
+                          {project.reference_links && project.reference_links.length > 0 && (
+                            <div>
+                              <h4 className="text-lg font-semibold text-[#20263e] mb-3">🔗 參考資料</h4>
+                              <ul className="space-y-2">
+                                {project.reference_links.map((link: string, index: number) => (
+                                  <li key={index}>
+                                    <a
+                                      href={link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:text-blue-800 hover:underline break-all"
+                                    >
+                                      {link}
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* 特殊需求 */}
+                          {project.new_special_requirements && (
+                            <div>
+                              <h4 className="text-lg font-semibold text-[#20263e] mb-3">⚠️ 特殊需求</h4>
+                              <p className="text-[#20263e] leading-relaxed whitespace-pre-line">
+                                {project.new_special_requirements}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* 擔憂事項 */}
+                          {project.new_concerns && project.new_concerns.length > 0 && (
+                            <div className="md:col-span-2">
+                              <h4 className="text-lg font-semibold text-[#20263e] mb-3">😟 擔憂與顧慮</h4>
+                              <ul className="list-disc list-inside space-y-1 text-[#20263e]">
+                                {project.new_concerns.map((concern: string, index: number) => (
+                                  <li key={index}>{concern}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      {project.maint_system_name && (
-                        <div>
-                          <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">系統名稱</h4>
-                          <p className="text-[#20263e] font-medium text-lg">{project.maint_system_name}</p>
-                        </div>
-                      )}
-                      {project.maint_system_purpose && (
-                        <div>
-                          <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">系統用途</h4>
-                          <p className="text-[#20263e] leading-relaxed">{project.maint_system_purpose}</p>
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    </>
                   )}
                 </div>
               </Card>
             </section>
-
-            {/* 詳細需求區塊 */}
-            <section>
-              <h2 className="text-2xl font-bold text-[#20263e] mb-4">詳細需求</h2>
-              <Card className="p-8">
-                {isNewDevelopment ? (
-                  <NewDevelopmentDetails project={project} />
-                ) : (
-                  <MaintenanceDetails project={project} />
-                )}
-              </Card>
-            </section>
-
-            {/* 技術與規格區塊 */}
-            {(project.required_skills?.length > 0 || project.new_design_style?.length > 0 || project.new_integrations?.length > 0 || project.maint_known_tech_stack?.length > 0) && (
-              <section>
-                <h2 className="text-2xl font-bold text-[#20263e] mb-4">技術規格</h2>
-                <Card className="p-8">
-                  <div className="space-y-6">
-                    {/* 技能需求 */}
-                    {project.required_skills && project.required_skills.length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-semibold text-[#20263e] mb-3">🛠️ 技能需求</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {project.required_skills.map((skill: string) => (
-                            <Badge key={skill} variant="info" className="text-sm py-1 px-3">
-                              {skill}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 設計風格 (全新開發) */}
-                    {project.new_design_style && project.new_design_style.length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-semibold text-[#20263e] mb-3">🎨 設計風格</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {project.new_design_style.map((style: string) => (
-                            <Badge key={style} variant="info" className="text-sm py-1 px-3">
-                              {style}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 整合需求 (全新開發) */}
-                    {project.new_integrations && project.new_integrations.length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-semibold text-[#20263e] mb-3">🔌 外部整合</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {project.new_integrations.map((integration: string) => (
-                            <Badge key={integration} variant="info" className="text-sm py-1 px-3">
-                              {integration}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 已知技術棧 (修改維護) */}
-                    {project.maint_known_tech_stack && project.maint_known_tech_stack.length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-semibold text-[#20263e] mb-3">🏗️ 現有技術棧</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {project.maint_known_tech_stack.map((tech: string) => (
-                            <Badge key={tech} variant="info" className="text-sm py-1 px-3">
-                              {tech}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              </section>
-            )}
-
-            {/* 補充與參考資料 */}
-            {(project.reference_links?.length > 0 || project.new_special_requirements || project.new_concerns?.length > 0) && (
-              <section>
-                <h2 className="text-2xl font-bold text-[#20263e] mb-4">補充資訊</h2>
-                <Card className="p-8 bg-[#fafafa]">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* 參考資料 */}
-                    {project.reference_links && project.reference_links.length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-semibold text-[#20263e] mb-3">🔗 參考資料</h3>
-                        <ul className="space-y-2">
-                          {project.reference_links.map((link: string, index: number) => (
-                            <li key={index}>
-                              <a
-                                href={link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800 hover:underline break-all"
-                              >
-                                {link}
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* 特殊需求 */}
-                    {project.new_special_requirements && (
-                      <div>
-                        <h3 className="text-lg font-semibold text-[#20263e] mb-3">⚠️ 特殊需求</h3>
-                        <p className="text-[#20263e] leading-relaxed whitespace-pre-line">
-                          {project.new_special_requirements}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* 擔憂事項 */}
-                    {project.new_concerns && project.new_concerns.length > 0 && (
-                      <div className="md:col-span-2">
-                        <h3 className="text-lg font-semibold text-[#20263e] mb-3">😟 擔憂與顧慮</h3>
-                        <ul className="list-disc list-inside space-y-1 text-[#20263e]">
-                          {project.new_concerns.map((concern: string, index: number) => (
-                            <li key={index}>{concern}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              </section>
-            )}
 
             {/* 投標列表（僅發案者可見） */}
             {isOwner && project.bids && project.bids.length > 0 && (
@@ -420,8 +426,8 @@ export default function ProjectDetailPage({
             {/* 主要行動卡片 */}
             <Card className="p-6 border-t-4 border-t-[#20263e] shadow-lg">
               <div className="mb-6">
-                <p className="text-sm text-[#c5ae8c] mb-1 font-medium uppercase tracking-wide">專案預算</p>
-                <p className="text-3xl font-bold text-[#20263e]">
+                <p className="text-sm text-[#20263e] mb-1 font-medium uppercase tracking-wide">專案預算</p>
+                <p className="text-2xl font-bold text-[#20263e]">
                   NT$ {project.budget_min.toLocaleString()} - {project.budget_max.toLocaleString()}
                 </p>
                 {project.budget_estimate_only && (
@@ -505,7 +511,7 @@ export default function ProjectDetailPage({
               </div>
 
               {!isOwner && (
-                <Button variant="outline" className="w-full mt-6">
+                <Button className="w-full mt-6 bg-[#20263e] text-white hover:bg-white hover:text-[#20263e] border-2 border-[#20263e]">
                   發送訊息
                 </Button>
               )}
@@ -532,7 +538,7 @@ function NewDevelopmentDetails({ project }: { project: any }) {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {project.new_features.map((feature: string, index: number) => (
-              <div key={index} className="flex items-start gap-3 p-3 bg-[#f9f9f9] rounded-lg">
+              <div key={index} className="flex items-start gap-3 p-3">
                 <span className="text-[#20263e] mt-1">✅</span>
                 <span className="text-[#20263e]">{feature}</span>
               </div>

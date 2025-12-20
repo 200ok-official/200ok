@@ -19,7 +19,11 @@ export default function RootLayout({
   return (
     <html lang="zh-TW">
       <body className={inter.className}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <div className="pt-16">
+            {children}
+          </div>
+        </Providers>
       </body>
     </html>
   );

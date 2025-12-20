@@ -48,7 +48,7 @@ export default function ProjectDetailClient({
       {!isOwner && userId && (
         <Button
           onClick={handleSubmitProposal}
-          className="w-full py-6 text-lg shadow-md hover:shadow-lg transition-all"
+          className="w-full shadow-md hover:shadow-lg transition-all bg-[#20263e] text-white hover:bg-white hover:text-[#20263e] border-2 border-[#20263e]"
         >
           提交提案
         </Button>
@@ -61,7 +61,7 @@ export default function ProjectDetailClient({
             localStorage.setItem('returnUrl', `/projects/${projectId}/submit-proposal`);
             router.push('/login');
           }}
-          className="w-full py-6 text-lg shadow-md hover:shadow-lg transition-all"
+          className="w-auto mx-auto py-4 text-lg shadow-md hover:shadow-lg transition-all"
           variant="secondary"
         >
           請先登入以提交提案
