@@ -75,3 +75,32 @@ export function truncate(text: string, maxLength: number): string {
   return text.substring(0, maxLength) + "...";
 }
 
+/**
+ * 格式化相對時間（例如：1小時前、一天前、一個月前）
+ */
+export function formatRelativeTime(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  const diffMonths = Math.floor(diffDays / 30);
+  const diffYears = Math.floor(diffDays / 365);
+
+  if (diffSeconds < 60) {
+    return "剛剛";
+  } else if (diffMinutes < 60) {
+    return `${diffMinutes}分鐘前`;
+  } else if (diffHours < 24) {
+    return `${diffHours}小時前`;
+  } else if (diffDays < 30) {
+    return `${diffDays}天前`;
+  } else if (diffMonths < 12) {
+    return `${diffMonths}個月前`;
+  } else {
+    return `${diffYears}年前`;
+  }
+}
+

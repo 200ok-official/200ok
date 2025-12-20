@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { formatRelativeTime } from "@/lib/utils";
 
 interface ProjectCardProps {
   project: {
@@ -52,75 +52,79 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   };
 
   return (
-    <Card className="hover:shadow-xl transition-all duration-300 border-2 border-[#c5ae8c] shadow-md bg-white">
-      <CardContent>
-        <div className="flex justify-between items-start mb-3">
-          <Link href={`/projects/${project.id}`}>
-            <h3 className="text-lg font-semibold text-[#20263e] hover:text-[#2d3550] cursor-pointer">
-              {project.title}
-            </h3>
-          </Link>
-          <Badge variant={statusVariant[project.status as keyof typeof statusVariant]}>
-            {statusText[project.status as keyof typeof statusText]}
-          </Badge>
-        </div>
+    <Link href={`/projects/${project.id}`} className="block">
+      <Card className="hover:shadow-lg transition-all cursor-pointer bg-white/40 border-2 border-[#c5ae8c] rounded-[2rem] hover:border-[#20263e] shadow-none backdrop-blur-sm">
+        <CardContent className="p-8">
+          <div className="flex flex-col">
+            {/* Header: Title */}
+            <div className="mb-4">
+              <h3 className="text-2xl font-bold text-[#20263e] hover:text-[#2d3550] tracking-tight leading-tight">
+                {project.title}
+              </h3>
+            </div>
 
-        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-          {project.description}
-        </p>
+            {/* Price - Moved under title */}
+            <div className="mb-6">
+              <span className="text-xl font-bold text-[#20263e]">
+                ${project.budget_min.toLocaleString()} - ${project.budget_max.toLocaleString()}
+              </span>
+            </div>
 
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-lg font-bold text-[#20263e]">
-            ${project.budget_min.toLocaleString()} - ${project.budget_max.toLocaleString()}
-          </span>
-        </div>
+            {/* Body: Description & Tags */}
+            <div className="flex-1 mb-8">
+              <p className="text-gray-600 text-lg mb-6 leading-relaxed">
+                {project.description}
+              </p>
 
-        {project.tags && project.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {project.tags.slice(0, 5).map((pt, index) => (
-              <Badge key={index} variant="default" size="sm">
-                {pt.tag.name}
-              </Badge>
-            ))}
-            {project.tags.length > 5 && (
-              <Badge variant="default" size="sm">
-                +{project.tags.length - 5}
-              </Badge>
-            )}
-          </div>
-        )}
+              {project.tags && project.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {project.tags.slice(0, 5).map((pt, index) => (
+                    <Badge key={index} variant="default" className="bg-[#e6dfcf] text-[#20263e] hover:bg-[#d6c2a3] border-none px-3 py-1">
+                      {pt.tag.name}
+                    </Badge>
+                  ))}
+                  {project.tags.length > 5 && (
+                    <Badge variant="default" className="bg-[#e6dfcf] text-[#20263e] hover:bg-[#d6c2a3] border-none px-3 py-1">
+                      +{project.tags.length - 5}
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <div className="flex items-center gap-2">
-            {project.client.avatar_url ? (
-              <img
-                src={project.client.avatar_url}
-                alt={project.client.name}
-                className="w-8 h-8 rounded-full"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-[#c5ae8c] flex items-center justify-center text-white">
-                {project.client.name[0]}
+            {/* Footer: Client Info */}
+            <div className="pt-6 border-t border-[#20263e]/10 mt-auto">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {project.client.avatar_url ? (
+                    <img
+                      src={project.client.avatar_url}
+                      alt={project.client.name}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-[#20263e] flex items-center justify-center text-white text-lg font-medium">
+                      {project.client.name[0]}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-bold text-[#20263e]">
+                      {project.client.name}
+                    </p>
+                    <p className="text-xs text-gray-500 font-medium">
+                      ⭐ {project.client.rating !== null ? project.client.rating.toFixed(1) : "N/A"} · {project.bids_count || 0} 個投標
+                    </p>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500 font-medium">
+                  {formatRelativeTime(project.created_at)}
+                </div>
               </div>
-            )}
-            <div>
-              <p className="text-sm font-medium text-gray-900">
-                {project.client.name}
-              </p>
-              <p className="text-xs text-gray-500">
-                ⭐ {project.client.rating !== null ? project.client.rating.toFixed(1) : "N/A"} · {project.bids_count || 0} 個投標
-              </p>
             </div>
           </div>
-
-          {showActions && (
-            <Link href={`/projects/${project.id}`}>
-              <Button size="sm">查看詳情</Button>
-            </Link>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </Link>
   );
 };
 

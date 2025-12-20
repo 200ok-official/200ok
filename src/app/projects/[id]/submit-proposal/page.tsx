@@ -209,9 +209,9 @@ ${proposalContent}`;
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
+      <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center pt-24">
+        <main className="flex-1 flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-[#20263e]"></div>
         </main>
         <Footer />
@@ -221,10 +221,10 @@ ${proposalContent}`;
 
   if (!project) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
+      <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center pt-24">
-          <Card className="p-8 max-w-md border-2 border-[#c5ae8c] shadow-md">
+        <main className="flex-1 flex items-center justify-center">
+          <Card className="p-8 max-w-md">
             <h2 className="text-xl font-bold text-[#20263e] mb-4">無法載入案件資訊</h2>
             <Button onClick={() => router.back()}>返回</Button>
           </Card>
@@ -235,13 +235,13 @@ ${proposalContent}`;
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
+    <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
       <Navbar />
 
-      <main className="flex-1 pt-24 pb-10 px-4">
+      <main className="flex-1 py-6 px-4">
         <div className="max-w-7xl mx-auto">
           {/* 案件資訊卡片 - 緊湊顯示 */}
-          <Card className="p-4 mb-6 bg-white border-2 border-[#c5ae8c] border-l-8 shadow-md">
+          <Card className="p-4 mb-6 bg-white border-l-4 border-[#c5ae8c]">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
@@ -253,7 +253,7 @@ ${proposalContent}`;
                     {project.project_mode === 'new_development' ? '全新開發' : '修改維護'}
                   </Badge>
                 </div>
-                <div className="flex flex-wrap gap-4 text-sm text-[#20263e]/70">
+                <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                   <span>💰 預算：NT$ {project.budget_min?.toLocaleString()} - {project.budget_max?.toLocaleString()}</span>
                   {project.deadline && (
                     <span>📅 截止：{new Date(project.deadline).toLocaleDateString('zh-TW')}</span>
@@ -266,7 +266,6 @@ ${proposalContent}`;
               <Button
                 variant="outline"
                 size="sm"
-                className="border-[#c5ae8c] text-[#20263e] hover:bg-[#e6dfcf]"
                 onClick={() => router.push(`/projects/${projectId}`)}
               >
                 查看完整資訊
@@ -278,7 +277,7 @@ ${proposalContent}`;
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* 左側：編輯器 */}
             <div>
-              <Card className="p-6 border-2 border-[#c5ae8c] shadow-lg">
+              <Card className="p-6">
                 <div className="mb-6">
                   <h3 className="text-2xl font-bold text-[#20263e] mb-2">提交提案</h3>
                   <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
@@ -304,7 +303,7 @@ ${proposalContent}`;
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                   {/* 報價金額 */}
                   <div>
-                    <label className="block text-sm font-semibold text-[#20263e] mb-2">
+                    <label className="block text-sm font-medium text-[#20263e] mb-2">
                       報價金額 (NT$) <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -312,7 +311,7 @@ ${proposalContent}`;
                       value={budgetAmount}
                       onChange={(e) => setBudgetAmount(e.target.value)}
                       placeholder="請輸入您的報價"
-                      className="w-full px-4 py-3 border-2 border-[#c5ae8c] rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e] transition bg-[#e6dfcf]/30 text-[#20263e] text-base font-semibold"
+                      className="w-48 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c5ae8c] focus:border-transparent text-base"
                       min="0"
                       step="1000"
                     />
@@ -320,7 +319,7 @@ ${proposalContent}`;
 
                   {/* 預估工時 */}
                   <div>
-                    <label className="block text-sm font-semibold text-[#20263e] mb-2">
+                    <label className="block text-sm font-medium text-[#20263e] mb-2">
                       預估工時 <span className="text-red-500">*</span>
                     </label>
                     <div className="flex items-center gap-3">
@@ -330,7 +329,7 @@ ${proposalContent}`;
                           value={estimatedMonths}
                           onChange={(e) => setEstimatedMonths(e.target.value)}
                           placeholder="0"
-                          className="w-20 px-3 py-3 border-2 border-[#c5ae8c] rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e] transition bg-[#e6dfcf]/30 text-[#20263e] text-base text-center font-semibold"
+                          className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c5ae8c] focus:border-transparent text-base text-center"
                           min="0"
                         />
                         <span className="text-base font-medium text-[#20263e] whitespace-nowrap">
@@ -343,7 +342,7 @@ ${proposalContent}`;
                           value={estimatedDays}
                           onChange={(e) => setEstimatedDays(e.target.value)}
                           placeholder="0"
-                          className="w-20 px-3 py-3 border-2 border-[#c5ae8c] rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e] transition bg-[#e6dfcf]/30 text-[#20263e] text-base text-center font-semibold"
+                          className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c5ae8c] focus:border-transparent text-base text-center"
                           min="0"
                         />
                         <span className="text-base font-medium text-[#20263e] whitespace-nowrap">
@@ -351,21 +350,21 @@ ${proposalContent}`;
                         </span>
                       </div>
                     </div>
-                    <p className="text-xs text-[#c5ae8c] mt-2">至少填寫其中一項</p>
+                    <p className="text-xs text-gray-500 mt-2">至少填寫其中一項</p>
                   </div>
                 </div>
 
                 {/* 提案內容 */}
                 <div className="mb-6">
-                  <label className="block text-sm font-semibold text-[#20263e] mb-2">
+                  <label className="block text-sm font-medium text-[#20263e] mb-2">
                     提案內容 <span className="text-red-500">*</span>
-                    <span className="text-[#c5ae8c] font-normal ml-2">(支援 Markdown)</span>
+                    <span className="text-gray-500 font-normal ml-2">(支援 Markdown)</span>
                   </label>
                   <textarea
                     value={proposalContent}
                     onChange={(e) => setProposalContent(e.target.value)}
                     placeholder="請詳細說明您的提案內容，包括：&#10;• 您對案件的理解&#10;• 技術方案與實作計畫&#10;• 相關經驗與作品集&#10;• 為何您是最佳人選&#10;&#10;支援 Markdown 語法：**粗體**、*斜體*、[連結](url)、清單等"
-                    className="w-full px-4 py-3 border-2 border-[#c5ae8c] rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e] transition bg-[#e6dfcf]/30 text-[#20263e] font-mono text-sm"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c5ae8c] focus:border-transparent font-mono text-sm"
                     rows={20}
                   />
                 </div>
@@ -376,14 +375,14 @@ ${proposalContent}`;
                     onClick={() => router.back()}
                     variant="outline"
                     disabled={submitting}
-                    className="flex-1 border-[#c5ae8c] text-[#20263e] hover:bg-[#e6dfcf]"
+                    className="flex-1"
                   >
                     取消
                   </Button>
                   <Button
                     onClick={handleSubmit}
                     disabled={submitting || !proposalContent.trim() || !budgetAmount || (!estimatedMonths && !estimatedDays)}
-                    className="flex-1 bg-[#20263e] hover:bg-[#2d3550] text-white font-semibold"
+                    className="flex-1 bg-[#20263e] hover:bg-[#2d3550]"
                   >
                     {submitting ? '提交中...' : '支付 100 代幣並提交提案'}
                   </Button>
@@ -393,7 +392,7 @@ ${proposalContent}`;
 
             {/* 右側：預覽 */}
             <div>
-              <Card className="p-6 sticky top-24 border-2 border-[#c5ae8c] shadow-lg">
+              <Card className="p-6 sticky top-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-[#20263e]">聊天室預覽</h3>
                   <button
@@ -405,7 +404,7 @@ ${proposalContent}`;
                 </div>
 
                 {showPreview && (
-                  <div className="bg-[#e6dfcf]/30 rounded-xl p-4 max-h-[calc(100vh-300px)] overflow-y-auto border-2 border-[#c5ae8c]/30">
+                  <div className="bg-gray-50 rounded-lg p-4 max-h-[calc(100vh-250px)] overflow-y-auto">
                     {proposalContent.trim() ? (
                       <div className="bg-white rounded-lg p-4 shadow-sm">
                         <div className="flex items-start gap-3">
