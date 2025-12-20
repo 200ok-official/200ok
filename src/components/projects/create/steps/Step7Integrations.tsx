@@ -70,11 +70,11 @@ export const Step7Integrations: React.FC<Props> = ({ data, updateData }) => {
   };
 
   const handleTechToggle = (tech: string) => {
-    const currentTechs = data.required_skills || [];
+    const currentTechs = data.requiredTechStacks || [];
     if (currentTechs.includes(tech)) {
-      updateData({ required_skills: currentTechs.filter((t: string) => t !== tech) });
+      updateData({ requiredTechStacks: currentTechs.filter((t: string) => t !== tech) });
     } else {
-      updateData({ required_skills: [...currentTechs, tech] });
+      updateData({ requiredTechStacks: [...currentTechs, tech] });
     }
   };
 
@@ -149,7 +149,7 @@ export const Step7Integrations: React.FC<Props> = ({ data, updateData }) => {
               key={tech.value}
               onClick={() => handleTechToggle(tech.value)}
               className={`px-3 py-1.5 rounded-full border transition-all text-xs font-medium ${
-                (data.required_skills || []).includes(tech.value)
+                (data.requiredTechStacks || []).includes(tech.value)
                   ? "border-[#20263e] bg-[#20263e] text-white"
                   : "border-[#e5e7eb] text-[#20263e] hover:border-[#c5ae8c] bg-white"
               }`}
@@ -160,7 +160,7 @@ export const Step7Integrations: React.FC<Props> = ({ data, updateData }) => {
         </div>
 
         {/* 其他技術說明 */}
-        {(data.required_skills || []).includes("other") && (
+        {(data.requiredTechStacks || []).includes("other") && (
           <div className="mt-3">
             <input
               type="text"

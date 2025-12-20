@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     TOKEN_VIEW_PROPOSAL_COST: int = 50
     TOKEN_NEW_USER_GIFT: int = 1000
     
+    # AI 服務設定 (Google Gemini)
+    GEMINI_API_KEY: str = ""
+    
     class Config:
         env_file = ".env"
         case_sensitive = True
