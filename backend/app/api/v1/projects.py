@@ -541,7 +541,8 @@ async def delete_project(
     current_user: User = Depends(get_current_user)
 ):
     """
-    刪除案件（僅 draft 狀態） - 使用 Raw SQL
+    刪除案件 - 使用 Raw SQL
+    擁有者可以刪除自己的任何案件
     """
     # 查詢專案
     sql = """
@@ -566,14 +567,7 @@ async def delete_project(
             detail="您沒有權限刪除此案件"
         )
     
-    # 只有 draft 狀態可以刪除
-    if project.status != 'draft':
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="只有草稿狀態的案件可以刪除"
-        )
-    
-    # 刪除專案
+    # 刪除專案（直接刪除，不限制狀態）
     delete_sql = """
         DELETE FROM projects
         WHERE id = :project_id
@@ -672,6 +666,7 @@ async def update_project(
 ):
     """
     更新專案 - 使用 Raw SQL
+    擁有者可以更新自己的任何案件
     """
     # 查詢專案
     check_sql = """
@@ -696,14 +691,7 @@ async def update_project(
             detail="您沒有權限修改此案件"
         )
     
-    # 只有 draft 或 open 狀態可以修改
-    if project.status not in ['draft', 'open']:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="只有草稿或開放中的案件可以修改"
-        )
-    
-    # 更新資料
+    # 更新資料（不限制狀態）
     update_dict = data.model_dump(exclude_unset=True)
     
     if not update_dict:
