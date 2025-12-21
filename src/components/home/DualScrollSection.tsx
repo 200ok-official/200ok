@@ -315,48 +315,66 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
                 <>
                   {freelancers.slice(0, 6).map((freelancer) => (
                     <Link key={freelancer.id} href={`/users/${freelancer.id}`}>
-                      <Card className="p-6 transition-all duration-300 border border-[#c5ae8c] flex-shrink-0 w-80 cursor-pointer hover:shadow-lg hover:-translate-y-1 bg-[#fcfcfc]">
-                        <div className="flex items-start space-x-4">
+                      <Card className="p-6 transition-all duration-300 border-2 border-[#c5ae8c] hover:border-[#20263e] flex-shrink-0 w-80 cursor-pointer hover:shadow-lg hover:-translate-y-1 bg-white/90 backdrop-blur-sm flex flex-col justify-between" style={{ height: 'calc((100vh - 4rem) / 2 - 40px)', maxHeight: '230px' }}>
+                        {/* Avatar & Name Section */}
+                        <div className="flex items-center gap-3 mb-3">
                           <div className="flex-shrink-0">
                             {freelancer.avatar_url ? (
                               <img
                                 src={freelancer.avatar_url}
                                 alt={freelancer.name}
-                                className="w-12 h-12 rounded-full object-cover border-2 border-[#c5ae8c]"
+                                className="w-14 h-14 rounded-full object-cover border-2 border-[#c5ae8c]"
                               />
                             ) : (
-                              <div className="w-12 h-12 rounded-full bg-[#20263e] flex items-center justify-center text-white font-bold">
+                              <div className="w-14 h-14 rounded-full bg-[#20263e] flex items-center justify-center text-white text-lg font-bold border-2 border-[#c5ae8c]">
                                 {freelancer.name.charAt(0).toUpperCase()}
                               </div>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-semibold text-[#20263e] truncate">
+                            <h3 className="text-lg font-bold text-[#20263e] whitespace-nowrap overflow-hidden text-ellipsis mb-1" style={{ fontFamily: "'Noto Serif TC', serif" }}>
                               {freelancer.name}
                             </h3>
-                            <div className="flex items-center mt-1 mb-2">
-                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-[#fbbf24] mr-1">
-                                 <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
-                               </svg>
-                               <span className="text-sm text-[#20263e] font-semibold">
+                            <div className="flex items-center text-sm">
+                              <span className="text-[#fbbf24] mr-1">★</span>
+                              <span className="text-[#20263e] font-semibold">
                                  {freelancer.rating !== null ? freelancer.rating.toFixed(1) : "N/A"}
                                </span>
+                              {freelancer.hourly_rate && (
+                                <>
+                                  <span className="mx-2 text-gray-300">|</span>
+                                  <span className="text-[#c5ae8c] font-medium">
+                                    ${freelancer.hourly_rate}/hr
+                                  </span>
+                                </>
+                              )}
                             </div>
-                            {freelancer.skills && freelancer.skills.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mb-3 h-12 overflow-hidden">
-                                {freelancer.skills.slice(0, 3).map((skill, index) => (
-                                  <Badge
-                                    key={index}
-                                    variant="default"
-                                    className="text-xs bg-[#e6dfcf] text-[#20263e] border border-[#c5ae8c]"
-                                  >
-                                    {skill}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
                           </div>
                         </div>
+                        
+                        {/* Bio Section */}
+                        {freelancer.bio && (
+                          <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-3">
+                            {freelancer.bio}
+                          </p>
+                        )}
+                        
+                        {/* Skills Section */}
+                            {freelancer.skills && freelancer.skills.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {freelancer.skills.slice(0, 5).map((skill, index) => (
+                              <span
+                                    key={index}
+                                className="bg-[#f5f3ed] text-[#20263e] px-3 py-1 rounded-full text-xs font-medium"
+                                  >
+                                    {skill}
+                              </span>
+                                ))}
+                            {freelancer.skills.length > 5 && (
+                              <span className="text-gray-400 text-xs self-center">+{freelancer.skills.length - 5}</span>
+                            )}
+                          </div>
+                        )}
                       </Card>
                     </Link>
                   ))}

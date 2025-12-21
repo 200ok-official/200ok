@@ -51,6 +51,25 @@ export default function HomePage() {
   const hasInitialized = useRef(false);
   const freelancersRequested = useRef(false);
 
+  // 計算工程師的資訊完整度分數
+  const calculateCompletenessScore = (freelancer: Freelancer): number => {
+    let score = 0;
+    
+    // 基本資訊 (最多 40 分)
+    if (freelancer.name) score += 10;
+    if (freelancer.avatar_url) score += 10;
+    if (freelancer.bio && freelancer.bio.length > 20) score += 20; // 有意義的自我介紹
+    
+    // 專業資訊 (最多 60 分)
+    if (freelancer.skills && freelancer.skills.length > 0) {
+      score += Math.min(freelancer.skills.length * 5, 30); // 每個技能 5 分，最多 30 分
+    }
+    if (freelancer.hourly_rate && freelancer.hourly_rate > 0) score += 15;
+    if (freelancer.rating !== null && freelancer.rating > 0) score += 15;
+    
+    return score;
+  };
+
   // 案件載入完成後，再載入工程師
   const fetchFreelancers = useCallback(async () => {
     // 防止重複調用（如果已經請求過，則跳過）
@@ -61,9 +80,30 @@ export default function HomePage() {
     freelancersRequested.current = true;
     setFreelancersLoading(true);
     try {
-      const freelancersData = await apiGet("/api/v1/users/search", { limit: "8" });
+      const freelancersData = await apiGet("/api/v1/users/search", { limit: "50" }); // 增加請求數量以便篩選
       // API 回應格式: { success: true, data: [...], pagination: {...} }
-      setRecommendedFreelancers(freelancersData.data || []);
+      const freelancers = freelancersData.data || [];
+      
+      // 排序：1) 評分從高到低 2) 資訊完整度從高到低
+      const sortedFreelancers = freelancers.sort((a: Freelancer, b: Freelancer) => {
+        // 首先按評分排序（從高到低）
+        // 有評分的優先於沒有評分的
+        const ratingA = a.rating ?? -1; // null 或 undefined 設為 -1，讓它們排在最後
+        const ratingB = b.rating ?? -1;
+        
+        if (ratingB !== ratingA) {
+          return ratingB - ratingA;
+        }
+        
+        // 評分相同時，按資訊完整度排序（從高到低）
+        const scoreA = calculateCompletenessScore(a);
+        const scoreB = calculateCompletenessScore(b);
+        
+        return scoreB - scoreA;
+      });
+      
+      // 取前 8 名
+      setRecommendedFreelancers(sortedFreelancers.slice(0, 8));
     } catch (freelancerError) {
       console.error("Error fetching freelancers:", freelancerError);
       setRecommendedFreelancers([]);
