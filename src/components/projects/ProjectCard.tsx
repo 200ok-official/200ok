@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { formatRelativeTime } from "@/lib/utils";
+import { apiGet } from "@/lib/api";
 import { 
   CommandLineIcon, 
   CheckIcon,
@@ -22,6 +23,9 @@ interface ProjectCardProps {
     required_skills?: string[];
     features?: string[]; // 對應 new_features
     deliverables?: string[]; // 對應 new_deliverables
+    new_features?: string[];
+    new_deliverables?: string[];
+    maint_new_features?: string;
     tags?: Array<{
       tag: {
         name: string;
@@ -50,6 +54,60 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   fixedHeight = false,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [fullProjectData, setFullProjectData] = useState<any>(null);
+  const [hasLoadedData, setHasLoadedData] = useState(false);
+  const cardRef = React.useRef<HTMLDivElement>(null);
+
+  // 使用 Intersection Observer 只在卡片進入視窗時才加載數據
+  React.useEffect(() => {
+    if (!cardRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          // 當卡片進入視窗（或接近視窗）時加載數據
+          if (entry.isIntersecting && !hasLoadedData) {
+            fetchProjectDetails();
+          }
+        });
+      },
+      {
+        // rootMargin: 提前 300px 開始加載，讓用戶滾動到時數據已準備好
+        rootMargin: '300px',
+        threshold: 0.01
+      }
+    );
+
+    observer.observe(cardRef.current);
+
+    return () => {
+      if (cardRef.current) {
+        observer.unobserve(cardRef.current);
+      }
+    };
+  }, [hasLoadedData]);
+
+  const fetchProjectDetails = async () => {
+    if (hasLoadedData) return; // 避免重複加載
+    
+    try {
+      setHasLoadedData(true);
+      const data = await apiGet(`/api/v1/projects/${project.id}`);
+      if (data.success) {
+        setFullProjectData(data.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch project details:", error);
+    }
+  };
+
+  const handleHoverStart = () => {
+    setIsHovered(true);
+  };
+
+  const handleHoverEnd = () => {
+    setIsHovered(false);
+  };
 
   // 定義液體流動的動畫變體
   const liquidVariants = {
@@ -78,9 +136,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   return (
     <Link href={`/projects/${project.id}`} className="block h-full">
       <motion.div
+        ref={cardRef}
         className="group relative w-full rounded-[2rem] bg-white/40 shadow-none border-2 border-[#c5ae8c] hover:border-[#20263e] overflow-hidden h-full backdrop-blur-sm"
-        onHoverStart={() => setIsHovered(true)}
-        onHoverEnd={() => setIsHovered(false)}
+        onHoverStart={handleHoverStart}
+        onHoverEnd={handleHoverEnd}
         whileHover={{ y: -5 }}
         transition={{ type: "spring", stiffness: 300 }}
       >
@@ -100,9 +159,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               </span>
            </div>
            
-           {/* Body: Description - 顯示 AI 生成的摘要 */}
+           {/* Body: Description - 優先顯示專案描述 */}
            <p className="text-gray-600 text-lg mb-8 leading-relaxed line-clamp-3 flex-grow">
-             {project.ai_summary || project.description}
+             {project.ai_summary || 
+              project.description ||
+              "暫無專案描述"}
            </p>
 
            {/* Technical Specs Preview */}
@@ -176,38 +237,56 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               <div className="w-12 h-1 bg-[#c5ae8c] rounded-full"></div>
             </div>
 
-            <div className="flex-1 overflow-y-auto no-scrollbar space-y-8">
+            <div className="flex-1 overflow-y-auto no-scrollbar space-y-6">
               {/* 功能需求 Section */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-1 h-6 bg-white rounded-full"></div>
-                  <h4 className="text-xl font-bold text-white">功能需求</h4>
+              {fullProjectData?.new_features && fullProjectData.new_features.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-1 h-6 bg-white rounded-full"></div>
+                    <h4 className="text-xl font-bold text-white">功能需求</h4>
+                  </div>
+                  <div className="grid grid-cols-1 gap-y-3 gap-x-4">
+                    {fullProjectData.new_features.map((feature: string, i: number) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <CheckIcon className="w-5 h-5 text-white shrink-0" strokeWidth={2.5} />
+                        <span className="text-lg text-white/90">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 gap-y-3 gap-x-4">
-                  {(project.features || ["媒合 Pipeline", "求職者管理", "客戶管理"]).map((feature, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <CheckIcon className="w-5 h-5 text-white shrink-0" strokeWidth={2.5} />
-                      <span className="text-lg text-white/90">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              )}
 
               {/* 需交付文件/檔案 Section */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-1 h-6 bg-white rounded-full"></div>
-                  <h4 className="text-xl font-bold text-white">需交付文件/檔案</h4>
+              {fullProjectData?.new_deliverables && fullProjectData.new_deliverables.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-1 h-6 bg-white rounded-full"></div>
+                    <h4 className="text-xl font-bold text-white">需交付文件/檔案</h4>
+                  </div>
+                  <ul className="space-y-3 list-none">
+                    {fullProjectData.new_deliverables.map((item: string, i: number) => (
+                      <li key={i} className="flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 bg-white rounded-full shrink-0"></div>
+                        <span className="text-lg text-white/90">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <ul className="space-y-3 list-none">
-                  {(project.deliverables || ["CRM dashboard", "求職者管理", "客戶管理"]).map((item, i) => (
-                    <li key={i} className="flex items-center gap-3">
-                      <div className="w-1.5 h-1.5 bg-white rounded-full shrink-0"></div>
-                      <span className="text-lg text-white/90">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              )}
+
+              {/* 如果沒有數據，顯示項目描述作為後備 */}
+              {(!fullProjectData?.new_features || fullProjectData.new_features.length === 0) && 
+               (!fullProjectData?.new_deliverables || fullProjectData.new_deliverables.length === 0) && (
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-1 h-6 bg-white rounded-full"></div>
+                    <h4 className="text-xl font-bold text-white">項目詳情</h4>
+                  </div>
+                  <p className="text-lg text-white/90 leading-relaxed">
+                    {project.description}
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
         </motion.div>
