@@ -119,14 +119,6 @@ export const Step10Additional: React.FC<Props> = ({ data, updateData }) => {
           </div>
         </div>
       </div>
-
-      {/* 最後提示 */}
-      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
-        <InformationCircleIcon className="w-5 h-5 text-yellow-800 shrink-0 mt-0.5" />
-        <p className="text-sm text-yellow-800">
-          <strong>提醒：</strong> 發布後，專案會先以「草稿」狀態儲存，您可以隨時修改。確認無誤後，再點擊「發布」讓接案者看到您的專案。
-        </p>
-      </div>
     </div>
   );
 };
