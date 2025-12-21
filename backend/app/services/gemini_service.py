@@ -99,7 +99,7 @@ class GeminiService:
 
 請生成摘要："""
         
-        return await self.generate_text(prompt, max_tokens=200, temperature=0.5)
+        return await self.generate_text(prompt, max_tokens=1000, temperature=0.5)
     
     async def generate_project_title(self, project_data: dict) -> Optional[str]:
         """

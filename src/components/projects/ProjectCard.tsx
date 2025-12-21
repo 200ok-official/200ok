@@ -101,7 +101,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
            </div>
            
            {/* Body: Description - 顯示 AI 生成的摘要 */}
-           <p className="text-gray-600 text-lg mb-8 leading-relaxed line-clamp-2 flex-grow">
+           <p className="text-gray-600 text-lg mb-8 leading-relaxed line-clamp-3 flex-grow">
              {project.ai_summary || project.description}
            </p>
 
