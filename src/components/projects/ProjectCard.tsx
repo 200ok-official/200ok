@@ -38,11 +38,15 @@ interface ProjectCardProps {
     };
   };
   showActions?: boolean;
+  hideClient?: boolean;
+  fixedHeight?: boolean;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
   project,
   showActions = true,
+  hideClient = false,
+  fixedHeight = false,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 

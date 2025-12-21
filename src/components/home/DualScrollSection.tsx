@@ -12,15 +12,18 @@ import { formatRelativeTime } from "@/lib/utils";
 export interface Project {
   id: string;
   title: string;
+  description: string;
   budget_min: number;
   budget_max: number;
   status: string;
   created_at: string;
+  required_skills?: string[];
   client: {
     id: string;
     name: string;
     avatar_url?: string;
   };
+  bids_count?: number;
 }
 
 export interface Freelancer {
@@ -75,8 +78,9 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
   // Calculate horizontal scroll distance dynamically based on viewport width
   
   const calculateEndX = (itemCount: number) => {
-    const cardWidth = 320;
-    const gap = 16;
+    // ProjectCard 在橫向滾動中的寬度（與看所有案件頁面的卡片寬度一致）
+    const cardWidth = 400; // 調整為更適合 ProjectCard 的寬度
+    const gap = 24; // 與看所有案件頁面的 gap-6 一致
     const seeMoreWidth = 192;
     // Padding should match the CSS: pl-4 (16px) for mobile, md:pl-8 (32px) for desktop
     const leftPadding = viewportWidth < 768 ? 16 : 32;
@@ -117,17 +121,27 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
     { ease: smoothEase }
   );
 
-  // Skeleton Loader for Projects
+  // Skeleton Loader for Projects - 使用與 ProjectCard 相似的結構（不顯示發案人）
   const ProjectSkeleton = () => (
-    <div className="flex gap-4">
+    <div className="flex gap-6">
       {[...Array(5)].map((_, i) => (
-        <div key={i} className="animate-pulse flex-shrink-0 w-80">
-          <Card className="p-6 h-full flex flex-col justify-between">
-            <div>
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-1/2 mb-4"></div>
+        <div key={i} className="animate-pulse flex-shrink-0 w-[400px] h-[500px]">
+          <Card className="p-8 h-full flex flex-col bg-white/40 border-2 border-[#c5ae8c] rounded-[2rem]">
+            <div className="mb-4 relative">
+              <div className="absolute top-0 right-0 h-3 bg-gray-200 rounded w-16"></div>
+              <div className="h-7 bg-gray-200 rounded w-3/4 mb-4"></div>
+              <div className="h-6 bg-gray-200 rounded w-1/2 mb-6"></div>
             </div>
-            <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+            <div className="flex-1 mb-8">
+              <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-5/6 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-4/5 mb-6"></div>
+              <div className="flex gap-2">
+                <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+                <div className="h-6 bg-gray-200 rounded-full w-20"></div>
+                <div className="h-6 bg-gray-200 rounded-full w-18"></div>
+              </div>
+            </div>
           </Card>
         </div>
       ))}
@@ -169,7 +183,7 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
           </div>
           
           <div className="w-full pl-4 md:pl-8 pt-16 md:pt-0">
-             <motion.div style={{ x: xProjects }} className="flex gap-4 items-center">
+             <motion.div style={{ x: xProjects }} className="flex gap-6 items-start">
               {projectsLoading ? (
                 <ProjectSkeleton />
               ) : projects.length > 0 ? (
