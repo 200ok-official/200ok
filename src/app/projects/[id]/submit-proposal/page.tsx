@@ -427,7 +427,7 @@ ${proposalContent}`;
                                 [&_em]:italic [&_em]:text-[#20263e] [&_em]:break-words
                                 [&_a]:text-[#c5ae8c] [&_a]:underline [&_a]:hover:text-[#a08a6f] [&_a]:break-all
                                 [&_code]:text-xs [&_code]:bg-gray-200 [&_code]:text-[#20263e] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono [&_code]:break-all
-                                [&_pre]:bg-gray-200 [&_pre]:text-[#20263e] [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:my-3 [&_pre]:border [&_pre]:border-gray-300 [&_pre]:break-words
+                                [&_pre]:bg-slate-50 [&_pre]:text-[#20263e] [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:my-3 [&_pre]:border [&_pre]:border-gray-300 [&_pre]:break-words
                                 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-xs [&_pre_code]:break-all [&_pre_code]:whitespace-pre-wrap
                                 [&_blockquote]:border-l-4 [&_blockquote]:border-[#c5ae8c] [&_blockquote]:pl-3 [&_blockquote]:my-3 [&_blockquote]:text-[#20263e] [&_blockquote]:italic [&_blockquote]:break-words
                                 [&_table]:w-full [&_table]:my-3 [&_table]:border-collapse [&_table]:border [&_table]:border-gray-300 [&_table]:table-auto

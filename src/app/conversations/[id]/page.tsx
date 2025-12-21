@@ -583,7 +583,7 @@ export default function ConversationPage() {
                               [&_em]:italic
                               [&_a]:underline [&_a]:hover:opacity-80
                               [&_code]:text-xs [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono
-                              [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:my-2 [&_pre]:border
+                              [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:my-2 [&_pre]:border [&_pre]:bg-slate-50
                               [&_pre_code]:p-0 [&_pre_code]:text-xs
                               [&_blockquote]:border-l-4 [&_blockquote]:pl-3 [&_blockquote]:my-2 [&_blockquote]:italic
                               [&_table]:w-full [&_table]:my-3 [&_table]:border-collapse

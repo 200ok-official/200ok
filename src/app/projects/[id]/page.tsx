@@ -410,7 +410,7 @@ export default function ProjectDetailPage({
                         <h3 className="text-xl font-bold text-[#20263e] mb-4">專案描述</h3>
                         {!isEditMode ? (
                           <p className="text-[#20263e] leading-relaxed whitespace-pre-line text-lg">
-                            {displayProject.ai_summary || displayProject.description || '未填寫'}
+                            {displayProject.ai_summary ? displayProject.ai_summary : (displayProject.description || '未填寫')}
                           </p>
                         ) : (
                           <textarea

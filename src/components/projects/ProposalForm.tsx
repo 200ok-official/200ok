@@ -198,7 +198,8 @@ export default function ProposalForm({
               disabled={isSubmitting}
             />
           ) : (
-            <div className="border rounded-lg p-4 min-h-[400px] prose prose-sm max-w-none">
+            <div className="border rounded-lg p-4 min-h-[400px] prose prose-sm max-w-none
+              [&_pre]:bg-slate-50 [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:my-2 [&_pre]:border">
               {proposal ? (
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
