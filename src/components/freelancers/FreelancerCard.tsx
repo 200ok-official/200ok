@@ -117,7 +117,7 @@ export const FreelancerCard: React.FC<FreelancerCardProps> = ({
             </h3>
             <div className="w-12 h-1 bg-[#c5ae8c] rounded-full mb-6"></div>
             
-            <p className="text-white/90 text-lg leading-relaxed line-clamp-4 mb-8">
+            <p className="text-white/90 text-lg leading-relaxed line-clamp-3 mb-8">
                 {freelancer.bio || "這位接案者尚未填寫自我介紹。"}
             </p>
             
