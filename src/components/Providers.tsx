@@ -1,46 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 import { SessionProvider } from 'next-auth/react';
-import SessionExpiredModal from '@/components/ui/SessionExpiredModal';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [showSessionExpired, setShowSessionExpired] = useState(false);
-
   useEffect(() => {
-    // 監聽 session expired 事件
-    const handleSessionExpired = (event: CustomEvent) => {
-      setShowSessionExpired(true);
+    // 監聽自動登出事件（可用於追蹤或其他用途）
+    const handleAutoLogout = (event: CustomEvent) => {
+      console.log('User automatically logged out:', event.detail);
+      // 可在此添加其他邏輯，例如清除 state、發送追蹤事件等
     };
 
-    window.addEventListener('session-expired', handleSessionExpired as EventListener);
+    window.addEventListener('auto-logout', handleAutoLogout as EventListener);
 
     return () => {
-      window.removeEventListener('session-expired', handleSessionExpired as EventListener);
+      window.removeEventListener('auto-logout', handleAutoLogout as EventListener);
     };
   }, []);
-
-  const handleLogin = () => {
-    setShowSessionExpired(false);
-    router.push('/login');
-  };
-
-  const handleCloseModal = () => {
-    setShowSessionExpired(false);
-  };
 
   return (
     <SessionProvider>
       {children}
-      <SessionExpiredModal
-        isOpen={showSessionExpired}
-        onClose={handleCloseModal}
-        onLogin={handleLogin}
-        returnUrl={pathname}
-      />
     </SessionProvider>
   );
 }

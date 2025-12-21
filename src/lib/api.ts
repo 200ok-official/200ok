@@ -160,19 +160,22 @@ export async function apiFetchJson<T = any>(
         throw new Error(errorMessage);
       }
       
-      // 如果是其他 API 的 401（表示已登入但 token 過期），才顯示「登入逾時」
-      // 儲存當前頁面 URL，登入後可以返回
+      // 如果是其他 API 的 401（表示已登入但 token 過期），自動登出
       if (typeof window !== 'undefined') {
-        const currentPath = window.location.pathname + window.location.search;
-        localStorage.setItem('returnUrl', currentPath);
+        // 清除認證資訊
+        clearAuth();
         
-        // 觸發 session expired 事件
-        window.dispatchEvent(new CustomEvent('session-expired', {
-          detail: { path: currentPath }
+        // 靜默導向首頁（不顯示彈窗）
+        window.location.href = '/';
+        
+        // 觸發自動登出事件（可用於更新 UI 狀態）
+        window.dispatchEvent(new CustomEvent('auto-logout', {
+          detail: { reason: 'token_expired' }
         }));
       }
       
-      throw new Error('登入已逾時，請重新登入');
+      // 不拋出錯誤，避免顯示錯誤訊息
+      return Promise.reject(new Error('Token expired'));
     }
     
     throw new Error(errorMessage);

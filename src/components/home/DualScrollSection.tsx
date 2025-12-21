@@ -201,7 +201,7 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
 
                     return (
                       <Link key={project.id} href={`/projects/${project.id}`}>
-                        <Card className="p-6 transition-all duration-300 border-2 border-[#c5ae8c] hover:border-[#20263e] flex-shrink-0 w-80 bg-white/90 backdrop-blur-sm cursor-pointer hover:shadow-lg hover:-translate-y-1 flex flex-col" style={{ height: 'calc((100vh - 4rem) / 2 - 40px)', maxHeight: '200px' }}>
+                        <Card className="p-6 transition-all duration-300 border-2 border-[#c5ae8c] hover:border-[#20263e] flex-shrink-0 w-80 bg-white/90 backdrop-blur-sm cursor-pointer hover:shadow-lg hover:-translate-y-1 flex flex-col" style={{ height: 'calc((100vh - 4rem) / 2 - 40px)', maxHeight: '230px' }}>
                           <div className="mb-4">
                             <h3 className="text-2xl font-bold text-[#20263e] line-clamp-2" style={{ fontFamily: "'Noto Serif TC', serif" }}>
                               {capitalizeFirstLetter(project.title)}

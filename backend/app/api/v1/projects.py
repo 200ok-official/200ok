@@ -253,10 +253,14 @@ async def create_project(
             detail="最低預算不能大於最高預算"
         )
     
-    # 建立專案
+    # 建立專案資料
     project_data = data.model_dump()
     
+    # ⚠️ 重要：在進入資料庫事務前，先完成所有外部 API 調用
     # 使用 AI 生成專案標題（如果有設定 Gemini API key）
+    ai_generated_title = None
+    ai_generated_summary = None
+    
     try:
         ai_generated_title = await gemini_service.generate_project_title(project_data)
         if ai_generated_title:
@@ -264,6 +268,15 @@ async def create_project(
     except Exception as e:
         # AI 生成失敗不影響主流程，使用原本的標題
         print(f"AI 生成標題失敗: {str(e)}")
+    
+    # 生成專案摘要（如果有標題）
+    if project_data.get('title'):
+        try:
+            ai_generated_summary = await gemini_service.generate_project_summary(project_data)
+            if ai_generated_summary:
+                project_data['ai_summary'] = ai_generated_summary
+        except Exception as e:
+            print(f"AI 生成摘要失敗: {str(e)}")
     
     # 補全缺失的欄位為 None，避免 SQLAlchemy 報錯
     all_fields = [
@@ -331,9 +344,7 @@ async def create_project(
     row = result.fetchone()
     project_id = row.id
     
-    await db.commit()
-    
-    # 取得完整資料（包含 client）
+    # 在 commit 之前取得完整資料（包含 client）
     get_sql = """
         SELECT 
             p.*,
@@ -348,6 +359,9 @@ async def create_project(
     
     result = await db.execute(text(get_sql), {'project_id': str(project_id)})
     project = result.fetchone()
+    
+    # 最後再 commit
+    await db.commit()
     
     return {
         "success": True,

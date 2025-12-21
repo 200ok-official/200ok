@@ -55,16 +55,8 @@ export const Navbar: React.FC = () => {
       setTokenBalance(data.balance);
     } catch (error: any) {
       // 靜默處理錯誤，不影響頁面顯示
-      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-        // Token 過期或無效，清除登入狀態
-        console.warn('Token 無效或已過期，請重新登入');
-        clearAuth();
-        setIsLoggedIn(false);
-        setUser(null);
+      // 如果是 token 過期，會由 api.ts 自動處理登出
         setTokenBalance(null);
-      } else {
-        setTokenBalance(null);
-      }
     }
   };
 
