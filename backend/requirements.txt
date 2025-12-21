@@ -38,6 +38,7 @@ resend==0.7.0
 
 # Utilities
 python-dateutil==2.8.2
+Pillow==10.2.0  # Image processing for avatar upload
 
 # Development & Testing (optional)
 pytest==7.4.4

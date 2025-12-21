@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { apiGet, apiPut } from "@/lib/api";
+import { apiGet, apiPut, apiPost, apiDelete } from "@/lib/api";
 
 type UserRole = "freelancer" | "client" | "admin";
 
@@ -30,10 +30,12 @@ export default function ProfilePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState<"freelancer" | "client">("client");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 表單資料
   const [formData, setFormData] = useState({
@@ -171,6 +173,85 @@ export default function ProfilePage() {
     }
   };
 
+  // 頭像上傳相關函數
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 驗證檔案類型
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      setError("不支援的圖片格式，請使用 JPEG、PNG、GIF 或 WebP");
+      return;
+    }
+
+    // 驗證檔案大小（5MB）
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setError("圖片大小不能超過 5MB");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      // 轉換為 Base64
+      const base64 = await fileToBase64(file);
+      
+      // 上傳到後端
+      const response = await apiPost("/api/v1/avatar/upload", {
+        avatar_data: base64,
+      });
+
+      // 更新本地狀態
+      setProfile((prev) => prev ? { ...prev, avatar_url: response.data.avatar_url } : null);
+      setSuccess("頭像上傳成功！");
+      
+      // 清空 input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (error: any) {
+      setError(error.message || "頭像上傳失敗");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    if (!confirm("確定要刪除頭像嗎？")) return;
+
+    setUploadingAvatar(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      await apiDelete("/api/v1/avatar/delete");
+      setProfile((prev) => prev ? { ...prev, avatar_url: undefined } : null);
+      setSuccess("頭像已刪除");
+    } catch (error: any) {
+      setError(error.message || "刪除頭像失敗");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  // 將檔案轉換為 Base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
@@ -272,6 +353,76 @@ export default function ProfilePage() {
             <h2 className="text-xl font-bold text-[#20263e] mb-6">基本資訊</h2>
             
             <div className="space-y-5">
+              {/* 頭像上傳區 */}
+              <div>
+                <label className="block text-sm font-semibold text-[#20263e] mb-3">
+                  個人頭像
+                </label>
+                <div className="flex items-center gap-6">
+                  {/* 頭像預覽 */}
+                  <div className="relative">
+                    <div className="w-24 h-24 rounded-full overflow-hidden bg-[#c5ae8c] flex items-center justify-center text-white text-3xl font-bold shadow-md">
+                      {profile.avatar_url ? (
+                        <img 
+                          src={profile.avatar_url} 
+                          alt="Avatar" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // 如果圖片載入失敗，顯示首字母
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <span>{profile.name?.charAt(0)?.toUpperCase() || "?"}</span>
+                      )}
+                    </div>
+                    {uploadingAvatar && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 上傳按鈕 */}
+                  <div className="flex-1">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleAvatarClick}
+                        disabled={uploadingAvatar}
+                        variant="outline"
+                        size="sm"
+                      >
+                        {uploadingAvatar ? "上傳中..." : profile.avatar_url ? "更換頭像" : "上傳頭像"}
+                      </Button>
+                      {profile.avatar_url && (
+                        <Button
+                          onClick={handleDeleteAvatar}
+                          disabled={uploadingAvatar}
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:border-red-600"
+                        >
+                          刪除
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#c5ae8c] mt-2">
+                      支援 JPEG、PNG、GIF、WebP，檔案大小不超過 5MB
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 分隔線 */}
+              <div className="border-t border-[#c5ae8c] opacity-30 my-6"></div>
+
               {/* 姓名 */}
               <div>
                 <label className="block text-sm font-semibold text-[#20263e] mb-2">

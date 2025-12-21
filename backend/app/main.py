@@ -22,6 +22,7 @@ from .api.v1 import (
     saved_projects,
     connections,
     admin,
+    avatar,  # 頭像上傳
     test_email # 測試郵件
 )
 
@@ -186,6 +187,7 @@ app.include_router(reviews.router, prefix="/api/v1", tags=["reviews"])
 app.include_router(saved_projects.router, prefix="/api/v1", tags=["saved-projects"])
 app.include_router(connections.router, prefix="/api/v1", tags=["connections"])
 app.include_router(admin.router, prefix="/api/v1", tags=["admin"])
+app.include_router(avatar.router, prefix="/api/v1", tags=["avatar"])
 app.include_router(test_email.router, prefix="/api/v1", tags=["test-email"])
 
 
