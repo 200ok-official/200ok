@@ -188,46 +188,74 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
                 <ProjectSkeleton />
               ) : projects.length > 0 ? (
                 <>
-                  {projects.slice(0, 5).map((project) => (
-                    <Link key={project.id} href={`/projects/${project.id}`}>
-                      <Card className="p-6 transition-all duration-300 border-2 border-[#c5ae8c] hover:border-[#20263e] flex-shrink-0 w-80 bg-white/90 backdrop-blur-sm cursor-pointer hover:shadow-lg hover:-translate-y-1">
-                        <div className="mb-4">
-                          <h3 className="text-2xl font-bold text-[#20263e] line-clamp-2 h-20">
-                            {project.title}
-                          </h3>
-                        </div>
-                        
-                        <div className="flex justify-between items-end mt-auto">
-                          {/* Left side: Avatar and Time */}
-                          <div className="flex items-center gap-3">
-                            <div className="flex-shrink-0">
-                              {project.client?.avatar_url ? (
-                                <img
-                                  src={project.client.avatar_url}
-                                  alt={project.client.name}
-                                  className="w-10 h-10 rounded-full object-cover border border-[#c5ae8c]"
-                                />
-                              ) : (
-                                <div className="w-10 h-10 rounded-full bg-[#20263e] flex items-center justify-center text-white font-medium border border-[#c5ae8c]">
-                                  {project.client?.name?.[0] || '?'}
-                                </div>
-                              )}
-                            </div>
-                            <span className="text-sm text-[#c5ae8c]">
-                              {formatRelativeTime(project.created_at)}
-                            </span>
-                          </div>
+                  {projects.slice(0, 5).map((project) => {
+                    // 處理標題首字母大寫（如果是英文）
+                    const capitalizeFirstLetter = (str: string) => {
+                      if (!str) return str;
+                      const firstChar = str[0];
+                      if (/[a-zA-Z]/.test(firstChar)) {
+                        return firstChar.toUpperCase() + str.slice(1);
+                      }
+                      return str;
+                    };
 
-                          {/* Right side: Budget */}
-                          <div className="text-right">
-                            <span className="text-xl font-bold text-[#20263e]">
-                              ${project.budget_min.toLocaleString()}
-                            </span>
+                    return (
+                      <Link key={project.id} href={`/projects/${project.id}`}>
+                        <Card className="p-6 transition-all duration-300 border-2 border-[#c5ae8c] hover:border-[#20263e] flex-shrink-0 w-80 bg-white/90 backdrop-blur-sm cursor-pointer hover:shadow-lg hover:-translate-y-1 flex flex-col" style={{ height: 'calc((100vh - 4rem) / 2 - 40px)', maxHeight: '200px' }}>
+                          <div className="mb-4">
+                            <h3 className="text-2xl font-bold text-[#20263e] line-clamp-2" style={{ fontFamily: "'Noto Serif TC', serif" }}>
+                              {capitalizeFirstLetter(project.title)}
+                            </h3>
                           </div>
-                        </div>
-                      </Card>
-                    </Link>
-                  ))}
+                          
+                          {/* Required Skills */}
+                          <div className="mb-4 min-h-[32px] flex flex-wrap gap-2">
+                            {project.required_skills && project.required_skills.length > 0 ? (
+                              <>
+                                {project.required_skills.slice(0, 3).map((skill, index) => (
+                                  <span key={index} className="bg-[#f5f3ed] text-[#20263e] px-3 py-1 rounded-full text-sm font-medium">
+                                    {skill}
+                                  </span>
+                                ))}
+                                {project.required_skills.length > 3 && (
+                                  <span className="text-gray-400 text-xs self-center">+{project.required_skills.length - 3}</span>
+                                )}
+                              </>
+                            ) : null}
+                          </div>
+                          
+                          <div className="flex justify-between items-end mt-auto -mb-2">
+                            {/* Left side: Avatar and Time */}
+                            <div className="flex items-center gap-3">
+                              <div className="flex-shrink-0">
+                                {project.client?.avatar_url ? (
+                                  <img
+                                    src={project.client.avatar_url}
+                                    alt={project.client.name}
+                                    className="w-10 h-10 rounded-full object-cover border border-[#c5ae8c]"
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-full bg-[#20263e] flex items-center justify-center text-white font-medium border border-[#c5ae8c]">
+                                    {project.client?.name?.[0] || '?'}
+                                  </div>
+                                )}
+                              </div>
+                              <span className="text-sm text-[#c5ae8c]">
+                                {formatRelativeTime(project.created_at)}
+                              </span>
+                            </div>
+
+                            {/* Right side: Budget */}
+                            <div className="text-right">
+                              <span className="text-xl font-bold text-[#20263e]" style={{ fontFamily: "'Noto Serif TC', serif" }}>
+                                <span className="text-sm text-[#c5ae8c] font-normal">預算</span> ${project.budget_min.toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        </Card>
+                      </Link>
+                    );
+                  })}
                   {/* "See More" Card at the end */}
                   <div className="flex-shrink-0 w-48 h-48 flex items-center justify-center">
                     <Link href="/projects">
