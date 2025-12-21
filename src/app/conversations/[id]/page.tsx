@@ -567,7 +567,7 @@ export default function ConversationPage() {
                         <div
                           className={`rounded-2xl px-5 py-3.5 shadow-sm ${
                             isMine
-                              ? 'bg-[#20263e] text-white rounded-tr-sm'
+                              ? 'bg-[#f5f3ed] text-[#20263e] border border-gray-200 rounded-tr-sm'
                               : 'bg-white text-[#20263e] border border-gray-200 rounded-tl-sm'
                           }`}
                         >
