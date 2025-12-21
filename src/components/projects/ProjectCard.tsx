@@ -147,7 +147,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         <div className="relative z-10 p-8 h-full flex flex-col">
            {/* Header: Title */}
            <div className="mb-4 flex justify-between items-start">
-             <h3 className="text-2xl font-bold text-[#20263e] tracking-tight leading-tight line-clamp-1" style={{ fontFamily: "'Noto Serif TC', serif" }}>
+             <h3 className="text-2xl font-bold text-[#20263e] tracking-tight leading-tight whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontFamily: "'Noto Serif TC', serif" }}>
                {project.title}
              </h3>
            </div>
