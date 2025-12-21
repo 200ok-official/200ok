@@ -1,428 +1,475 @@
+"use client";
+
+import React, { useRef } from "react";
 import Link from "next/link";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import {
+  UserPlusIcon,
+  DocumentTextIcon,
+  UserGroupIcon,
+  CheckCircleIcon,
+  IdentificationIcon,
+  MagnifyingGlassIcon,
+  DocumentCheckIcon,
+  TrophyIcon,
+  CpuChipIcon,
+  CodeBracketIcon,
+  BoltIcon,
+} from "@heroicons/react/24/solid";
 
 export default function HowItWorksPage() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "end start"]
+  });
+
+  const opacity = useTransform(scrollYProgress, [0, 0.3], [0, 1]);
+  
   return (
-    <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
+    <div ref={containerRef} className="min-h-screen flex flex-col bg-[#e6dfcf]">
       <Navbar />
 
       {/* Hero Section */}
-      <div className="bg-[#20263e] pb-20 pt-24">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold mb-6 text-white">如何使用 200 OK</h1>
-          <p className="text-xl text-[#c5ae8c] max-w-3xl mx-auto mb-4">
-            專為軟體工程設計的接案平台，與綜合型接案平台做出區隔
-          </p>
-          <p className="text-lg text-white/90 max-w-3xl mx-auto">
-            透過引導性類型特化步驟與 AI 輔助，讓需求更清晰，讓接案流程更流暢
-          </p>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="relative bg-gradient-to-br from-[#20263e] via-[#2d3550] to-[#20263e] pb-24 pt-32 overflow-hidden"
+      >
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[#c5ae8c] rounded-full blur-[120px] opacity-20" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#4f46e5] rounded-full blur-[120px] opacity-10" />
         </div>
-      </div>
+
+        <div className="relative container mx-auto px-4 text-center z-10">
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-5xl md:text-6xl font-bold mb-6 text-white"
+          >
+            如何使用 200 OK
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="text-xl md:text-2xl text-[#c5ae8c] max-w-3xl mx-auto mb-4 font-medium"
+          >
+            專為軟體工程設計的接案平台
+          </motion.p>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="text-lg text-white/90 max-w-3xl mx-auto leading-relaxed"
+          >
+            透過 AI 輔助與引導式流程，讓需求更清晰，讓接案流程更流暢
+          </motion.p>
+        </div>
+      </motion.div>
 
       {/* For Clients Section */}
-      <div className="container mx-auto px-4 py-16 flex-1">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-[#20263e] mb-4">給發案者</h2>
-          <p className="text-xl text-[#c5ae8c] mb-2">
-            透過 AI 輔助與引導式流程，清楚說明您的軟體需求
-          </p>
-          <p className="text-sm text-[#20263e]/70">
-            AI 會協助您了解需求等級、描述完整度與市場定位
-          </p>
+      <section className="relative py-20 px-4 overflow-hidden bg-white">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
+          <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-[#e6dfcf] rounded-full blur-[100px]" />
+          <div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] bg-[#c5ae8c] rounded-full blur-[120px] opacity-50" />
         </div>
 
-        <div className="grid md:grid-cols-4 gap-8 mb-16">
-          {/* Step 1 */}
-          <Card className="p-6 text-center bg-white border-2 border-[#c5ae8c] hover:border-[#20263e] transition">
-            <div className="w-16 h-16 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl font-bold text-white">1</span>
-            </div>
-            <h3 className="text-xl font-bold text-[#20263e] mb-3">註冊帳號</h3>
-            <p className="text-[#20263e]">
-              免費建立您的帳號，開始使用平台功能
+        <div className="relative container mx-auto max-w-6xl z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-[#20263e] mb-4">給發案者</h2>
+            <p className="text-xl text-[#c5ae8c] mb-2 font-medium">
+              透過 AI 輔助與引導式流程，清楚說明您的軟體需求
             </p>
-            <div className="mt-4">
-              <svg
-                className="w-12 h-12 mx-auto text-[#c5ae8c]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                />
-              </svg>
-            </div>
-          </Card>
+            <p className="text-sm text-[#20263e]/70 max-w-2xl mx-auto">
+              AI 會協助您了解需求等級、描述完整度與市場定位，讓您的專案更容易找到合適的工程師
+            </p>
+          </motion.div>
 
-          {/* Step 2 */}
-          <Card className="p-6 text-center bg-white border-2 border-[#c5ae8c] hover:border-[#20263e] transition">
-            <div className="w-16 h-16 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl font-bold text-white">2</span>
-            </div>
-            <h3 className="text-xl font-bold text-[#20263e] mb-3">發布案件</h3>
-            <p className="text-[#20263e]">
-              透過引導性類型特化步驟，AI 輔助您清楚描述軟體需求，自動分析需求等級與完整度
-            </p>
-            <div className="mt-4">
-              <svg
-                className="w-12 h-12 mx-auto text-[#c5ae8c]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-            </div>
-          </Card>
+          <div className="grid md:grid-cols-4 gap-8 mb-16">
+            {/* Step 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <Card className="p-8 text-center bg-white border-2 border-[#c5ae8c]/30 hover:border-[#20263e] transition-all duration-300 hover:shadow-xl hover:-translate-y-2 h-full">
+                <div className="w-16 h-16 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg transition-transform duration-300 hover:scale-110">
+                  <UserPlusIcon className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-xs font-bold text-[#c5ae8c] tracking-widest uppercase mb-2">Step 01</div>
+                <h3 className="text-xl font-bold text-[#20263e] mb-3">註冊帳號</h3>
+                <p className="text-[#20263e]/80 leading-relaxed text-sm">
+                  免費建立您的帳號，開始使用平台功能。只需幾分鐘即可完成註冊。
+                </p>
+              </Card>
+            </motion.div>
 
-          {/* Step 3 */}
-          <Card className="p-6 text-center bg-white border-2 border-[#c5ae8c] hover:border-[#20263e] transition">
-            <div className="w-16 h-16 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl font-bold text-white">3</span>
-            </div>
-            <h3 className="text-xl font-bold text-[#20263e] mb-3">選擇接案工程師</h3>
-            <p className="text-[#20263e]">
-              查看軟體工程師的技能展示與作品集，比較投標提案，選擇最適合的專業人才
-            </p>
-            <div className="mt-4">
-              <svg
-                className="w-12 h-12 mx-auto text-[#c5ae8c]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-          </Card>
+            {/* Step 2 */}
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <Card className="p-8 text-center bg-white border-2 border-[#c5ae8c]/30 hover:border-[#20263e] transition-all duration-300 hover:shadow-xl hover:-translate-y-2 h-full">
+                <div className="w-16 h-16 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg transition-transform duration-300 hover:scale-110">
+                  <DocumentTextIcon className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-xs font-bold text-[#c5ae8c] tracking-widest uppercase mb-2">Step 02</div>
+                <h3 className="text-xl font-bold text-[#20263e] mb-3">發布案件</h3>
+                <p className="text-[#20263e]/80 leading-relaxed text-sm">
+                  透過引導性類型特化步驟，AI 輔助您清楚描述軟體需求，自動分析需求等級與完整度
+                </p>
+              </Card>
+            </motion.div>
 
-          {/* Step 4 */}
-          <Card className="p-6 text-center bg-white border-2 border-[#c5ae8c] hover:border-[#20263e] transition">
-            <div className="w-16 h-16 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl font-bold text-white">4</span>
-            </div>
-            <h3 className="text-xl font-bold text-[#20263e] mb-3">完成專案</h3>
-            <p className="text-[#20263e]">
-              溝通細節、驗收成果，完成專案並給予評價
-            </p>
-            <div className="mt-4">
-              <svg
-                className="w-12 h-12 mx-auto text-[#c5ae8c]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-                />
-              </svg>
-            </div>
-          </Card>
+            {/* Step 3 */}
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Card className="p-8 text-center bg-white border-2 border-[#c5ae8c]/30 hover:border-[#20263e] transition-all duration-300 hover:shadow-xl hover:-translate-y-2 h-full">
+                <div className="w-16 h-16 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg transition-transform duration-300 hover:scale-110">
+                  <UserGroupIcon className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-xs font-bold text-[#c5ae8c] tracking-widest uppercase mb-2">Step 03</div>
+                <h3 className="text-xl font-bold text-[#20263e] mb-3">選擇接案工程師</h3>
+                <p className="text-[#20263e]/80 leading-relaxed text-sm">
+                  查看軟體工程師的技能展示與作品集，比較投標提案，選擇最適合的專業人才
+                </p>
+              </Card>
+            </motion.div>
+
+            {/* Step 4 */}
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <Card className="p-8 text-center bg-white border-2 border-[#c5ae8c]/30 hover:border-[#20263e] transition-all duration-300 hover:shadow-xl hover:-translate-y-2 h-full">
+                <div className="w-16 h-16 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg transition-transform duration-300 hover:scale-110">
+                  <CheckCircleIcon className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-xs font-bold text-[#c5ae8c] tracking-widest uppercase mb-2">Step 04</div>
+                <h3 className="text-xl font-bold text-[#20263e] mb-3">完成專案</h3>
+                <p className="text-[#20263e]/80 leading-relaxed text-sm">
+                  透過平台內建溝通工具協作，驗收成果，完成專案並給予評價
+                </p>
+              </Card>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* For Freelancers Section */}
+      <section className="relative py-20 px-4 overflow-hidden bg-[#e6dfcf]">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+          <div className="absolute top-[20%] -right-[10%] w-[50%] h-[50%] bg-[#c5ae8c] rounded-full blur-[100px]" />
+          <div className="absolute bottom-[20%] -left-[10%] w-[40%] h-[40%] bg-white rounded-full blur-[120px]" />
         </div>
 
-        {/* For Freelancers Section */}
-        <div className="text-center mb-12 mt-20">
-          <h2 className="text-3xl font-bold text-[#20263e] mb-4">給接案工程師</h2>
-          <p className="text-xl text-[#c5ae8c] mb-2">
-            專為軟體工程師設計，節省更多力氣去釐清需求
-          </p>
-          <p className="text-sm text-[#20263e]/70">
-            透過專屬技能展示空間，讓接案流程更流暢
-          </p>
+        <div className="relative container mx-auto max-w-6xl z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-[#20263e] mb-4">給接案工程師</h2>
+            <p className="text-xl text-[#c5ae8c] mb-2 font-medium">
+              專為軟體工程師設計，節省更多力氣去釐清需求
+            </p>
+            <p className="text-sm text-[#20263e]/70 max-w-2xl mx-auto">
+              透過專屬技能展示空間，讓接案流程更流暢，專注於您最擅長的開發工作
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-4 gap-8 mb-16">
+            {/* Step 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <Card className="p-8 text-center bg-white border-2 border-[#c5ae8c]/30 hover:border-[#20263e] transition-all duration-300 hover:shadow-xl hover:-translate-y-2 h-full">
+                <div className="w-16 h-16 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg transition-transform duration-300 hover:scale-110">
+                  <IdentificationIcon className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-xs font-bold text-[#c5ae8c] tracking-widest uppercase mb-2">Step 01</div>
+                <h3 className="text-xl font-bold text-[#20263e] mb-3">建立檔案</h3>
+                <p className="text-[#20263e]/80 leading-relaxed text-sm">
+                  專為軟體工程師設計的檔案系統，完善技能展示、作品集與專業經歷，讓發案者更了解您的專業能力
+                </p>
+              </Card>
+            </motion.div>
+
+            {/* Step 2 */}
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <Card className="p-8 text-center bg-white border-2 border-[#c5ae8c]/30 hover:border-[#20263e] transition-all duration-300 hover:shadow-xl hover:-translate-y-2 h-full">
+                <div className="w-16 h-16 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg transition-transform duration-300 hover:scale-110">
+                  <MagnifyingGlassIcon className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-xs font-bold text-[#c5ae8c] tracking-widest uppercase mb-2">Step 02</div>
+                <h3 className="text-xl font-bold text-[#20263e] mb-3">瀏覽案件</h3>
+                <p className="text-[#20263e]/80 leading-relaxed text-sm">
+                  查看經過 AI 分析的需求清晰案件，使用標籤篩選與搜尋功能，快速找到理想的合作機會
+                </p>
+              </Card>
+            </motion.div>
+
+            {/* Step 3 */}
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Card className="p-8 text-center bg-white border-2 border-[#c5ae8c]/30 hover:border-[#20263e] transition-all duration-300 hover:shadow-xl hover:-translate-y-2 h-full">
+                <div className="w-16 h-16 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg transition-transform duration-300 hover:scale-110">
+                  <DocumentCheckIcon className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-xs font-bold text-[#c5ae8c] tracking-widest uppercase mb-2">Step 03</div>
+                <h3 className="text-xl font-bold text-[#20263e] mb-3">提交報價</h3>
+                <p className="text-[#20263e]/80 leading-relaxed text-sm">
+                  撰寫專業提案與報價，展現您的技術優勢與過往經驗，提高獲選機會
+                </p>
+              </Card>
+            </motion.div>
+
+            {/* Step 4 */}
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <Card className="p-8 text-center bg-white border-2 border-[#c5ae8c]/30 hover:border-[#20263e] transition-all duration-300 hover:shadow-xl hover:-translate-y-2 h-full">
+                <div className="w-16 h-16 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg transition-transform duration-300 hover:scale-110">
+                  <TrophyIcon className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-xs font-bold text-[#c5ae8c] tracking-widest uppercase mb-2">Step 04</div>
+                <h3 className="text-xl font-bold text-[#20263e] mb-3">交付成果</h3>
+                <p className="text-[#20263e]/80 leading-relaxed text-sm">
+                  按時完成案件，獲得好評累積信用，建立您的專業聲譽
+                </p>
+              </Card>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="relative py-20 px-4 overflow-hidden bg-white">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
+          <div className="absolute -bottom-[20%] -left-[10%] w-[50%] h-[50%] bg-[#e6dfcf] rounded-full blur-[100px]" />
+          <div className="absolute top-[20%] -right-[10%] w-[40%] h-[40%] bg-[#c5ae8c] rounded-full blur-[120px] opacity-50" />
         </div>
 
-        <div className="grid md:grid-cols-4 gap-8 mb-16">
-          {/* Step 1 */}
-          <Card className="p-6 text-center bg-white border-2 border-[#c5ae8c] hover:border-[#20263e] transition">
-            <div className="w-16 h-16 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl font-bold text-white">1</span>
-            </div>
-            <h3 className="text-xl font-bold text-[#20263e] mb-3">建立檔案</h3>
-            <p className="text-[#20263e]">
-              專為軟體工程師設計的檔案系統，完善技能展示、作品集與專業經歷
-            </p>
-            <div className="mt-4">
-              <svg
-                className="w-12 h-12 mx-auto text-[#c5ae8c]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-            </div>
-          </Card>
-
-          {/* Step 2 */}
-          <Card className="p-6 text-center bg-white border-2 border-[#c5ae8c] hover:border-[#20263e] transition">
-            <div className="w-16 h-16 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl font-bold text-white">2</span>
-            </div>
-            <h3 className="text-xl font-bold text-[#20263e] mb-3">瀏覽案件</h3>
-            <p className="text-[#20263e]">
-              查看經過 AI 分析的需求清晰案件，使用標籤篩選與搜尋功能，找到理想的合作機會
-            </p>
-            <div className="mt-4">
-              <svg
-                className="w-12 h-12 mx-auto text-[#c5ae8c]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-          </Card>
-
-          {/* Step 3 */}
-          <Card className="p-6 text-center bg-white border-2 border-[#c5ae8c] hover:border-[#20263e] transition">
-            <div className="w-16 h-16 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl font-bold text-white">3</span>
-            </div>
-            <h3 className="text-xl font-bold text-[#20263e] mb-3">提交報價</h3>
-            <p className="text-[#20263e]">
-              撰寫專業提案與報價，展現您的優勢
-            </p>
-            <div className="mt-4">
-              <svg
-                className="w-12 h-12 mx-auto text-[#c5ae8c]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-          </Card>
-
-          {/* Step 4 */}
-          <Card className="p-6 text-center bg-white border-2 border-[#c5ae8c] hover:border-[#20263e] transition">
-            <div className="w-16 h-16 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl font-bold text-white">4</span>
-            </div>
-            <h3 className="text-xl font-bold text-[#20263e] mb-3">交付成果</h3>
-            <p className="text-[#20263e]">
-              按時完成案件，獲得好評累積信用
-            </p>
-            <div className="mt-4">
-              <svg
-                className="w-12 h-12 mx-auto text-[#c5ae8c]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                />
-              </svg>
-            </div>
-          </Card>
-        </div>
-
-        {/* Features Section */}
-        <div className="mt-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-[#20263e] mb-4">
+        <div className="relative container mx-auto max-w-6xl z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-[#20263e] mb-4">
               平台特色
             </h2>
-            <p className="text-lg text-[#c5ae8c]">
+            <p className="text-lg text-[#c5ae8c] font-medium max-w-2xl mx-auto">
               與綜合型接案平台做出區隔，專為軟體工程設計
             </p>
-          </div>
+          </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <Card className="p-8 text-center hover:shadow-xl transition-all bg-white border-2 border-[#c5ae8c] hover:border-[#20263e]">
-              <div className="w-20 h-20 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg
-                  className="w-10 h-10 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-[#20263e] mb-3">
-                AI 輔助需求分析
-              </h3>
-              <p className="text-[#20263e]">
-                透過引導性類型特化步驟與 AI 輔助，讓發案者清楚說明需求，了解需求等級、描述完整度與市場定位
-              </p>
-            </Card>
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="h-full"
+            >
+              <Card className="p-8 text-center hover:shadow-xl transition-all duration-300 bg-white border-2 border-[#c5ae8c]/30 hover:border-[#20263e] hover:-translate-y-2 h-full">
+                <div className="w-20 h-20 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg transition-transform duration-300 hover:scale-110 hover:rotate-3">
+                  <CpuChipIcon className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-[#20263e] mb-3">
+                  AI 輔助需求分析
+                </h3>
+                <p className="text-[#20263e]/80 leading-relaxed">
+                  透過引導性類型特化步驟與 AI 輔助，讓發案者清楚說明需求，了解需求等級、描述完整度與市場定位
+                </p>
+              </Card>
+            </motion.div>
 
-            <Card className="p-8 text-center hover:shadow-xl transition-all bg-white border-2 border-[#c5ae8c] hover:border-[#20263e]">
-              <div className="w-20 h-20 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg
-                  className="w-10 h-10 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-[#20263e] mb-3">
-                專屬技能展示
-              </h3>
-              <p className="text-[#20263e]">
-                專為軟體工程師設計的檔案系統，讓接案工程師節省更多力氣去釐清需求，接案流程更流暢
-              </p>
-            </Card>
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="h-full"
+            >
+              <Card className="p-8 text-center hover:shadow-xl transition-all duration-300 bg-white border-2 border-[#c5ae8c]/30 hover:border-[#20263e] hover:-translate-y-2 h-full">
+                <div className="w-20 h-20 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg transition-transform duration-300 hover:scale-110 hover:rotate-3">
+                  <CodeBracketIcon className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-[#20263e] mb-3">
+                  專屬技能展示
+                </h3>
+                <p className="text-[#20263e]/80 leading-relaxed">
+                  專為軟體工程師設計的檔案系統，讓接案工程師節省更多力氣去釐清需求，接案流程更流暢
+                </p>
+              </Card>
+            </motion.div>
 
-            <Card className="p-8 text-center hover:shadow-xl transition-all bg-white border-2 border-[#c5ae8c] hover:border-[#20263e]">
-              <div className="w-20 h-20 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg
-                  className="w-10 h-10 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-[#20263e] mb-3">
-                流暢接案流程
-              </h3>
-              <p className="text-[#20263e]">
-                從需求發布到專案完成，每個環節都經過優化，讓軟體專案合作更高效順暢
-              </p>
-            </Card>
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="h-full"
+            >
+              <Card className="p-8 text-center hover:shadow-xl transition-all duration-300 bg-white border-2 border-[#c5ae8c]/30 hover:border-[#20263e] hover:-translate-y-2 h-full">
+                <div className="w-20 h-20 bg-[#20263e] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg transition-transform duration-300 hover:scale-110 hover:rotate-3">
+                  <BoltIcon className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-[#20263e] mb-3">
+                  流暢接案流程
+                </h3>
+                <p className="text-[#20263e]/80 leading-relaxed">
+                  從需求發布到專案完成，每個環節都經過優化，讓軟體專案合作更高效順暢
+                </p>
+              </Card>
+            </motion.div>
           </div>
         </div>
+      </section>
 
-        {/* FAQ Section */}
-        <div className="mt-12">
-          <h2 className="text-3xl font-bold text-[#20263e] text-center mb-8">
-            常見問題
+      {/* FAQ Section */}
+      <section className="relative py-20 px-4 overflow-hidden bg-[#e6dfcf]">
+        <div className="container mx-auto max-w-4xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-[#20263e] mb-4">
+              常見問題
+            </h2>
+            <p className="text-lg text-[#c5ae8c] font-medium">
+              為您解答關於平台的常見疑問
+            </p>
+          </motion.div>
+
+          <div className="space-y-4">
+            {[
+              {
+                question: "使用平台需要付費嗎？",
+                answer: "註冊和瀏覽案件完全免費！我們僅在交易或接洽時收取少量服務費，確保您只在獲得價值時才需要付費。"
+              },
+              {
+                question: "如何確保案件品質？",
+                answer: "我們有完善的評價系統與作品集連結展示功能，您可以查看接案工程師的過往評價、技能認證與實際作品，選擇最適合的專業人才。"
+              },
+              {
+                question: "發生糾紛怎麼辦？",
+                answer: "我們有專業的團隊協助處理糾紛，透過平台內建的溝通記錄與專案管理工具，確保公平合理的解決方案。"
+              },
+              {
+                question: "AI 輔助功能如何使用？",
+                answer: "在發布案件時，系統會透過引導式問答協助您描述需求，AI 會自動分析需求等級、完整度與市場定位，讓您的案件更容易被合適的工程師看到。"
+              }
+            ].map((faq, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <Card className="p-6 bg-white border-2 border-[#c5ae8c]/30 hover:border-[#20263e] transition-all duration-300 hover:shadow-lg">
+                  <h3 className="text-lg font-bold text-[#20263e] mb-3 flex items-start gap-3">
+                    <span className="text-[#c5ae8c] font-bold text-xl shrink-0">Q{index + 1}</span>
+                    <span>{faq.question}</span>
+                  </h3>
+                  <p className="text-[#20263e]/80 leading-relaxed ml-8">
+                    {faq.answer}
+                  </p>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="relative py-24 px-4 bg-gradient-to-br from-[#20263e] via-[#2d3550] to-[#20263e] overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[#c5ae8c] rounded-full blur-[150px] opacity-20" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#4f46e5] rounded-full blur-[150px] opacity-10" />
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="relative max-w-4xl mx-auto text-center z-10"
+        >
+          <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white leading-tight">
+            準備開始您的<span className="text-[#c5ae8c]">軟體專案</span>了嗎？
           </h2>
-
-          <div className="max-w-3xl mx-auto space-y-4">
-            <Card className="p-6 bg-white border-2 border-[#c5ae8c]">
-              <h3 className="text-lg font-bold text-[#20263e] mb-2 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-red-600 shrink-0">
-                  <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm11.378-3.917c-.89-.777-2.366-.777-3.255 0a.75.75 0 0 1-.988-1.117c1.435-1.27 3.797-1.27 5.232 0 .714.63.99 1.52.926 2.35-.061.793-.405 1.501-1.029 2.038l-1.42 1.226a.375.375 0 0 0-.117.286v.714a.75.75 0 0 1-1.5 0v-.714c0-.6.237-1.174.659-1.587l1.42-1.226a.75.75 0 0 0 .225-.514c.023-.294-.076-.642-.424-.95ZM12 15.75a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" clipRule="evenodd" />
-                </svg>
-                使用平台需要付費嗎？
-              </h3>
-              <p className="text-[#20263e]">
-                註冊和瀏覽案件完全免費！我們僅在交易成功後收取少量服務費。
-              </p>
-            </Card>
-
-            <Card className="p-6 bg-white border-2 border-[#c5ae8c]">
-              <h3 className="text-lg font-bold text-[#20263e] mb-2 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-red-600 shrink-0">
-                  <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm11.378-3.917c-.89-.777-2.366-.777-3.255 0a.75.75 0 0 1-.988-1.117c1.435-1.27 3.797-1.27 5.232 0 .714.63.99 1.52.926 2.35-.061.793-.405 1.501-1.029 2.038l-1.42 1.226a.375.375 0 0 0-.117.286v.714a.75.75 0 0 1-1.5 0v-.714c0-.6.237-1.174.659-1.587l1.42-1.226a.75.75 0 0 0 .225-.514c.023-.294-.076-.642-.424-.95ZM12 15.75a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" clipRule="evenodd" />
-                </svg>
-                如何確保案件品質？
-              </h3>
-              <p className="text-[#20263e]">
-                我們有完善的評價系統，您可以查看接案工程師的過往評價與作品集，選擇最適合的人選。
-              </p>
-            </Card>
-
-            <Card className="p-6 bg-white border-2 border-[#c5ae8c]">
-              <h3 className="text-lg font-bold text-[#20263e] mb-2 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-red-600 shrink-0">
-                  <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm11.378-3.917c-.89-.777-2.366-.777-3.255 0a.75.75 0 0 1-.988-1.117c1.435-1.27 3.797-1.27 5.232 0 .714.63.99 1.52.926 2.35-.061.793-.405 1.501-1.029 2.038l-1.42 1.226a.375.375 0 0 0-.117.286v.714a.75.75 0 0 1-1.5 0v-.714c0-.6.237-1.174.659-1.587l1.42-1.226a.75.75 0 0 0 .225-.514c.023-.294-.076-.642-.424-.95ZM12 15.75a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" clipRule="evenodd" />
-                </svg>
-                付款安全嗎？
-              </h3>
-              <p className="text-[#20263e]">
-                我們提供第三方支付保障與託管機制，確保雙方權益。款項會在案件完成驗收後才撥付給接案工程師。
-              </p>
-            </Card>
-
-            <Card className="p-6 bg-white border-2 border-[#c5ae8c]">
-              <h3 className="text-lg font-bold text-[#20263e] mb-2 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-red-600 shrink-0">
-                  <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm11.378-3.917c-.89-.777-2.366-.777-3.255 0a.75.75 0 0 1-.988-1.117c1.435-1.27 3.797-1.27 5.232 0 .714.63.99 1.52.926 2.35-.061.793-.405 1.501-1.029 2.038l-1.42 1.226a.375.375 0 0 0-.117.286v.714a.75.75 0 0 1-1.5 0v-.714c0-.6.237-1.174.659-1.587l1.42-1.226a.75.75 0 0 0 .225-.514c.023-.294-.076-.642-.424-.95ZM12 15.75a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z" clipRule="evenodd" />
-                </svg>
-                發生糾紛怎麼辦？
-              </h3>
-              <p className="text-[#20263e]">
-                我們有專業的客服團隊協助處理糾紛，確保公平合理的解決方案。
-              </p>
-            </Card>
-          </div>
-        </div>
-
-        {/* CTA Section */}
-        <div className="mt-12 bg-[#20263e] rounded-2xl p-10 text-center">
-          <h2 className="text-4xl font-bold mb-4 text-white">準備開始了嗎？</h2>
-          <p className="text-xl text-[#c5ae8c] mb-2">
+          <p className="text-xl text-[#c5ae8c] mb-4 font-medium">
             立即加入 200 OK，專為軟體工程設計的接案平台
           </p>
-          <p className="text-base text-white/90 mb-8">
+          <p className="text-lg text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed">
             透過 AI 輔助與引導式流程，讓需求更清晰，讓合作更順暢
           </p>
-          <div className="flex justify-center space-x-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-4 items-center">
             <Link href="/register">
-              <Button className="!bg-[#c5ae8c] hover:!bg-[#b89d7a] !text-[#20263e] px-8 py-3 text-lg font-semibold border-none shadow-md">
-                免費註冊
-              </Button>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button className="!bg-[#c5ae8c] hover:!bg-[#b89d7a] !text-[#20263e] px-8 py-3 text-lg font-bold border-none shadow-lg transition-all">
+                  免費註冊
+                </Button>
+              </motion.div>
             </Link>
             <Link href="/projects">
-              <Button className="!bg-white hover:!bg-[#e6dfcf] !text-[#20263e] px-8 py-3 text-lg font-semibold border-none shadow-md">
-                瀏覽案件
-              </Button>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button className="!bg-white/10 hover:!bg-white/20 !text-white px-8 py-3 text-lg font-bold border-2 border-white/30 backdrop-blur-sm transition-all">
+                  瀏覽案件
+                </Button>
+              </motion.div>
             </Link>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </section>
 
       <Footer />
     </div>
