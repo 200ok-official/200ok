@@ -166,6 +166,7 @@ async def list_projects(
             p.client_id,
             p.title,
             p.description,
+            p.ai_summary,
             p.project_mode,
             p.project_type,
             p.budget_min,
