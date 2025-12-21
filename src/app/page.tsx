@@ -14,14 +14,19 @@ import { apiGet, isAuthenticated } from "@/lib/api";
 interface Project {
   id: string;
   title: string;
+  description: string;
   budget_min: number;
   budget_max: number;
   status: string;
   created_at: string;
+  required_skills?: string[];
   client: {
     id: string;
     name: string;
+    avatar_url?: string;
+    rating: number | null;
   };
+  bids_count?: number;
 }
 
 interface Freelancer {

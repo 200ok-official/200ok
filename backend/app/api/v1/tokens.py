@@ -165,6 +165,13 @@ async def purchase_tokens(
     
     注意：這裡應該整合實際的支付系統（例如 Stripe）
     目前僅為示範，直接增加代幣
+    
+    買多少送多少優惠：
+    - 100: +0 (無贈送)
+    - 500: +50
+    - 1000: +150
+    - 2000: +400
+    - 自訂金額: 無贈送
     """
     # TODO: 整合支付系統（Stripe, PayPal 等）
     
@@ -173,6 +180,16 @@ async def purchase_tokens(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="購買數量必須大於 0"
         )
+    
+    # 計算贈送代幣（買多少送多少優惠）
+    bonus_mapping = {
+        100: 0,
+        500: 50,
+        1000: 150,
+        2000: 400
+    }
+    bonus_amount = bonus_mapping.get(data.amount, 0)  # 自訂金額無贈送
+    total_tokens = data.amount + bonus_amount
     
     # 取得使用者代幣帳戶
     balance_sql = """
@@ -194,13 +211,13 @@ async def purchase_tokens(
         result = await db.execute(text(insert_sql), {
             'id': str(token_id),
             'user_id': str(current_user.id),
-            'balance': data.amount,
-            'total_earned': data.amount
+            'balance': total_tokens,
+            'total_earned': total_tokens
         })
         user_token = result.fetchone()
-        new_balance = data.amount
+        new_balance = total_tokens
     else:
-        # 增加代幣
+        # 增加代幣（包含贈送）
         update_sql = """
             UPDATE user_tokens
             SET balance = balance + :amount,
@@ -210,13 +227,13 @@ async def purchase_tokens(
             RETURNING balance
         """
         result = await db.execute(text(update_sql), {
-            'amount': data.amount,
+            'amount': total_tokens,
             'user_id': str(current_user.id)
         })
         updated = result.fetchone()
         new_balance = updated.balance
     
-    # 記錄交易
+    # 記錄購買交易（只記錄購買的部分）
     insert_transaction_sql = """
         INSERT INTO token_transactions (id, user_id, amount, balance_after, transaction_type, description, created_at)
         VALUES (:id, :user_id, :amount, :balance_after, :transaction_type, :description, NOW())
@@ -230,11 +247,28 @@ async def purchase_tokens(
         'description': f"購買 {data.amount} 代幣（{data.payment_method}）"
     })
     
+    # 如果有贈送，記錄贈送交易
+    if bonus_amount > 0:
+        insert_bonus_transaction_sql = """
+            INSERT INTO token_transactions (id, user_id, amount, balance_after, transaction_type, description, created_at)
+            VALUES (:id, :user_id, :amount, :balance_after, :transaction_type, :description, NOW())
+        """
+        await db.execute(text(insert_bonus_transaction_sql), {
+            'id': str(uuid.uuid4()),
+            'user_id': str(current_user.id),
+            'amount': bonus_amount,
+            'balance_after': new_balance,
+            'transaction_type': TransactionType.PLATFORM_FEE.value,
+            'description': f"購買 {data.amount} 代幣贈送"
+    })
+    
     return {
         "success": True,
-        "message": f"成功購買 {data.amount} 代幣",
+        "message": f"成功購買 {data.amount} 代幣" + (f"，贈送 {bonus_amount} 代幣" if bonus_amount > 0 else ""),
         "data": {
-            "balance": new_balance,
-            "purchased_amount": data.amount
+            "new_balance": new_balance,
+            "purchased_amount": data.amount,
+            "bonus_amount": bonus_amount,
+            "total_received": total_tokens
         }
     }

@@ -34,6 +34,7 @@ interface Conversation {
   recipient_paid: boolean;
   initiator_id: string;
   recipient_id: string;
+  bid_id?: string;
   initiator: {
     id: string;
     name: string;
@@ -52,6 +53,11 @@ interface Conversation {
     id: string;
     title: string;
   };
+  bid?: {
+    id: string;
+    status: 'pending' | 'accepted' | 'rejected';
+    created_at: string;
+  };
 }
 
 export default function ConversationPage() {
@@ -66,6 +72,7 @@ export default function ConversationPage() {
   const [unlocking, setUnlocking] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isComposing, setIsComposing] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isInitialLoad = useRef(true);
 
@@ -234,6 +241,39 @@ export default function ConversationPage() {
     }
   };
 
+  const handleWithdrawProposal = async () => {
+    if (!conversation?.bid?.id) return;
+
+    const confirmed = confirm(
+      '確定要撤回此提案嗎？\n\n' +
+      '撤回後將：\n' +
+      '• 刪除此提案和對話\n' +
+      '• 退還 100 代幣\n' +
+      '• 無法恢復此操作'
+    );
+
+    if (!confirmed) return;
+
+    setWithdrawing(true);
+    try {
+      if (!isAuthenticated()) {
+        router.push('/login');
+        return;
+      }
+
+      const response = await apiPost(`/api/v1/bids/${conversation.bid.id}/withdraw`, {});
+      alert(`✅ ${response.message || '提案已撤回，已退還 100 代幣'}`);
+      triggerTokenBalanceUpdate();
+      
+      // 導向到我的提案頁面
+      router.push('/bids/me');
+    } catch (error: any) {
+      alert(`❌ 撤回失敗：${error.message || '請稍後再試'}`);
+    } finally {
+      setWithdrawing(false);
+    }
+  };
+
   if (loading || (status === 'loading' && !userId)) {
     return (
       <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
@@ -269,6 +309,23 @@ export default function ConversationPage() {
   const otherUser = getOtherUser();
   const needsUnlock = conversation.type === 'project_proposal' && !conversation.recipient_paid && !isInitiator;
   const canSend = conversation.is_unlocked || (conversation.type === 'project_proposal' && isInitiator && messages.length === 0);
+
+  // 計算提案是否可撤回（7天後且未被接受）
+  const canWithdraw = conversation.type === 'project_proposal' 
+    && isInitiator 
+    && conversation.bid
+    && conversation.bid.status === 'pending'
+    && !conversation.recipient_paid;
+  
+  let daysPassedSinceProposal = 0;
+  let canWithdrawNow = false;
+  
+  if (canWithdraw && conversation.bid?.created_at) {
+    const createdAt = new Date(conversation.bid.created_at);
+    const now = new Date();
+    daysPassedSinceProposal = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+    canWithdrawNow = daysPassedSinceProposal >= 7;
+  }
 
   return (
     <div className="flex flex-col h-screen bg-[#f5f3ed] overflow-hidden">
@@ -401,13 +458,29 @@ export default function ConversationPage() {
 
               {/* 等待回應提示 */}
               {conversation.type === 'project_proposal' && isInitiator && !conversation.recipient_paid && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
-                  <p className="text-sm text-blue-700 flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+                    <p className="text-sm text-blue-700 flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 flex-shrink-0">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clipRule="evenodd" />
                     </svg>
-                    等待發案者回應中 (7日內無回應將自動退回代幣)
-                  </p>
+                      {canWithdrawNow 
+                        ? '發案者已超過 7 天未回應，您可以撤回提案並退回代幣' 
+                        : `等待發案者回應中（${7 - daysPassedSinceProposal} 天後可撤回）`
+                      }
+                    </p>
+                    {canWithdrawNow && (
+                      <Button 
+                        onClick={handleWithdrawProposal}
+                        disabled={withdrawing}
+                        variant="outline"
+                        size="sm"
+                        className="whitespace-nowrap border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400"
+                      >
+                        {withdrawing ? '處理中...' : '🔄 撤回提案並退回 100 代幣'}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

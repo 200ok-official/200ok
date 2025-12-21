@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import ProjectDetailClient from "@/components/projects/ProjectDetailClient";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
 
 export default function ProjectDetailPage({
   params,
@@ -20,6 +20,15 @@ export default function ProjectDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [sidebarPadding, setSidebarPadding] = useState(0);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedProject, setEditedProject] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
+  
+  const leftColumnRef = useRef<HTMLDivElement>(null);
+  const budgetDividerRef = useRef<HTMLHRElement>(null);
+  const rightColumnRef = useRef<HTMLDivElement>(null);
+  const clientDividerRef = useRef<HTMLHRElement>(null);
 
   useEffect(() => {
     // 獲取當前登入用戶
@@ -39,12 +48,60 @@ export default function ProjectDetailPage({
     fetchProject(token);
   }, [params.id]);
 
+  // 計算並對齊分隔線
+  useEffect(() => {
+    if (!project || !budgetDividerRef.current || !clientDividerRef.current || !leftColumnRef.current || !rightColumnRef.current) {
+      return;
+    }
+
+    const calculateAlignment = () => {
+      const budgetDivider = budgetDividerRef.current;
+      const clientDivider = clientDividerRef.current;
+      const leftColumn = leftColumnRef.current;
+      const rightColumn = rightColumnRef.current;
+
+      if (!budgetDivider || !clientDivider || !leftColumn || !rightColumn) return;
+
+      // 獲取分隔線相對於各自容器的位置
+      const leftRect = leftColumn.getBoundingClientRect();
+      const rightRect = rightColumn.getBoundingClientRect();
+      const budgetRect = budgetDivider.getBoundingClientRect();
+      const clientRect = clientDivider.getBoundingClientRect();
+
+      // 計算分隔線相對於容器頂部的距離
+      const budgetOffsetFromTop = budgetRect.top - leftRect.top;
+      const clientOffsetFromTop = clientRect.top - rightRect.top;
+
+      // 計算需要的底部填充
+      // 如果左側的分隔線位置更低，右側需要更多填充
+      const difference = budgetOffsetFromTop - clientOffsetFromTop;
+      
+      // 設定最小底部空間為 8rem (128px)
+      const minPadding = 128;
+      const calculatedPadding = Math.max(minPadding, difference > 0 ? difference : minPadding);
+      
+      setSidebarPadding(calculatedPadding);
+    };
+
+    // 延遲計算確保 DOM 完全渲染
+    const timer = setTimeout(calculateAlignment, 300);
+
+    // 監聽視窗大小變化
+    window.addEventListener('resize', calculateAlignment);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', calculateAlignment);
+    };
+  }, [project]);
+
   const fetchProject = async (token: string | null) => {
     try {
       setLoading(true);
       const data = await apiGet(`/api/v1/projects/${params.id}`);
       if (data.success) {
         setProject(data.data);
+        setEditedProject(data.data);
       } else {
         setError(data.error || "載入失敗");
       }
@@ -58,6 +115,61 @@ export default function ProjectDetailPage({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('確定要刪除此案件嗎？此操作無法復原。')) {
+      return;
+    }
+    
+    try {
+      const data = await apiDelete(`/api/v1/projects/${params.id}`);
+      if (data.success) {
+        alert('案件已刪除');
+        router.push('/projects/me');
+      } else {
+        alert(data.error || '刪除失敗');
+      }
+    } catch (err: any) {
+      console.error('Delete failed:', err);
+      alert(err.message || '刪除失敗');
+    }
+  };
+
+  const handleEdit = () => {
+    setIsEditMode(true);
+    setEditedProject({ ...project });
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    setEditedProject({ ...project });
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const data = await apiPut(`/api/v1/projects/${params.id}`, editedProject);
+      if (data.success) {
+        setProject(editedProject);
+        setIsEditMode(false);
+        alert('儲存成功');
+      } else {
+        alert(data.error || '儲存失敗');
+      }
+    } catch (err: any) {
+      console.error('Save failed:', err);
+      alert(err.message || '儲存失敗');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleFieldChange = (field: string, value: any) => {
+    setEditedProject((prev: any) => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   if (loading) {
@@ -96,6 +208,53 @@ export default function ProjectDetailPage({
 
   const isOwner = userId && userId === project.client_id;
   const isNewDevelopment = project.project_mode === "new_development";
+  
+  // 顯示用的專案資料（編輯模式使用 editedProject，否則使用 project）
+  const displayProject = isEditMode ? editedProject : project;
+
+  // 可編輯欄位組件
+  const EditableField = ({ label, value, field, multiline = false, type = "text" }: any) => {
+    if (!isEditMode) {
+      return (
+        <p className="text-[#20263e] leading-relaxed whitespace-pre-line text-lg">
+          {value || '未填寫'}
+        </p>
+      );
+    }
+
+    if (multiline) {
+      return (
+        <textarea
+          value={value || ''}
+          onChange={(e) => handleFieldChange(field, e.target.value)}
+          className="w-full p-3 border-2 border-[#c5ae8c] rounded-lg text-[#20263e] focus:outline-none focus:border-[#20263e] min-h-[120px]"
+          placeholder={label}
+        />
+      );
+    }
+
+    if (type === "number") {
+      return (
+        <input
+          type="number"
+          value={value || ''}
+          onChange={(e) => handleFieldChange(field, parseFloat(e.target.value) || 0)}
+          className="w-full p-3 border-2 border-[#c5ae8c] rounded-lg text-[#20263e] focus:outline-none focus:border-[#20263e]"
+          placeholder={label}
+        />
+      );
+    }
+
+    return (
+      <input
+        type={type}
+        value={value || ''}
+        onChange={(e) => handleFieldChange(field, e.target.value)}
+        className="w-full p-3 border-2 border-[#c5ae8c] rounded-lg text-[#20263e] focus:outline-none focus:border-[#20263e]"
+        placeholder={label}
+      />
+    );
+  };
 
   // 映射英文值到中文标签（用于需交付文件和擔憂與顧慮）
   const DELIVERABLE_MAP: Record<string, string> = {
@@ -141,8 +300,8 @@ export default function ProjectDetailPage({
 
       <main className="flex-1 py-10 px-4">
         <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        {/* 頁首 */}
-        <div className="mb-8">
+          {/* 頁首 */}
+          <div className="mb-8">
           <div className="flex items-center gap-2 text-sm text-[#c5ae8c] mb-2">
             <a href="/projects" className="hover:text-[#20263e]">
               案件列表
@@ -151,11 +310,21 @@ export default function ProjectDetailPage({
             <span>{project.title}</span>
           </div>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-            <div>
+            <div className="flex-1">
               <div className="flex flex-wrap items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-[#20263e]">
-                  {project.title}
-                </h1>
+                {isEditMode ? (
+                  <input
+                    type="text"
+                    value={displayProject.title || ''}
+                    onChange={(e) => handleFieldChange('title', e.target.value)}
+                    className="text-3xl font-bold text-[#20263e] border-2 border-[#c5ae8c] rounded-lg px-3 py-1 focus:outline-none focus:border-[#20263e] flex-1 min-w-0"
+                    placeholder="專案標題"
+                  />
+                ) : (
+                  <h1 className="text-3xl font-bold text-[#20263e]">
+                    {project.title}
+                  </h1>
+                )}
                 <Badge
                   variant={
                     project.status === "open"
@@ -163,7 +332,7 @@ export default function ProjectDetailPage({
                       : project.status === "draft"
                       ? "default"
                       : project.status === "in_progress"
-                      ? "info"
+                      ? "khaki"
                       : "danger"
                   }
                 >
@@ -173,7 +342,7 @@ export default function ProjectDetailPage({
                     ? "進行中"
                     : "已結案"}
                 </Badge>
-                <Badge variant={isNewDevelopment ? "default" : "info"}>
+                <Badge variant={isNewDevelopment ? "khaki" : "khaki"}>
                   {isNewDevelopment ? "全新開發" : "修改維護"}
                 </Badge>
               </div>
@@ -183,12 +352,44 @@ export default function ProjectDetailPage({
             </div>
             {isOwner && (
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  編輯
-                </Button>
-                <Button variant="outline" size="sm">
-                  刪除
-                </Button>
+                {isEditMode ? (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleCancelEdit}
+                      disabled={saving}
+                    >
+                      取消
+                    </Button>
+                    <Button 
+                      size="sm"
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      {saving ? '儲存中...' : '儲存'}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleEdit}
+                    >
+                      編輯
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleDelete}
+                      className="text-red-600 hover:bg-red-50 border-red-300"
+                    >
+                      刪除
+                    </Button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -196,7 +397,7 @@ export default function ProjectDetailPage({
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 左側主要內容 */}
-          <div className="lg:col-span-2 space-y-8">
+          <div ref={leftColumnRef} className="lg:col-span-2 space-y-8">
             {/* 合併所有內容到一個 Card */}
             <section>
               <Card className="p-8 bg-transparent shadow-none border-0">
@@ -204,42 +405,70 @@ export default function ProjectDetailPage({
                   {/* 專案概況區塊 */}
                   <div>
                     <div className="space-y-6">
-                      {/* 專案描述 */}
+                      {/* 專案描述 - 顯示 AI 生成的摘要 */}
                       <div>
                         <h3 className="text-xl font-bold text-[#20263e] mb-4">專案描述</h3>
-                    <p className="text-[#20263e] leading-relaxed whitespace-pre-line text-lg">
-                      {project.description}
-                    </p>
+                        {!isEditMode ? (
+                          <p className="text-[#20263e] leading-relaxed whitespace-pre-line text-lg">
+                            {displayProject.ai_summary || displayProject.description || '未填寫'}
+                          </p>
+                        ) : (
+                          <textarea
+                            value={displayProject.description || ''}
+                            onChange={(e) => handleFieldChange('description', e.target.value)}
+                            className="w-full p-3 border-2 border-[#c5ae8c] rounded-lg text-[#20263e] focus:outline-none focus:border-[#20263e] min-h-[120px]"
+                            placeholder="專案描述"
+                          />
+                        )}
                   </div>
 
                   {/* 根據專案模式顯示核心資訊 */}
                   {isNewDevelopment ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      {project.new_usage_scenario && (
+                      {(displayProject.new_usage_scenario || isEditMode) && (
                         <div>
                           <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">使用場景</h4>
-                          <p className="text-[#20263e] leading-relaxed">{project.new_usage_scenario}</p>
+                          <EditableField 
+                            label="使用場景"
+                            value={displayProject.new_usage_scenario}
+                            field="new_usage_scenario"
+                            multiline
+                          />
                         </div>
                       )}
-                      {project.new_goals && (
+                      {(displayProject.new_goals || isEditMode) && (
                         <div>
                           <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">專案目標</h4>
-                          <p className="text-[#20263e] leading-relaxed">{project.new_goals}</p>
+                          <EditableField 
+                            label="專案目標"
+                            value={displayProject.new_goals}
+                            field="new_goals"
+                            multiline
+                          />
                         </div>
                       )}
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      {project.maint_system_name && (
+                      {(displayProject.maint_system_name || isEditMode) && (
                         <div>
                           <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">系統名稱</h4>
-                          <p className="text-[#20263e] font-medium text-lg">{project.maint_system_name}</p>
+                          <EditableField 
+                            label="系統名稱"
+                            value={displayProject.maint_system_name}
+                            field="maint_system_name"
+                          />
                         </div>
                       )}
-                      {project.maint_system_purpose && (
+                      {(displayProject.maint_system_purpose || isEditMode) && (
                         <div>
                           <h4 className="font-semibold text-[#c5ae8c] mb-2 text-sm uppercase tracking-wide">系統用途</h4>
-                          <p className="text-[#20263e] leading-relaxed">{project.maint_system_purpose}</p>
+                          <EditableField 
+                            label="系統用途"
+                            value={displayProject.maint_system_purpose}
+                            field="maint_system_purpose"
+                            multiline
+                          />
                         </div>
                       )}
                     </div>
@@ -299,7 +528,7 @@ export default function ProjectDetailPage({
                                 href={link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                                        className="text-[#20263e] hover:text-[#c5ae8c] hover:underline"
                               >
                                         {linkText}
                               </a>
@@ -347,17 +576,36 @@ export default function ProjectDetailPage({
                   )}
 
                   {/* 專案預算與付款資訊 */}
-                  <hr className="border-[#20263e] border" />
+                  <hr ref={budgetDividerRef} className="border-[#20263e] border" />
                   
                   <div>
                     <div className="mb-6">
                       <div className="flex items-center justify-center gap-3 mb-2">
                         <p className="text-3xl text-[#20263e] font-bold uppercase tracking-wide" style={{ fontFamily: "'Noto Serif TC', serif" }}>專案預算</p>
-                        <p className="text-3xl font-bold text-[#20263e]" style={{ fontFamily: "'Noto Serif TC', serif" }}>
-                          NT$ {project.budget_min.toLocaleString()} - {project.budget_max.toLocaleString()}
-                        </p>
+                        {isEditMode ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">NT$</span>
+                            <input
+                              type="number"
+                              value={displayProject.budget_min}
+                              onChange={(e) => handleFieldChange('budget_min', parseFloat(e.target.value))}
+                              className="w-32 p-2 border-2 border-[#c5ae8c] rounded text-center"
+                            />
+                            <span>-</span>
+                            <input
+                              type="number"
+                              value={displayProject.budget_max}
+                              onChange={(e) => handleFieldChange('budget_max', parseFloat(e.target.value))}
+                              className="w-32 p-2 border-2 border-[#c5ae8c] rounded text-center"
+                            />
+                          </div>
+                        ) : (
+                          <p className="text-3xl font-bold text-[#20263e]" style={{ fontFamily: "'Noto Serif TC', serif" }}>
+                            NT$ {displayProject.budget_min.toLocaleString()} - {displayProject.budget_max.toLocaleString()}
+                          </p>
+                        )}
                       </div>
-                      {project.budget_estimate_only && (
+                      {displayProject.budget_estimate_only && (
                         <p className="text-sm text-[#c5ae8c] mt-1 flex items-center justify-center gap-1">
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#20263e]">
                             <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
@@ -370,35 +618,66 @@ export default function ProjectDetailPage({
                     <div className="space-y-4 mb-6 pt-6 border-t border-gray-100">
                       <div className="flex justify-between items-center">
                         <span className="text-[#c5ae8c]">付款方式</span>
-                        <span className="font-medium text-[#20263e]">
-                          {project.payment_method === "installment"
-                            ? "分期付款"
-                            : project.payment_method === "milestone"
-                            ? "里程碑付款"
-                            : project.payment_method === "full_after"
-                            ? "完成後付款"
-                            : "待協商"}
-                        </span>
+                        {isEditMode ? (
+                          <select
+                            value={displayProject.payment_method || 'negotiable'}
+                            onChange={(e) => handleFieldChange('payment_method', e.target.value)}
+                            className="p-2 border-2 border-[#c5ae8c] rounded text-[#20263e]"
+                          >
+                            <option value="installment">分期付款</option>
+                            <option value="milestone">里程碑付款</option>
+                            <option value="full_after">完成後付款</option>
+                            <option value="negotiable">待協商</option>
+                          </select>
+                        ) : (
+                          <span className="font-medium text-[#20263e]">
+                            {displayProject.payment_method === "installment"
+                              ? "分期付款"
+                              : displayProject.payment_method === "milestone"
+                              ? "里程碑付款"
+                              : displayProject.payment_method === "full_after"
+                              ? "完成後付款"
+                              : "待協商"}
+                          </span>
+                        )}
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-[#c5ae8c]">期望開始</span>
-                        <span className="font-medium text-[#20263e]">
-                          {project.start_date ? new Date(project.start_date).toLocaleDateString("zh-TW") : "可議"}
-                        </span>
+                        {isEditMode ? (
+                          <input
+                            type="date"
+                            value={displayProject.start_date ? displayProject.start_date.split('T')[0] : ''}
+                            onChange={(e) => handleFieldChange('start_date', e.target.value)}
+                            className="p-2 border-2 border-[#c5ae8c] rounded text-[#20263e]"
+                          />
+                        ) : (
+                          <span className="font-medium text-[#20263e]">
+                            {displayProject.start_date ? new Date(displayProject.start_date).toLocaleDateString("zh-TW") : "可議"}
+                          </span>
+                        )}
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-[#c5ae8c]">期望完成</span>
-                        <span className="font-medium text-[#20263e]">
-                          {project.deadline ? new Date(project.deadline).toLocaleDateString("zh-TW") : "可議"}
-                        </span>
+                        {isEditMode ? (
+                          <input
+                            type="date"
+                            value={displayProject.deadline ? displayProject.deadline.split('T')[0] : ''}
+                            onChange={(e) => handleFieldChange('deadline', e.target.value)}
+                            className="p-2 border-2 border-[#c5ae8c] rounded text-[#20263e]"
+                          />
+                        ) : (
+                          <span className="font-medium text-[#20263e]">
+                            {displayProject.deadline ? new Date(displayProject.deadline).toLocaleDateString("zh-TW") : "可議"}
+                          </span>
+                        )}
                       </div>
                     </div>
 
                     {/* 提交提案按鈕 */}
                     {!isOwner && (
                       <ProjectDetailClient 
-                        projectId={project.id} 
-                        projectTitle={project.title}
+                        projectId={displayProject.id} 
+                        projectTitle={displayProject.title}
                         isOwner={false} 
                         userId={userId || undefined} 
                       />
@@ -449,7 +728,7 @@ export default function ProjectDetailPage({
                           <Badge
                             variant={
                               bid.status === "pending"
-                                ? "info"
+                                ? "khaki"
                                 : bid.status === "accepted"
                                 ? "success"
                                 : "danger"
@@ -483,7 +762,8 @@ export default function ProjectDetailPage({
           </div>
 
           {/* 右側邊欄 */}
-          <div className="space-y-6">
+          <div ref={rightColumnRef} className="space-y-6 flex flex-col h-full">
+            <div className="sticky top-24 space-y-6">
 
             {/* 技術規格 */}
             {(project.required_skills?.length > 0 || project.new_design_style?.length > 0 || project.new_integrations?.length > 0 || project.maint_known_tech_stack?.length > 0 || project.new_outputs?.length > 0) && (
@@ -501,7 +781,7 @@ export default function ProjectDetailPage({
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {project.required_skills.map((skill: string) => (
-                          <Badge key={skill} variant="info" className="text-sm py-1 px-3">
+                          <Badge key={skill} variant="khaki" className="text-sm py-1 px-3">
                             {skill}
                           </Badge>
                         ))}
@@ -520,7 +800,7 @@ export default function ProjectDetailPage({
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {project.new_design_style.map((style: string) => (
-                          <Badge key={style} variant="info" className="text-sm py-1 px-3">
+                          <Badge key={style} variant="khaki" className="text-sm py-1 px-3">
                             {style}
                           </Badge>
                         ))}
@@ -539,7 +819,7 @@ export default function ProjectDetailPage({
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {project.new_integrations.map((integration: string) => (
-                          <Badge key={integration} variant="info" className="text-sm py-1 px-3">
+                          <Badge key={integration} variant="khaki" className="text-sm py-1 px-3">
                             {integration}
                           </Badge>
                         ))}
@@ -558,7 +838,7 @@ export default function ProjectDetailPage({
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {project.maint_known_tech_stack.map((tech: string) => (
-                          <Badge key={tech} variant="info" className="text-sm py-1 px-3">
+                          <Badge key={tech} variant="khaki" className="text-sm py-1 px-3">
                             {tech}
                           </Badge>
                         ))}
@@ -577,7 +857,7 @@ export default function ProjectDetailPage({
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {project.new_outputs.map((output: string, index: number) => (
-                          <Badge key={index} variant="info" className="text-sm py-1 px-3">
+                          <Badge key={index} variant="khaki" className="text-sm py-1 px-3">
                             {output}
                           </Badge>
                         ))}
@@ -589,7 +869,7 @@ export default function ProjectDetailPage({
             )}
 
             {/* 關於發案者 */}
-            <hr className="border-[#20263e] border my-6" />
+            <hr ref={clientDividerRef} className="border-[#20263e] border my-6" />
             <section>
               <h3 className="text-lg font-bold text-[#20263e] mb-4">關於發案者</h3>
               <div className="flex items-center gap-4">
@@ -640,6 +920,10 @@ export default function ProjectDetailPage({
                 </div>
               </div>
             </section>
+            </div>
+            
+            {/* 底部填充，用於對齊 */}
+            <div className="flex-1" style={{ minHeight: `${sidebarPadding}px` }}></div>
           </div>
         </div>
         </div>

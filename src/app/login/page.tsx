@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { apiPost } from "@/lib/api";
+import { getRememberMe, saveRememberMe, clearRememberMe } from "@/lib/rememberMe";
 
 // 提取使用 useSearchParams 的組件
 function LoginForm() {
@@ -43,6 +44,16 @@ function LoginForm() {
     if (urlReturnUrl && typeof window !== 'undefined') {
       localStorage.setItem('returnUrl', urlReturnUrl);
     }
+    
+    // 檢查是否有記住的 email
+    const rememberedEmail = getRememberMe();
+    if (rememberedEmail) {
+      setFormData(prev => ({
+        ...prev,
+        email: rememberedEmail,
+        rememberMe: true,
+      }));
+    }
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,11 +81,18 @@ function LoginForm() {
 
     try {
       const data = await apiPost("/api/v1/auth/login", formData);
-      // ... (其餘登入成功邏輯保持不變)
+
       // 儲存 token
       localStorage.setItem("access_token", data.data.access_token);
       localStorage.setItem("refresh_token", data.data.refresh_token);
       localStorage.setItem("user", JSON.stringify(data.data.user));
+
+      // 根據 rememberMe 狀態處理 email 記憶
+      if (formData.rememberMe) {
+        saveRememberMe(formData.email);
+      } else {
+        clearRememberMe();
+      }
 
       // 檢查是否有返回 URL（優先順序：URL query > localStorage）
       const urlReturnUrl = searchParams?.get('returnUrl');
@@ -104,6 +122,12 @@ function LoginForm() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
+    
+    // 如果取消勾選「記住我」，立即清除 LocalStorage
+    if (name === 'rememberMe' && !checked) {
+      clearRememberMe();
+    }
+    
     setFormData({
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
@@ -119,28 +143,28 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#e6dfcf] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="h-[calc(100vh-4rem)] flex items-center justify-center bg-[#e6dfcf] px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-4">
         {/* Logo / Header */}
         <div className="text-center">
-          <Link href="/" className="inline-block mb-4">
+          <Link href="/" className="inline-block mb-2">
             <img 
               src="/200ok_logo_dark.png" 
               alt="200 OK" 
-              className="h-24 mx-auto"
+              className="h-20 mx-auto"
             />
           </Link>
-          <h2 className="text-2xl font-semibold text-[#20263e] mt-4">
+          <h2 className="text-2xl font-semibold text-[#20263e] mt-2">
             歡迎回來
           </h2>
-          <p className="mt-2 text-[#c5ae8c] text-lg">
+          <p className="mt-1 text-[#c5ae8c] text-lg">
             登入您的帳號開始使用
           </p>
         </div>
 
         {/* Login Form */}
-        <Card className="p-8 bg-white shadow-lg border-2 border-[#c5ae8c]">
-          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+        <Card className="p-6 bg-white shadow-lg border-2 border-[#c5ae8c]">
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             {error && (
               <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded">
                 <p className="font-medium">{error}</p>
@@ -196,11 +220,11 @@ function LoginForm() {
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
               <Checkbox
-                id="rememberMe"
-                name="rememberMe"
-                checked={formData.rememberMe}
-                onChange={handleChange}
-                label="記住我"
+                    id="rememberMe"
+                    name="rememberMe"
+                    checked={formData.rememberMe}
+                    onChange={handleChange}
+                label="記住電子郵件"
               />
 
               <div className="text-sm">

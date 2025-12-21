@@ -6,6 +6,7 @@ Bids Endpoints
 from typing import Optional
 from uuid import UUID
 from decimal import Decimal
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy import text
 import uuid
@@ -14,7 +15,9 @@ from ...db import get_db, parse_pg_array
 from ...models.user import User
 from ...models.project import ProjectStatus
 from ...models.bid import BidStatus
+from ...models.conversation import ConversationType
 from ...models.notification import NotificationType
+from ...models.token import TransactionType
 from ...schemas.bid import BidCreate, BidResponse
 from ...schemas.common import SuccessResponse
 from ...dependencies import get_current_user, PaginationParams
@@ -463,6 +466,156 @@ async def reject_bid(
         "data": {
             "id": str(bid_id),
             "status": BidStatus.REJECTED.value
+        }
+    }
+
+
+# ==================== 撤回提案（7天後未接受可撤回並退款） ====================
+
+@router.post("/{bid_id}/withdraw", response_model=SuccessResponse[dict])
+async def withdraw_bid(
+    bid_id: UUID,
+    db = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    撤回提案（7天後未被接受的提案可撤回，退還 100 代幣）
+    
+    邏輯：
+    1. 檢查提案是否存在且屬於當前使用者
+    2. 檢查提案狀態為 pending
+    3. 檢查提案是否超過 7 天
+    4. 刪除相關的 bid、conversation、messages、user_connection
+    5. 退還 100 代幣給提案者
+    """
+    # 查詢提案及相關資訊
+    bid_sql = """
+        SELECT 
+            b.id,
+            b.freelancer_id,
+            b.status,
+            b.created_at,
+            b.project_id,
+            p.title as project_title
+        FROM bids b
+        LEFT JOIN projects p ON p.id = b.project_id
+        WHERE b.id = :bid_id
+    """
+    result = await db.execute(text(bid_sql), {'bid_id': str(bid_id)})
+    bid = result.fetchone()
+    
+    if not bid:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="找不到該提案"
+        )
+    
+    # 檢查權限：只有提案者本人可撤回
+    if str(bid.freelancer_id) != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="您沒有權限撤回此提案"
+        )
+    
+    # 檢查狀態：只有 pending 狀態可撤回
+    if bid.status != BidStatus.PENDING.value:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="只能撤回待審核的提案"
+        )
+    
+    # 檢查時間：必須超過 7 天
+    created_at = bid.created_at
+    if isinstance(created_at, str):
+        created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+    
+    days_passed = (datetime.utcnow() - created_at).days
+    if days_passed < 7:
+        remaining_days = 7 - days_passed
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"提案需等待 7 天後才能撤回，還剩 {remaining_days} 天"
+        )
+    
+    # 查詢相關的對話 ID
+    conv_sql = """
+        SELECT id FROM conversations
+        WHERE bid_id = :bid_id
+    """
+    conv_result = await db.execute(text(conv_sql), {'bid_id': str(bid_id)})
+    conversation = conv_result.fetchone()
+    conversation_id = str(conversation.id) if conversation else None
+    
+    # 開始刪除流程
+    
+    # 1. 刪除相關訊息（如果有對話）
+    if conversation_id:
+        delete_messages_sql = """
+            DELETE FROM messages
+            WHERE conversation_id = :conversation_id
+        """
+        await db.execute(text(delete_messages_sql), {'conversation_id': conversation_id})
+        
+        # 2. 刪除 user_connection
+        delete_connection_sql = """
+            DELETE FROM user_connections
+            WHERE conversation_id = :conversation_id
+        """
+        await db.execute(text(delete_connection_sql), {'conversation_id': conversation_id})
+        
+        # 3. 刪除對話
+        delete_conv_sql = """
+            DELETE FROM conversations
+            WHERE id = :conversation_id
+        """
+        await db.execute(text(delete_conv_sql), {'conversation_id': conversation_id})
+    
+    # 4. 刪除提案
+    delete_bid_sql = """
+        DELETE FROM bids
+        WHERE id = :bid_id
+    """
+    await db.execute(text(delete_bid_sql), {'bid_id': str(bid_id)})
+    
+    # 5. 退還 100 代幣
+    update_token_sql = """
+        UPDATE user_tokens
+        SET balance = balance + 100,
+            updated_at = NOW()
+        WHERE user_id = :user_id
+        RETURNING balance
+    """
+    token_result = await db.execute(text(update_token_sql), {'user_id': str(current_user.id)})
+    new_balance_row = token_result.fetchone()
+    
+    # 6. 記錄代幣交易
+    insert_transaction_sql = """
+        INSERT INTO token_transactions (
+            id, user_id, amount, balance_after, transaction_type, 
+            reference_id, description, created_at
+        )
+        VALUES (
+            :id, :user_id, :amount, :balance_after, :transaction_type,
+            :reference_id, :description, NOW()
+        )
+    """
+    await db.execute(text(insert_transaction_sql), {
+        'id': str(uuid.uuid4()),
+        'user_id': str(current_user.id),
+        'amount': 100,
+        'balance_after': new_balance_row.balance if new_balance_row else 100,
+        'transaction_type': TransactionType.REFUND.value,
+        'reference_id': str(bid_id),
+        'description': f"撤回提案「{bid.project_title}」，退還代幣"
+    })
+    
+    return {
+        "success": True,
+        "message": "提案已撤回，已退還 100 代幣",
+        "data": {
+            "bid_id": str(bid_id),
+            "refunded_amount": 100,
+            "new_balance": new_balance_row.balance if new_balance_row else 100
         }
     }
 

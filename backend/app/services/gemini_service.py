@@ -109,7 +109,7 @@ class GeminiService:
             project_data: 專案資料字典，包含 project_type, description 等
             
         Returns:
-            生成的專案標題（10-30字）
+            生成的專案標題（5-15字）
         """
         project_type = project_data.get('project_type', '')
         description = project_data.get('description', '')
@@ -120,7 +120,14 @@ class GeminiService:
         # 構建提示詞
         if system_name:
             # 修改維護專案
-            prompt = f"""請為以下系統維護專案生成一個簡潔明確的標題（5-15字），標題應該：
+            prompt = f"""請為以下系統維護專案生成一個簡潔明確的標題。
+
+⚠️ 重要限制：
+- 標題必須是 5-15 個繁體中文字（不含標點符號和空格）
+- 超過 15 字將被視為無效
+- 請直接輸出標題，不要加引號、說明或任何額外文字
+
+專案要求：
 1. 包含系統名稱
 2. 簡要說明維護/改善的重點
 
@@ -128,10 +135,17 @@ class GeminiService:
 專案類型：{project_type}
 專案描述：{description[:200]}
 
-請只輸出標題，不要有其他說明："""
+請只輸出標題："""
         else:
             # 全新開發專案
-            prompt = f"""請為以下軟體開發專案生成一個簡潔明確的標題（5-15字），標題應該：
+            prompt = f"""請為以下軟體開發專案生成一個簡潔明確的標題。
+
+⚠️ 重要限制：
+- 標題必須是 5-15 個繁體中文字（不含標點符號和空格）
+- 超過 15 字將被視為無效
+- 請直接輸出標題，不要加引號、說明或任何額外文字
+
+專案要求：
 1. 體現專案類型（{project_type}）
 2. 說明核心功能或目標
 3. 專業且清楚明瞭
@@ -141,16 +155,45 @@ class GeminiService:
 專案目標：{goals[:150]}
 專案描述：{description[:200]}
 
-請只輸出標題，不要有其他說明或引號："""
+請只輸出標題："""
         
-        result = await self.generate_text(prompt, max_tokens=50, temperature=0.7)
+        result = await self.generate_text(prompt, max_tokens=50, temperature=0.5)
         
         if result:
-            # 清理結果，移除可能的引號和多餘空白
+            # 清理結果，移除可能的引號、換行和多餘空白
             title = result.strip().strip('"').strip("'").strip()
-            # 限制長度
+            # 移除換行符號
+            title = title.replace('\n', '').replace('\r', '')
+            
+            # 計算實際字數（排除標點符號和空格）
+            import re
+            clean_title = re.sub(r'[，。、；：！？\s\.,;:!?]', '', title)
+            char_count = len(clean_title)
+            
+            # 如果超過 15 字，智能截斷
+            if char_count > 15:
+                # 嘗試保留完整的詞彙
+                truncated = ''
+                current_count = 0
+                for char in title:
+                    # 跳過標點符號和空格
+                    if char not in '，。、；：！？\s\.,;:!? ':
+                        current_count += 1
+                        if current_count > 15:
+                            break
+                    truncated += char
+                
+                # 移除末尾的標點符號
+                title = truncated.rstrip('，。、；：！？\.,;:!? ')
+                
+                # 如果截斷後太短，使用簡單截斷
+                if len(title) < 5:
+                    title = result[:15].strip()
+            
+            # 最終確保長度不超過 50 字元（包含標點）
             if len(title) > 50:
                 title = title[:47] + "..."
+            
             return title
         
         return None

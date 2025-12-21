@@ -10,13 +10,13 @@ export default function HowItWorksPage() {
       <Navbar />
 
       {/* Hero Section */}
-      <div className="bg-[#20263e] text-white pb-20 pt-16 -mt-16">
+      <div className="bg-[#20263e] pb-20 pt-24">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold mb-6">如何使用 200 OK</h1>
+          <h1 className="text-5xl font-bold mb-6 text-white">如何使用 200 OK</h1>
           <p className="text-xl text-[#c5ae8c] max-w-3xl mx-auto mb-4">
             專為軟體工程設計的接案平台，與綜合型接案平台做出區隔
           </p>
-          <p className="text-lg text-white/80 max-w-3xl mx-auto">
+          <p className="text-lg text-white/90 max-w-3xl mx-auto">
             透過引導性類型特化步驟與 AI 輔助，讓需求更清晰，讓接案流程更流暢
           </p>
         </div>
@@ -401,12 +401,12 @@ export default function HowItWorksPage() {
         </div>
 
         {/* CTA Section */}
-        <div className="mt-12 bg-[#20263e] rounded-2xl p-10 text-center text-white">
-          <h2 className="text-4xl font-bold mb-4">準備開始了嗎？</h2>
+        <div className="mt-12 bg-[#20263e] rounded-2xl p-10 text-center">
+          <h2 className="text-4xl font-bold mb-4 text-white">準備開始了嗎？</h2>
           <p className="text-xl text-[#c5ae8c] mb-2">
             立即加入 200 OK，專為軟體工程設計的接案平台
           </p>
-          <p className="text-sm text-white/80 mb-8">
+          <p className="text-base text-white/90 mb-8">
             透過 AI 輔助與引導式流程，讓需求更清晰，讓合作更順暢
           </p>
           <div className="flex justify-center space-x-4">

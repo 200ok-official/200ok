@@ -139,25 +139,25 @@ export const Step7Integrations: React.FC<Props> = ({ data, updateData }) => {
           {displayOptions.map((option) => {
             const Icon = ICON_MAP[option.value] || QuestionMarkCircleIcon;
             return (
-              <button
-                key={option.value}
-                onClick={() => handleIntegrationToggle(option.value)}
-                className={`p-2.5 rounded-lg border transition-all flex flex-col items-center justify-center gap-1.5 hover:shadow-sm ${
-                  isIntegrationSelected(option.value)
-                    ? "border-[#20263e] bg-[#20263e] bg-opacity-5"
-                    : "border-[#e5e7eb] hover:border-[#c5ae8c]"
-                }`}
-              >
+            <button
+              key={option.value}
+              onClick={() => handleIntegrationToggle(option.value)}
+              className={`p-2.5 rounded-lg border transition-all flex flex-col items-center justify-center gap-1.5 hover:shadow-sm ${
+                isIntegrationSelected(option.value)
+                  ? "border-[#20263e] bg-[#20263e] bg-opacity-5"
+                  : "border-[#e5e7eb] hover:border-[#c5ae8c]"
+              }`}
+            >
                 <Icon className="w-8 h-8 text-[#20263e]" />
-                <span className="text-xs font-medium text-[#20263e] whitespace-nowrap">
-                  {option.label}
-                </span>
-                {isIntegrationSelected(option.value) && (
+              <span className="text-xs font-medium text-[#20263e] whitespace-nowrap">
+                {option.label}
+              </span>
+              {isIntegrationSelected(option.value) && (
                   <span className="absolute top-1 right-1 text-[#20263e]">
                     <CheckIcon className="w-3 h-3" />
                   </span>
-                )}
-              </button>
+              )}
+            </button>
             );
           })}
         </div>

@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { FreelancerCard } from "@/components/freelancers/FreelancerCard";
 import { Button } from "@/components/ui/Button";
 import { apiGet } from "@/lib/api";
 
@@ -28,6 +27,7 @@ export default function FreelancersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
   const [popularSkills, setPopularSkills] = useState<string[]>([]);
+  const [columns, setColumns] = useState<Freelancer[][]>([[], [], []]);
 
   useEffect(() => {
     fetchFreelancers();
@@ -37,6 +37,45 @@ export default function FreelancersPage() {
     fetchPopularSkills();
   }, []);
 
+  // Filter Logic (Client-side for now, as per original implementation)
+  const filteredFreelancers = freelancers.filter((freelancer) =>
+    freelancer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    freelancer.skills?.some((skill) =>
+      skill.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+
+  // Masonry Layout Logic
+  useEffect(() => {
+    const distributeMasonry = () => {
+        if (filteredFreelancers.length === 0) {
+            setColumns([[], [], []]);
+            return;
+        }
+        
+        // Determine number of columns based on window width
+        const numColumns = typeof window !== 'undefined' 
+            ? window.innerWidth >= 1024 ? 3 : window.innerWidth >= 768 ? 2 : 1
+            : 3;
+            
+        const newColumns: Freelancer[][] = Array.from({ length: numColumns }, () => []);
+        
+        // Distribute items to the shortest column
+        filteredFreelancers.forEach((freelancer) => {
+            const shortestColumnIndex = newColumns.reduce((minIndex, column, index) => 
+                column.length < newColumns[minIndex].length ? index : minIndex, 0
+            );
+            newColumns[shortestColumnIndex].push(freelancer);
+        });
+        
+        setColumns(newColumns);
+    };
+
+    distributeMasonry();
+    window.addEventListener('resize', distributeMasonry);
+    return () => window.removeEventListener('resize', distributeMasonry);
+  }, [freelancers, searchTerm, selectedSkill]); // Re-run when data or filter changes
+
   const fetchPopularSkills = async () => {
     try {
       const data = await apiGet("/api/v1/tags", { category: "tech", limit: "12" });
@@ -44,7 +83,6 @@ export default function FreelancersPage() {
       setPopularSkills(skills);
     } catch (error) {
       console.error("Failed to fetch popular skills:", error);
-      // 使用預設技能作為後備
       setPopularSkills([
         "React",
         "Vue",
@@ -65,13 +103,12 @@ export default function FreelancersPage() {
   const fetchFreelancers = async () => {
     setLoading(true);
     try {
-      const params: Record<string, string> = { limit: "12" };
+      const params: Record<string, string> = { limit: "50" }; // Increased limit for better masonry demo
       if (selectedSkill) {
         params["skills[]"] = selectedSkill;
       }
 
       const data = await apiGet("/api/v1/users/search", params);
-      // API 回應格式: { success: true, data: [...], pagination: {...} }
       setFreelancers(data.data || []);
     } catch (error) {
       console.error("Failed to fetch freelancers:", error);
@@ -80,88 +117,68 @@ export default function FreelancersPage() {
     }
   };
 
-  const filteredFreelancers = freelancers.filter((freelancer) =>
-    freelancer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    freelancer.skills?.some((skill) =>
-      skill.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
-
   return (
     <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
       <Navbar />
 
-      {/* Hero Section */}
-      <div className="bg-[#20263e] text-white pb-16 pt-16 -mt-16">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            尋找專業接案者
-          </h1>
-          <p className="text-xl text-[#c5ae8c] mb-8 max-w-2xl">
-            在這裡找到最適合您專案的專業人才
-          </p>
+      <main className="flex-1 w-full pt-32 pb-16 px-8 md:px-16 lg:px-40 xl:px-40 2xl:px-40">
+        
+        {/* Header & Filter Section */}
+        <div className="text-center mb-16">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#20263e] mb-6 tracking-tight">
+              尋找專業接案者
+            </h1>
+            <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
+              在這裡找到最適合您專案的專業人才
+            </p>
 
-          {/* Search Bar */}
-          <div className="max-w-2xl">
-            <div className="flex gap-3">
-              <input
-                type="text"
-                placeholder="搜尋接案者姓名、技能..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1 px-6 py-4 rounded-lg text-[#20263e] text-lg focus:outline-none focus:ring-2 focus:ring-[#c5ae8c] bg-white"
-              />
-              <Button
-                onClick={fetchFreelancers}
-                className="px-8 py-4 bg-[#c5ae8c] hover:bg-[#b89d7a] text-[#20263e] font-semibold"
-              >
-                搜尋
-              </Button>
+            {/* Search Bar */}
+            <div className="max-w-3xl mx-auto mb-8 relative">
+                <input
+                    type="text"
+                    placeholder="搜尋接案者姓名、技能..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full px-8 py-5 text-lg rounded-full shadow-lg border-none focus:outline-none focus:ring-4 focus:ring-[#c5ae8c]/50 transition bg-white text-[#20263e] placeholder:text-gray-400"
+                />
+                <div className="absolute top-1/2 -translate-y-1/2 right-3">
+                    <button 
+                        onClick={fetchFreelancers}
+                        className="bg-[#20263e] text-white rounded-full p-3 hover:bg-[#2d3550] transition-colors"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-12 flex-1">
-        {/* Skill Filter */}
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-[#20263e] mb-4">
-            熱門技能標籤篩選
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            <Badge
-              variant="default"
-              className={`cursor-pointer px-4 py-2 font-semibold ${
-                selectedSkill === null
-                  ? "bg-[#20263e] text-white"
-                  : "bg-white text-[#20263e] border-2 border-[#c5ae8c] hover:border-[#20263e]"
-              }`}
-              onClick={() => setSelectedSkill(null)}
-            >
-              全部
-            </Badge>
-            {popularSkills.map((skill) => (
-              <Badge
-                key={skill}
-                variant="default"
-                className={`cursor-pointer px-4 py-2 font-semibold transition ${
-                  selectedSkill === skill
-                    ? "bg-[#20263e] text-white"
-                    : "bg-white text-[#20263e] border-2 border-[#c5ae8c] hover:border-[#20263e]"
-                }`}
-                onClick={() => setSelectedSkill(skill)}
-              >
-                {skill}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="mb-6">
-          <p className="text-[#20263e] font-semibold">
-            找到 <span className="text-[#c5ae8c] text-xl">{filteredFreelancers.length}</span> 位接案者
-          </p>
+            {/* Popular Skills Filter */}
+            <div className="flex flex-wrap justify-center gap-3">
+                <button
+                        className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                        selectedSkill === null 
+                        ? "bg-[#20263e] text-white shadow-lg transform scale-105" 
+                        : "bg-white text-[#20263e] hover:bg-[#20263e]/10 border border-transparent"
+                        }`}
+                        onClick={() => setSelectedSkill(null)}
+                >
+                    全部
+                </button>
+                {popularSkills.map((skill) => (
+                    <button
+                    key={skill}
+                    className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                        selectedSkill === skill
+                        ? "bg-[#20263e] text-white shadow-lg transform scale-105"
+                        : "bg-white text-[#20263e] hover:bg-[#20263e]/10 border border-transparent"
+                    }`}
+                    onClick={() => setSelectedSkill(skill)}
+                    >
+                    {skill}
+                    </button>
+                ))}
+            </div>
         </div>
 
         {/* Loading State */}
@@ -172,99 +189,17 @@ export default function FreelancersPage() {
           </div>
         )}
 
-        {/* Freelancers Grid */}
+        {/* Masonry Grid */}
         {!loading && filteredFreelancers.length > 0 && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredFreelancers.map((freelancer) => (
-              <Link key={freelancer.id} href={`/users/${freelancer.id}`}>
-                <Card
-                  className="p-6 transition-all duration-300 bg-white border border-[#c5ae8c] cursor-pointer hover:shadow-lg hover:-translate-y-1"
-                >
-                  <div className="flex items-start space-x-4">
-                  {/* Avatar */}
-                  <div className="flex-shrink-0">
-                    {freelancer.avatar_url ? (
-                      <img
-                        src={freelancer.avatar_url}
-                        alt={freelancer.name}
-                        className="w-16 h-16 rounded-full object-cover border-2 border-[#c5ae8c]"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-full bg-[#20263e] flex items-center justify-center text-white text-xl font-bold border-2 border-[#c5ae8c]">
-                        {freelancer.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
+          <div className="flex gap-6 items-start">
+            {columns.map((column, columnIndex) => (
+              <div key={columnIndex} className="flex-1 flex flex-col gap-6">
+                {column.map((freelancer) => (
+                  <div key={freelancer.id}>
+                    <FreelancerCard freelancer={freelancer} />
                   </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-bold text-[#20263e] truncate">
-                      {freelancer.name}
-                    </h3>
-
-                    {/* Rating */}
-                    <div className="flex items-center mt-1 mb-2">
-                      <div className="flex items-center gap-0.5">
-                        {[...Array(5)].map((_, i) => (
-                          <svg
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < Math.floor(freelancer.rating || 0)
-                                ? "text-[#fbbf24]"
-                                : "text-gray-300"
-                            }`}
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
-                          </svg>
-                        ))}
-                        <span className="ml-2 text-sm text-[#20263e] font-semibold">
-                          {freelancer.rating !== null ? freelancer.rating.toFixed(1) : "N/A"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Bio */}
-                    {freelancer.bio && (
-                      <p className="text-sm text-[#20263e] line-clamp-2 mb-3">
-                        {freelancer.bio}
-                      </p>
-                    )}
-
-                    {/* Skills */}
-                    {freelancer.skills && freelancer.skills.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {freelancer.skills.slice(0, 3).map((skill, index) => (
-                          <Badge
-                            key={index}
-                            variant="default"
-                            className="text-xs bg-[#e6dfcf] text-[#20263e] border border-[#c5ae8c]"
-                          >
-                            {skill}
-                          </Badge>
-                        ))}
-                        {freelancer.skills.length > 3 && (
-                          <Badge
-                            variant="default"
-                            className="text-xs bg-[#e6dfcf] text-[#20263e] border border-[#c5ae8c]"
-                          >
-                            +{freelancer.skills.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Hourly Rate */}
-                    {freelancer.hourly_rate && (
-                      <p className="text-sm font-semibold text-[#20263e]">
-                        時薪：<span className="text-[#c5ae8c]">${freelancer.hourly_rate}</span> / 小時
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </Card>
-              </Link>
+                ))}
+              </div>
             ))}
           </div>
         )}
@@ -296,21 +231,28 @@ export default function FreelancersPage() {
 
         {/* CTA Section */}
         {!loading && filteredFreelancers.length > 0 && (
-          <div className="mt-16 bg-[#20263e] rounded-2xl p-12 text-center text-white">
-            <h2 className="text-3xl font-bold mb-4">
-              找到您需要的專業人才了嗎？
-            </h2>
-            <p className="text-xl text-[#c5ae8c] mb-8">
-              立即發布案件，讓更多接案者為您服務
-            </p>
-            <Link href="/projects/new">
-              <Button className="bg-[#c5ae8c] hover:bg-[#b89d7a] text-[#20263e] px-8 py-3 text-lg font-semibold">
-                免費發布案件
-              </Button>
-            </Link>
+          <div className="mt-20 bg-[#20263e] rounded-[2.5rem] p-12 text-center text-white shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
+                <div className="absolute -top-24 -left-24 w-96 h-96 bg-white rounded-full blur-[100px]"></div>
+                <div className="absolute bottom-0 right-0 w-[30rem] h-[30rem] bg-[#c5ae8c] rounded-full blur-[120px]"></div>
+            </div>
+            
+            <div className="relative z-10">
+                <h2 className="text-3xl font-bold mb-4 text-white">
+                找到您需要的專業人才了嗎？
+                </h2>
+                <p className="text-xl text-white/90 mb-8">
+                立即發布案件，讓更多接案者為您服務
+                </p>
+                <Link href="/projects/new">
+                <Button className="bg-[#c5ae8c] hover:bg-[#b89d7a] text-[#20263e] px-8 py-3 text-lg font-semibold rounded-full">
+                    免費發布案件
+                </Button>
+                </Link>
+            </div>
           </div>
         )}
-      </div>
+      </main>
 
       <Footer />
     </div>

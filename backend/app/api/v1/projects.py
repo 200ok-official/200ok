@@ -204,6 +204,7 @@ async def list_projects(
             "client_id": str(row.client_id),
             "title": row.title,
             "description": row.description,
+            "ai_summary": row.ai_summary,
             "project_mode": row.project_mode,
             "project_type": row.project_type,
             "budget_min": float(row.budget_min) if row.budget_min else None,
@@ -253,10 +254,14 @@ async def create_project(
             detail="最低預算不能大於最高預算"
         )
     
-    # 建立專案
+    # 建立專案資料
     project_data = data.model_dump()
     
+    # ⚠️ 重要：在進入資料庫事務前，先完成所有外部 API 調用
     # 使用 AI 生成專案標題（如果有設定 Gemini API key）
+    ai_generated_title = None
+    ai_generated_summary = None
+    
     try:
         ai_generated_title = await gemini_service.generate_project_title(project_data)
         if ai_generated_title:
@@ -264,6 +269,15 @@ async def create_project(
     except Exception as e:
         # AI 生成失敗不影響主流程，使用原本的標題
         print(f"AI 生成標題失敗: {str(e)}")
+    
+    # 生成專案摘要（如果有標題）
+    if project_data.get('title'):
+        try:
+            ai_generated_summary = await gemini_service.generate_project_summary(project_data)
+            if ai_generated_summary:
+                project_data['ai_summary'] = ai_generated_summary
+        except Exception as e:
+            print(f"AI 生成摘要失敗: {str(e)}")
     
     # 補全缺失的欄位為 None，避免 SQLAlchemy 報錯
     all_fields = [
@@ -331,9 +345,7 @@ async def create_project(
     row = result.fetchone()
     project_id = row.id
     
-    await db.commit()
-    
-    # 取得完整資料（包含 client）
+    # 在 commit 之前取得完整資料（包含 client）
     get_sql = """
         SELECT 
             p.*,
@@ -348,6 +360,9 @@ async def create_project(
     
     result = await db.execute(text(get_sql), {'project_id': str(project_id)})
     project = result.fetchone()
+    
+    # 最後再 commit
+    await db.commit()
     
     return {
         "success": True,
@@ -457,6 +472,7 @@ async def get_project(
             "client_id": str(row.client_id),
             "title": row.title,
             "description": row.description,
+            "ai_summary": row.ai_summary,
             "project_mode": row.project_mode,
         "project_type": row.project_type,
             "budget_min": float(row.budget_min) if row.budget_min else None,
@@ -527,7 +543,8 @@ async def delete_project(
     current_user: User = Depends(get_current_user)
 ):
     """
-    刪除案件（僅 draft 狀態） - 使用 Raw SQL
+    刪除案件 - 使用 Raw SQL
+    擁有者可以刪除自己的任何案件
     """
     # 查詢專案
     sql = """
@@ -552,14 +569,7 @@ async def delete_project(
             detail="您沒有權限刪除此案件"
         )
     
-    # 只有 draft 狀態可以刪除
-    if project.status != 'draft':
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="只有草稿狀態的案件可以刪除"
-        )
-    
-    # 刪除專案
+    # 刪除專案（直接刪除，不限制狀態）
     delete_sql = """
         DELETE FROM projects
         WHERE id = :project_id
@@ -658,6 +668,7 @@ async def update_project(
 ):
     """
     更新專案 - 使用 Raw SQL
+    擁有者可以更新自己的任何案件
     """
     # 查詢專案
     check_sql = """
@@ -682,14 +693,7 @@ async def update_project(
             detail="您沒有權限修改此案件"
         )
     
-    # 只有 draft 或 open 狀態可以修改
-    if project.status not in ['draft', 'open']:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="只有草稿或開放中的案件可以修改"
-        )
-    
-    # 更新資料
+    # 更新資料（不限制狀態）
     update_dict = data.model_dump(exclude_unset=True)
     
     if not update_dict:

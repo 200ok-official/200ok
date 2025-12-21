@@ -394,12 +394,13 @@ async def get_conversation(
     
     RLS 邏輯: 必須是對話參與者
     """
-    # 查詢對話（包含 user_connections 的解鎖狀態）
+    # 查詢對話（包含 user_connections 的解鎖狀態和 bid 資訊）
     sql = """
         SELECT 
             c.id,
             c.type,
             c.project_id,
+            c.bid_id,
             c.is_unlocked,
             c.initiator_id,
             c.recipient_id,
@@ -415,6 +416,9 @@ async def get_conversation(
             r.phone as recipient_phone,
             p.id as project_id_full,
             p.title as project_title,
+            b.id as bid_id_full,
+            b.status as bid_status,
+            b.created_at as bid_created_at,
             uc.initiator_unlocked_at,
             uc.recipient_unlocked_at,
             uc.expires_at,
@@ -423,6 +427,7 @@ async def get_conversation(
         LEFT JOIN users i ON i.id = c.initiator_id
         LEFT JOIN users r ON r.id = c.recipient_id
         LEFT JOIN projects p ON p.id = c.project_id
+        LEFT JOIN bids b ON b.id = c.bid_id
         LEFT JOIN user_connections uc ON uc.conversation_id = c.id
         WHERE c.id = :conversation_id
     """
@@ -458,6 +463,7 @@ async def get_conversation(
             "id": str(row.id),
             "type": row.type,
             "project_id": str(row.project_id) if row.project_id else None,
+            "bid_id": str(row.bid_id) if row.bid_id else None,
             "is_unlocked": row.is_unlocked or (initiator_unlocked and recipient_unlocked),
             "initiator_id": str(row.initiator_id),
             "recipient_id": str(row.recipient_id),
@@ -482,7 +488,12 @@ async def get_conversation(
             "project": {
                 "id": str(row.project_id_full),
                 "title": row.project_title
-            } if row.project_id_full else None
+            } if row.project_id_full else None,
+            "bid": {
+                "id": str(row.bid_id_full),
+                "status": row.bid_status,
+                "created_at": row.bid_created_at.isoformat() if row.bid_created_at else None
+            } if row.bid_id_full else None
         }
     }
 

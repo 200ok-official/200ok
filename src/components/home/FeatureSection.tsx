@@ -3,20 +3,25 @@
 import React, { useRef } from "react";
 import { motion, useMotionTemplate, useMotionValue, useSpring } from "framer-motion";
 import { Card } from "@/components/ui/Card";
+import { 
+  CpuChipIcon, 
+  ComputerDesktopIcon, 
+  BoltIcon 
+} from "@heroicons/react/24/solid";
 
 const features = [
   {
-    icon: "🤖",
+    icon: <CpuChipIcon className="w-8 h-8" />,
     title: "AI 輔助需求分析",
     description: "透過引導性類型特化步驟與 AI 輔助，讓您清楚說明需求，了解需求等級、描述完整度與市場定位。",
   },
   {
-    icon: "💻",
+    icon: <ComputerDesktopIcon className="w-8 h-8" />,
     title: "專為工程師設計",
     description: "專屬技能展示空間，讓接案工程師節省更多力氣去釐清需求，接案流程更流暢。",
   },
   {
-    icon: "⚡",
+    icon: <BoltIcon className="w-8 h-8" />,
     title: "引導式發案流程",
     description: "即使不懂技術也能透過引導式問答清楚描述需求，快速找到合適的軟體開發者。",
   },
