@@ -185,10 +185,10 @@ export default function ConversationsPage() {
                           </div>
                         )}
                         {/* 未讀訊息藍點 */}
-                        {conv.unread_count && conv.unread_count > 0 && (
+                        {(conv.unread_count ?? 0) > 0 && (
                           <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
                             <span className="text-xs font-bold text-white">
-                              {conv.unread_count > 99 ? '99+' : conv.unread_count}
+                              {(conv.unread_count ?? 0) > 99 ? '99+' : (conv.unread_count ?? 0)}
                             </span>
                           </div>
                         )}
@@ -231,10 +231,10 @@ export default function ConversationsPage() {
 
                         {lastMessage ? (
                           <div className="flex items-center gap-2">
-                            <p className={`text-sm truncate flex-1 ${conv.unread_count && conv.unread_count > 0 ? 'text-[#20263e] font-semibold' : 'text-gray-500'}`} title={lastMessage.content}>
+                            <p className={`text-sm truncate flex-1 ${(conv.unread_count ?? 0) > 0 ? 'text-[#20263e] font-semibold' : 'text-gray-500'}`} title={lastMessage.content}>
                               {getMessagePreview(lastMessage.content, 50)}
                             </p>
-                            {conv.unread_count && conv.unread_count > 0 && (
+                            {(conv.unread_count ?? 0) > 0 && (
                               <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                             )}
                           </div>

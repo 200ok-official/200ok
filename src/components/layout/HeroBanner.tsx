@@ -9,96 +9,213 @@ export const HeroBanner: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const leftShapeRef = useRef<HTMLDivElement>(null);
   const rightShapeRef = useRef<HTMLDivElement>(null);
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const rightBoxRef = useRef<HTMLDivElement>(null);
+  const leftBoxRef = useRef<HTMLDivElement>(null);
   const [textProgress, setTextProgress] = useState(0);
 
   // Define easing curve (Standard Ease-In-Out)
-  // This curve starts slow, speeds up in the middle, and slows down at the end
   const ease = cubicBezier(0.45, 0.05, 0.55, 0.95);
 
-  // ========== 動畫參數配置 ==========
-  // 調整這些參數來改變動畫效果：
-  const animationConfig = {
-    // 動畫距離倍數（相對於視窗高度）
-    // 例如：1.5 表示需要滾動 1.5 個視窗高度才會完成動畫
-    // 數值越大，動畫時間越長
-    animationDistanceMultiplier: 4,
-    
-    // 初始偏移量（像素）- 向左偏移更多
-    // 兩個圖形初始位置的間距，數值越大，初始分開越遠
-    initialOffset: 300,
-    
-    // 整體向左偏移（像素）
-    // 讓兩張圖的初始位置都更靠左
-    leftOffset: -200,
-    
-    // 最大移動距離（像素）
-    // 圖形從初始位置移動到定點的距離
-    // 數值越大，圖形移動越遠，定點越靠外
-    maxTranslate: 1500,
-    
-    // 初始縮放大小（1 = 100%）
-    initialScale: 1.2,
-    
-    // 右圖初始縮放大小（比左圖小）
-    rightInitialScale: 0.9,
-    
-    // 滾動後的最終縮放大小
-    finalScale: 0.8,
-    
-    // 左圖向下偏移（像素）- 讓左圖初始位置更靠下
-    leftDownOffset: 80,
-    
-    // 初始透明度
-    initialOpacity: 0.25,
-    
-    // 滾動後的最終透明度
-    finalOpacity: 0.0,
+  // Helper to map a value from one range to another
+  const mapRange = (value: number, inMin: number, inMax: number, outMin: number, outMax: number) => {
+    if (value <= inMin) return outMin;
+    if (value >= inMax) return outMax;
+    const percentage = (value - inMin) / (inMax - inMin);
+    return outMin + (percentage * (outMax - outMin));
   };
-  // =================================
+
+  // ========== 動畫參數配置 ==========
+  const animationConfig = {
+    animationDistanceMultiplier: 6, // 增加滾動距離，讓動畫更從容
+    initialOffset: 300,
+    leftOffset: -200,
+    leftDownOffset: 80,
+    initialScale: 1.2,
+    rightInitialScale: 0.9,
+    initialOpacity: 0.25, // 增加初始透明度，因為現在是主角
+  };
 
   useEffect(() => {
     const handleScroll = () => {
       if (!containerRef.current) return;
 
-      const container = containerRef.current;
-      const rect = container.getBoundingClientRect();
-      
-      // 計算動畫進度：從頁面頂部開始滾動到動畫結束
       const animationDistance = window.innerHeight * animationConfig.animationDistanceMultiplier;
       const scrolled = window.scrollY;
       const linearProgress = Math.min(1, Math.max(0, scrolled / animationDistance));
-      
-      // Apply easing to the progress
       const progress = ease(linearProgress);
 
-      // 更新文字顯示進度
       setTextProgress(progress);
 
-      // 計算圖形移動距離（從中間向兩側滑開）
-      // 左邊圖形：從 -initialOffset + leftOffset 開始，向左移動到 -(initialOffset + maxTranslate) + leftOffset
-      const totalLeftTranslate = -(animationConfig.initialOffset + progress * animationConfig.maxTranslate) + animationConfig.leftOffset;
-      // 右邊圖形：從 initialOffset + leftOffset 開始，向右移動到 (initialOffset + maxTranslate) + leftOffset
-      const totalRightTranslate = animationConfig.initialOffset + progress * animationConfig.maxTranslate + animationConfig.leftOffset;
+      // Animation Timeline
+      // 0.00 - 0.15: Cursor enters and moves to Right Image
+      // 0.15 - 0.20: Click Right Image (Box appears)
+      // 0.20 - 0.32: Pause (Right Box stays visible)
+      // 0.32 - 0.45: Drag Right Image to Right (Exit)
+      
+      // 0.45 - 0.55: Cursor moves to Left Image
+      // 0.55 - 0.60: Click Left Image (Box appears)
+      // 0.60 - 0.72: Pause (Left Box stays visible)
+      // 0.72 - 0.85: Drag Left Image to Left (Exit)
+      
+      // 0.85 - 1.00: End
 
-      // 計算縮放和透明度（從大到小，從不透明到透明）
-      const leftScale = animationConfig.initialScale - (progress * (animationConfig.initialScale - animationConfig.finalScale));
-      const rightScale = animationConfig.rightInitialScale - (progress * (animationConfig.rightInitialScale - animationConfig.finalScale));
-      const opacity = animationConfig.initialOpacity - (progress * (animationConfig.initialOpacity - animationConfig.finalOpacity));
+      const rightImageCenterX = animationConfig.initialOffset + animationConfig.leftOffset;
+      const leftImageCenterX = -animationConfig.initialOffset + animationConfig.leftOffset;
+      
+      // Cursor Position & Opacity
+      let cursorX = 0;
+      let cursorY = 0; // Relative to center
+      let cursorOpacity = 0;
+      let cursorScale = 1;
 
-      // 左邊圖形：從中間偏左位置向左滑動，同時縮小和變透明，並向下偏移
-      if (leftShapeRef.current) {
-        leftShapeRef.current.style.transform = `translate(${totalLeftTranslate}px, calc(-50% + ${animationConfig.leftDownOffset}px)) scale(${leftScale})`;
-        leftShapeRef.current.style.opacity = `${opacity}`;
+      // Right Image Transform
+      let rightX = rightImageCenterX;
+      let rightOpacity = animationConfig.initialOpacity || 1; // Default visible
+
+      // Left Image Transform
+      let leftX = leftImageCenterX;
+      let leftOpacity = animationConfig.initialOpacity || 1; // Default visible
+
+      // Box Opacities
+      let rightBoxOpacity = 0;
+      let leftBoxOpacity = 0;
+
+      // Phase 1: Cursor Enters & Moves to Right
+      if (progress < 0.15) {
+        cursorOpacity = mapRange(progress, 0.05, 0.1, 0, 1);
+        cursorX = mapRange(progress, 0.05, 0.15, 0, rightImageCenterX);
+        cursorY = mapRange(progress, 0.05, 0.15, 200, -50); // From bottom to center-ish
+      } 
+      // Phase 2: Click Right
+      else if (progress < 0.20) {
+        cursorOpacity = 1;
+        cursorX = rightImageCenterX;
+        cursorY = -50;
+        // Click effect
+        if (progress > 0.18) {
+          cursorScale = 0.9;
+          rightBoxOpacity = mapRange(progress, 0.18, 0.20, 0, 1);
+        }
+      }
+      // Phase 2.5: Pause Right
+      else if (progress < 0.32) {
+        cursorOpacity = 1;
+        cursorX = rightImageCenterX;
+        cursorY = -50;
+        cursorScale = 1;
+        rightBoxOpacity = 1;
+      }
+      // Phase 3: Drag Right Out
+      else if (progress < 0.45) {
+        cursorOpacity = 1;
+        rightBoxOpacity = 1;
+        const dragProgress = mapRange(progress, 0.32, 0.45, 0, 1);
+        const dragDist = 1000; // Drag far right
+        
+        cursorX = rightImageCenterX + dragDist * dragProgress;
+        cursorY = -50;
+        
+        rightX = cursorX; // Image follows cursor
+        rightOpacity = mapRange(progress, 0.4, 0.45, 1, 0); // Fade out near end
+      }
+      // Phase 4: Move to Left
+      else if (progress < 0.55) {
+        // Right image is gone
+        rightX = 2000; // Far away
+        rightOpacity = 0;
+        
+        // Move from right-ish to left image
+        if (progress < 0.50) {
+             cursorOpacity = mapRange(progress, 0.45, 0.48, 1, 0);
+             cursorX = rightImageCenterX + 1000; 
+             cursorY = -50;
+        } else {
+             cursorOpacity = mapRange(progress, 0.50, 0.53, 0, 1);
+             // Move to Left Image
+             cursorX = mapRange(progress, 0.50, 0.55, 0, leftImageCenterX); 
+             cursorY = mapRange(progress, 0.50, 0.55, 100, -50); // slight arc
+        }
+      }
+      // Phase 5: Click Left
+      else if (progress < 0.60) {
+        rightOpacity = 0;
+        cursorOpacity = 1;
+        cursorX = leftImageCenterX;
+        cursorY = -50;
+        
+        if (progress > 0.58) {
+          cursorScale = 0.9;
+          leftBoxOpacity = mapRange(progress, 0.58, 0.60, 0, 1);
+        }
+      }
+      // Phase 5.5: Pause Left
+      else if (progress < 0.72) {
+        rightOpacity = 0;
+        cursorOpacity = 1;
+        cursorX = leftImageCenterX;
+        cursorY = -50;
+        cursorScale = 1;
+        leftBoxOpacity = 1;
+      }
+      // Phase 6: Drag Left Out
+      else if (progress < 0.85) {
+        rightOpacity = 0;
+        cursorOpacity = 1;
+        leftBoxOpacity = 1;
+        
+        const dragProgress = mapRange(progress, 0.72, 0.85, 0, 1);
+        const dragDist = -1000; // Drag far left
+        
+        cursorX = leftImageCenterX + dragDist * dragProgress;
+        cursorY = -50;
+        
+        leftX = cursorX;
+        leftOpacity = mapRange(progress, 0.80, 0.85, 1, 0);
+      }
+      // Phase 7: End
+      else {
+         rightOpacity = 0;
+         leftOpacity = 0;
+         cursorOpacity = mapRange(progress, 0.85, 0.90, 1, 0); // Fade cursor out
+         cursorX = leftImageCenterX - 1000;
       }
 
-      // 右邊圖形：從中間偏右位置向右滑動，同時縮小和變透明
+      // Apply styles
+      if (cursorRef.current) {
+        cursorRef.current.style.transform = `translate(${cursorX}px, ${cursorY}px) scale(${cursorScale})`;
+        cursorRef.current.style.opacity = `${cursorOpacity}`;
+      }
+
       if (rightShapeRef.current) {
-        rightShapeRef.current.style.transform = `translate(${totalRightTranslate}px, -50%) scale(${rightScale})`;
-        rightShapeRef.current.style.opacity = `${opacity}`;
+        // Adjust right image specific transforms
+        // Note: original had calc(-50%) for Y. We need to maintain that.
+        // My cursorY is relative to center. I should probably treat it as offset.
+        // Actually, let's just use the calculated X/Y for the image container center.
+        // The original code: translate(X, -50%). 
+        // We will animate X.
+        rightShapeRef.current.style.transform = `translate(${rightX}px, -50%) scale(${animationConfig.rightInitialScale})`;
+        rightShapeRef.current.style.opacity = `${rightOpacity}`;
+      }
+
+      if (leftShapeRef.current) {
+        // Original: translate(X, calc(-50% + 80px)) scale(1.2)
+        // We'll keep the scale and Y offset logic but override X
+        leftShapeRef.current.style.transform = `translate(${leftX}px, calc(-50% + ${animationConfig.leftDownOffset}px)) scale(${animationConfig.initialScale})`;
+        leftShapeRef.current.style.opacity = `${leftOpacity}`;
+      }
+      
+      if (rightBoxRef.current) {
+        rightBoxRef.current.style.opacity = `${rightBoxOpacity}`;
+        rightBoxRef.current.style.transform = `scale(${rightBoxOpacity > 0 ? 1 : 0.8})`;
+      }
+      
+      if (leftBoxRef.current) {
+        leftBoxRef.current.style.opacity = `${leftBoxOpacity}`;
+        leftBoxRef.current.style.transform = `scale(${leftBoxOpacity > 0 ? 1 : 0.8})`;
       }
     };
 
-    // 使用 requestAnimationFrame 優化滾動性能
     let ticking = false;
     const onScroll = () => {
       if (!ticking) {
@@ -111,29 +228,25 @@ export const HeroBanner: React.FC = () => {
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    handleScroll(); // 初始執行一次
+    handleScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // 計算容器高度（與動畫距離一致）
   const containerHeight = `${animationConfig.animationDistanceMultiplier * 100}vh`;
 
-  // 文字內容
+  // Text Logic
   const subtitleText = "透過 AI 輔助與引導式流程，讓需求更清晰，合作更順暢";
+  const rawProgress = Math.min(1, textProgress * 1.5); // Keep existing text timing or delay it?
+  // Maybe delay text until images start clearing? 
+  // User didn't specify, but "Hero Banner" usually introduces things. 
+  // Let's keep it but maybe delay the "Welcome" slightly or sync with the clearing.
+  // Actually, let's keep the text logic as is, it works well in parallel.
   
-  // 計算需要顯示的文字數量（降低倍數讓動畫更慢）
-  // 使用 Math.min 確保最大值為 1
-  const rawProgress = Math.min(1, textProgress * 1.5);
   const visibleCharCount = Math.floor(rawProgress * subtitleText.length);
   const displayText = subtitleText.slice(0, visibleCharCount);
-  
-  // 打字机风格的文字显示进度（用于"軟體工程"和游标）
-  // 将平滑进度转换为离散的步骤，每个字符占一个步骤，模拟打字机效果
-  const typingSteps = 4; // "軟體工程"有4个字符
+  const typingSteps = 4;
   const typingStepProgress = Math.floor(rawProgress * typingSteps);
   const textDisplayProgress = typingStepProgress / typingSteps;
-
-  // 按鈕出現進度（延遲到文字進度 40% 後才開始出現，在 85% 時完全顯示）
   const buttonProgress = Math.max(0, Math.min(1, (textProgress - 0.4) / 0.45));
 
   return (
@@ -142,13 +255,12 @@ export const HeroBanner: React.FC = () => {
       className="relative w-full"
       style={{ height: containerHeight }}
     >
-      {/* Sticky 容器：在滾動時固定在畫面上，從 Navbar 下方開始 */}
       <div className="sticky top-16 h-[calc(100vh-4rem)] w-full overflow-hidden bg-gradient-to-br from-[#e6dfcf] via-[#f0ebe0] to-[#e6dfcf]">
         
-        {/* 背景幾何圖形 - 左邊（初始在中間偏左，較大尺寸，向下偏移） */}
+        {/* Left Shape */}
         <div
           ref={leftShapeRef}
-          className="absolute left-1/2 top-1/2 w-96 h-96 md:w-[32rem] md:h-[32rem]"
+          className="absolute left-1/2 top-1/2 w-96 h-96 md:w-[32rem] md:h-[32rem] transition-transform duration-75"
           style={{ 
             transform: `translate(${-animationConfig.initialOffset + animationConfig.leftOffset}px, calc(-50% + ${animationConfig.leftDownOffset}px)) scale(${animationConfig.initialScale})`,
             opacity: animationConfig.initialOpacity,
@@ -158,14 +270,24 @@ export const HeroBanner: React.FC = () => {
           <img
             src="/hero_left.png"
             alt=""
-            className="w-full h-full object-contain"
-            />
+            className="w-full h-full object-contain relative z-10"
+          />
+          {/* Interactive Box Overlay for Left */}
+          <div 
+             ref={leftBoxRef}
+             className="absolute inset-0 z-20 border-4 border-[#20263e] rounded-xl bg-[#20263e]/10 backdrop-blur-[2px] transition-all duration-300"
+             style={{ opacity: 0 }}
+          >
+             <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-[#20263e] text-white px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap shadow-xl">
+                接案工程師
+             </div>
+          </div>
         </div>
 
-        {/* 背景幾何圖形 - 右邊（初始在中間偏右，較小尺寸） */}
+        {/* Right Shape */}
         <div
           ref={rightShapeRef}
-          className="absolute left-1/2 top-1/2 w-96 h-96 md:w-[32rem] md:h-[32rem]"
+          className="absolute left-1/2 top-1/2 w-96 h-96 md:w-[32rem] md:h-[32rem] transition-transform duration-75"
           style={{ 
             transform: `translate(${animationConfig.initialOffset + animationConfig.leftOffset}px, -50%) scale(${animationConfig.rightInitialScale})`,
             opacity: animationConfig.initialOpacity,
@@ -175,13 +297,43 @@ export const HeroBanner: React.FC = () => {
           <img
             src="/hero_right.png"
             alt=""
-            className="w-full h-full object-contain"
-            />
+            className="w-full h-full object-contain relative z-10"
+          />
+           {/* Interactive Box Overlay for Right */}
+           <div 
+             ref={rightBoxRef}
+             className="absolute inset-0 z-20 border-4 border-[#20263e] rounded-xl bg-[#20263e]/10 backdrop-blur-[2px] transition-all duration-300"
+             style={{ opacity: 0 }}
+          >
+             <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-[#20263e] text-white px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap shadow-xl">
+                發案客戶
+             </div>
+          </div>
         </div>
 
-        {/* 內容區域 */}
-        <div className="relative z-10 flex items-center justify-center h-full">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        {/* Cursor Element */}
+        <div
+          ref={cursorRef}
+          className="absolute left-1/2 top-1/2 z-50 pointer-events-none transition-transform duration-75"
+          style={{ 
+            marginTop: 0, 
+            marginLeft: 0,
+            width: '32px',
+            height: '32px',
+            opacity: 0,
+            willChange: "transform, opacity"
+          }}
+        >
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 -ml-3 -mt-2 drop-shadow-xl">
+                <path d="M5.5 3.5L11.5 19.5L14.5 13.5L20.5 19.5L22.5 17.5L16.5 11.5L22.5 8.5L5.5 3.5Z" fill="#20263e" stroke="white" strokeWidth="2" strokeLinejoin="round"/>
+            </svg>
+        </div>
+
+        {/* Content Area */}
+        <div className="relative z-10 flex items-center justify-center h-full pointer-events-none">
+           {/* Pointer events none to let clicks pass through if needed, but here we just show text. 
+               Actually, buttons need pointer-events-auto. */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pointer-events-auto">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-[#20263e] mb-6 leading-tight">
               歡迎來到 200 OK
             </h1>
