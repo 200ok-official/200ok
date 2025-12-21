@@ -14,6 +14,7 @@ interface ProjectCardProps {
     id: string;
     title: string;
     description: string;
+    ai_summary?: string;
     budget_min: number;
     budget_max: number;
     status: string;
@@ -99,9 +100,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               </span>
            </div>
            
-           {/* Body: Description */}
+           {/* Body: Description - 顯示 AI 生成的摘要 */}
            <p className="text-gray-600 text-lg mb-8 leading-relaxed line-clamp-2 flex-grow">
-             {project.description}
+             {project.ai_summary || project.description}
            </p>
 
            {/* Technical Specs Preview */}

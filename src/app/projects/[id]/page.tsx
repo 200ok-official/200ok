@@ -310,11 +310,21 @@ export default function ProjectDetailPage({
             <span>{project.title}</span>
           </div>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-            <div>
+            <div className="flex-1">
               <div className="flex flex-wrap items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-[#20263e]">
-                  {project.title}
-                </h1>
+                {isEditMode ? (
+                  <input
+                    type="text"
+                    value={displayProject.title || ''}
+                    onChange={(e) => handleFieldChange('title', e.target.value)}
+                    className="text-3xl font-bold text-[#20263e] border-2 border-[#c5ae8c] rounded-lg px-3 py-1 focus:outline-none focus:border-[#20263e] flex-1 min-w-0"
+                    placeholder="專案標題"
+                  />
+                ) : (
+                  <h1 className="text-3xl font-bold text-[#20263e]">
+                    {project.title}
+                  </h1>
+                )}
                 <Badge
                   variant={
                     project.status === "open"
@@ -395,15 +405,21 @@ export default function ProjectDetailPage({
                   {/* 專案概況區塊 */}
                   <div>
                     <div className="space-y-6">
-                      {/* 專案描述 */}
+                      {/* 專案描述 - 顯示 AI 生成的摘要 */}
                       <div>
                         <h3 className="text-xl font-bold text-[#20263e] mb-4">專案描述</h3>
-                        <EditableField 
-                          label="專案描述"
-                          value={displayProject.description}
-                          field="description"
-                          multiline
-                        />
+                        {!isEditMode ? (
+                          <p className="text-[#20263e] leading-relaxed whitespace-pre-line text-lg">
+                            {displayProject.ai_summary || displayProject.description || '未填寫'}
+                          </p>
+                        ) : (
+                          <textarea
+                            value={displayProject.description || ''}
+                            onChange={(e) => handleFieldChange('description', e.target.value)}
+                            className="w-full p-3 border-2 border-[#c5ae8c] rounded-lg text-[#20263e] focus:outline-none focus:border-[#20263e] min-h-[120px]"
+                            placeholder="專案描述"
+                          />
+                        )}
                   </div>
 
                   {/* 根據專案模式顯示核心資訊 */}
