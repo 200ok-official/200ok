@@ -147,7 +147,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         <div className="relative z-10 p-8 h-full flex flex-col">
            {/* Header: Title */}
            <div className="mb-4 flex justify-between items-start">
-             <h3 className="text-2xl font-bold text-[#20263e] tracking-tight leading-tight line-clamp-2" style={{ fontFamily: "'Noto Serif TC', serif" }}>
+             <h3 className="text-2xl font-bold text-[#20263e] tracking-tight leading-tight line-clamp-1" style={{ fontFamily: "'Noto Serif TC', serif" }}>
                {project.title}
              </h3>
            </div>
@@ -171,7 +171,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                   <CommandLineIcon className="w-5 h-5 text-[#c5ae8c] mt-1 shrink-0" />
                   <div className="flex flex-wrap gap-2">
                     {project.required_skills.slice(0, 3).map((skill, i) => (
-                      <span key={i} className="bg-[#f5f3ed] text-[#20263e] px-3 py-1 rounded-full text-sm font-medium">
+                      <span key={i} className="bg-[#f5f3ed] text-[#20263e] px-4 py-2 rounded-full text-sm font-medium">
                         {skill}
                       </span>
                     ))}
