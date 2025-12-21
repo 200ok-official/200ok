@@ -92,7 +92,7 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
     
     // Calculate the target X position
     // Formula: ViewportWidth - (ContentWidth + LeftPadding + RightPadding)
-    return viewportWidth - (totalContentWidth + leftPadding + rightPadding);
+    return viewportWidth - (totalContentWidth * 0.85 + leftPadding + rightPadding);
   };
 
   // Determine item counts (fallback to 5 for skeleton/loading state)
@@ -118,6 +118,21 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
     scrollYProgress, 
     [0, 1], 
     [`${viewportWidth * 1.15}px`, `${calculateEndX(freelancerCount)}px`],
+    { ease: smoothEase }
+  );
+
+  // Animation for titles - fly in from center and stop at position
+  const xProjectTitle = useTransform(
+    scrollYProgress,
+    [0, 0.5],
+    [viewportWidth / 2, 0],
+    { ease: smoothEase }
+  );
+
+  const xFreelancerTitle = useTransform(
+    scrollYProgress,
+    [0, 0.6],
+    [viewportWidth * 0.8, 0],
     { ease: smoothEase }
   );
 
@@ -170,17 +185,20 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
   return (
     // Height 300vh creates the scroll space. Adjust this to control how "fast" the horizontal scroll feels relative to vertical scroll.
     // Increased to 350vh to make the animation slower and smoother per user request.
-    <section ref={targetRef} className="relative h-[350vh] bg-[#e6dfcf]">
+    <section ref={targetRef} className="relative h-[300vh] bg-[#e6dfcf]">
       <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-hidden flex flex-col">
         
         {/* Top Half: Projects */}
-        <div className="flex-1 border-b border-[#c5ae8c]/30 flex flex-col justify-center bg-[#e6dfcf] overflow-hidden relative group">
-          <div className="absolute top-4 left-4 z-10 md:left-8 md:top-6">
+        <div className="flex-[1.1] border-b border-[#c5ae8c]/30 flex flex-col justify-center bg-[#e6dfcf] overflow-hidden relative group">
+          <motion.div 
+            style={{ x: xProjectTitle }}
+            className="absolute top-4 left-4 z-10 md:left-8 md:top-6"
+          >
             <h2 className="text-2xl font-bold text-[#20263e] mb-1">最新案件</h2>
             <Link href="/projects" className="text-sm text-[#c5ae8c] hover:underline flex items-center gap-1">
               查看全部 <span className="text-xs">→</span>
             </Link>
-          </div>
+          </motion.div>
           
           <div className="w-full pl-4 md:pl-8 pt-16 md:pt-0">
              <motion.div style={{ x: xProjects }} className="flex gap-6 items-start">
@@ -279,12 +297,15 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
 
         {/* Bottom Half: Freelancers */}
         <div className="flex-1 flex flex-col justify-center bg-white overflow-hidden relative">
-          <div className="absolute top-4 left-4 z-10 md:left-8 md:top-6">
+          <motion.div 
+            style={{ x: xFreelancerTitle }}
+            className="absolute top-4 left-4 z-10 md:left-8 md:top-6"
+          >
             <h2 className="text-2xl font-bold text-[#20263e] mb-1">推薦工程師</h2>
             <Link href="/freelancers" className="text-sm text-[#c5ae8c] hover:underline flex items-center gap-1">
               查看全部 <span className="text-xs">→</span>
             </Link>
-          </div>
+          </motion.div>
 
           <div className="w-full pl-4 md:pl-8 pt-16 md:pt-0">
             <motion.div style={{ x: xFreelancers }} className="flex gap-4 items-center">

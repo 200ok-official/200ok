@@ -42,12 +42,32 @@ export const Navbar: React.FC = () => {
       }
     };
 
+    // 監聽未讀訊息更新事件
+    const handleUnreadCountUpdate = () => {
+      if (isAuthenticated()) {
+        fetchUnreadCount();
+      }
+    };
+
     window.addEventListener('token-balance-updated', handleTokenBalanceUpdate);
+    window.addEventListener('unread-count-updated', handleUnreadCountUpdate);
 
     return () => {
       window.removeEventListener('token-balance-updated', handleTokenBalanceUpdate);
+      window.removeEventListener('unread-count-updated', handleUnreadCountUpdate);
     };
   }, []);
+
+  // 當路徑變化時，更新未讀數量（例如從對話列表進入對話詳情）
+  useEffect(() => {
+    if (isAuthenticated() && pathname) {
+      // 延遲一點時間，確保後端已經更新
+      const timer = setTimeout(() => {
+        fetchUnreadCount();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [pathname, isAuthenticated]);
 
   const fetchTokenBalance = async () => {
     try {
@@ -154,7 +174,7 @@ export const Navbar: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                   </svg>
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}

@@ -547,9 +547,10 @@ async def get_messages(
         'offset': offset
     }
     
-    # 如果對話未解鎖，只能看自己發送的訊息
-    if not conversation.is_unlocked:
-        where_conditions.append("m.sender_id = :user_id")
+    # 對於未解鎖的對話：
+    # - initiator（提案者）可以看到自己發送的所有訊息
+    # - recipient（發案者）可以看到所有訊息（包括提案內容），但不能回覆（在發送訊息 API 中控制）
+    # 因此這裡不再限制訊息可見性
     
     where_clause = " AND ".join(where_conditions)
     
@@ -633,11 +634,23 @@ async def send_message(
             detail="您沒有權限在此對話發送訊息"
         )
     
+    # 對於未解鎖的對話：
+    # - initiator（提案者）不能再發送訊息（初始提案已發送）
+    # - recipient（發案者）需要解鎖後才能回覆
     if not conversation.is_unlocked:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="對話尚未解鎖，無法發送訊息"
-        )
+        # 檢查是否為 initiator
+        is_initiator = str(conversation.initiator_id) == str(current_user.id)
+        
+        if is_initiator:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="提案已發送，等待對方解鎖後才能繼續聊天"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="請先解鎖提案才能回覆"
+            )
     
     # 建立訊息
     message_id = uuid.uuid4()
@@ -706,4 +719,77 @@ async def get_unread_count(
     return {
         "success": True,
         "data": {"unread_count": unread_count}
+    }
+
+
+# ==================== 標記對話訊息為已讀 ====================
+
+@router.post("/{conversation_id}/mark-read", response_model=SuccessResponse[dict])
+async def mark_conversation_as_read(
+    conversation_id: UUID,
+    db = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    標記對話中的所有未讀訊息為已讀 - 使用 Raw SQL
+    
+    RLS 邏輯: 必須是對話參與者；只標記別人發送的未讀訊息
+    """
+    # 檢查對話權限
+    conv_sql = """
+        SELECT id, initiator_id, recipient_id
+        FROM conversations
+        WHERE id = :conversation_id
+    """
+    conv_result = await db.execute(text(conv_sql), {'conversation_id': str(conversation_id)})
+    conversation = conv_result.fetchone()
+    
+    if not conversation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="找不到該對話"
+        )
+    
+    # ========== RLS 邏輯 ==========
+    if str(conversation.initiator_id) != str(current_user.id) and str(conversation.recipient_id) != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="您沒有權限標記此對話的訊息為已讀"
+        )
+    
+    # 標記所有未讀訊息為已讀（只標記別人發送的訊息）
+    update_sql = """
+        UPDATE messages
+        SET is_read = TRUE
+        WHERE conversation_id = :conversation_id
+          AND sender_id != :user_id
+          AND is_read = FALSE
+    """
+    
+    result = await db.execute(text(update_sql), {
+        'conversation_id': str(conversation_id),
+        'user_id': str(current_user.id)
+    })
+    
+    # 取得更新的訊息數量
+    count_sql = """
+        SELECT COUNT(*)
+        FROM messages
+        WHERE conversation_id = :conversation_id
+          AND sender_id != :user_id
+          AND is_read = TRUE
+    """
+    count_result = await db.execute(text(count_sql), {
+        'conversation_id': str(conversation_id),
+        'user_id': str(current_user.id)
+    })
+    read_count = count_result.scalar() or 0
+    
+    return {
+        "success": True,
+        "message": "訊息已標記為已讀",
+        "data": {
+            "conversation_id": str(conversation_id),
+            "read_count": read_count
+        }
     }

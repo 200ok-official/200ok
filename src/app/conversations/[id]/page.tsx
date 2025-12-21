@@ -19,6 +19,7 @@ interface Message {
   sender_id: string;
   content: string;
   created_at: string;
+  is_read?: boolean;
   sender: {
     id: string;
     name: string;
@@ -133,6 +134,14 @@ export default function ConversationPage() {
 
           setConversation(convRes.data);
           setMessages(msgsRes.data);
+          
+          // 標記對話中的所有未讀訊息為已讀
+          try {
+            await apiPost(`/api/v1/conversations/${params.id}/mark-read`, {});
+          } catch (error) {
+            console.error('Failed to mark messages as read:', error);
+            // 不阻擋頁面載入，靜默失敗
+          }
         } catch (error: any) {
           console.error('Failed to load conversation data:', error);
           if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
@@ -153,9 +162,26 @@ export default function ConversationPage() {
   }, [status, session, params.id, router]);
 
   useEffect(() => {
-    // 移除自動滾動
-    // scrollToBottom();
-  }, [messages]);
+    // 當訊息更新時，標記未讀訊息為已讀
+    if (messages.length > 0 && userId) {
+      const markAsRead = async () => {
+        try {
+          await apiPost(`/api/v1/conversations/${params.id}/mark-read`, {});
+          // 觸發未讀數量更新事件，更新導航欄
+          window.dispatchEvent(new Event('unread-count-updated'));
+        } catch (error) {
+          console.error('Failed to mark messages as read:', error);
+        }
+      };
+      
+      // 延遲一點時間，確保用戶已經看到訊息
+      const timer = setTimeout(() => {
+        markAsRead();
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [messages, userId, params.id]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -166,6 +192,12 @@ export default function ConversationPage() {
     try {
       const { data } = await apiGet(`/api/v1/conversations/${params.id}/messages`);
       setMessages(data);
+      // 標記新訊息為已讀
+      try {
+        await apiPost(`/api/v1/conversations/${params.id}/mark-read`, {});
+      } catch (error) {
+        console.error('Failed to mark messages as read:', error);
+      }
     } catch (error) {
       console.error('Failed to refresh messages', error);
     }
@@ -308,7 +340,7 @@ export default function ConversationPage() {
   
   const otherUser = getOtherUser();
   const needsUnlock = conversation.type === 'project_proposal' && !conversation.recipient_paid && !isInitiator;
-  const canSend = conversation.is_unlocked || (conversation.type === 'project_proposal' && isInitiator && messages.length === 0);
+  const canSend = conversation.is_unlocked;
 
   // 計算提案是否可撤回（7天後且未被接受）
   const canWithdraw = conversation.type === 'project_proposal' 
@@ -438,26 +470,26 @@ export default function ConversationPage() {
         <div className="flex-1 overflow-y-auto bg-[#fafaf8] px-4 md:px-6 py-4">
           
           {/* 提示橫幅 */}
-          {(needsUnlock || (conversation.type === 'project_proposal' && isInitiator && !conversation.recipient_paid)) && (
+          {conversation.type === 'project_proposal' && !conversation.is_unlocked && (
             <div className="mb-4 space-y-3">
-              {/* 解鎖提示 */}
+              {/* 解鎖提示（發案者視角） */}
               {needsUnlock && (
                 <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4 text-center shadow-sm">
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-yellow-600">
                       <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
                     </svg>
-                    <p className="text-base text-yellow-900 font-bold">此提案尚未解鎖</p>
+                    <p className="text-base text-yellow-900 font-bold">您收到一份新提案</p>
                   </div>
-                  <p className="text-sm text-yellow-700 mb-3">解鎖後可查看完整提案內容並開始聊天</p>
+                  <p className="text-sm text-yellow-700 mb-3">您可以查看提案內容，解鎖後即可與對方聊天</p>
                   <Button onClick={handleUnlock} disabled={unlocking} size="sm" className="bg-[#20263e] text-white hover:bg-[#353e5e] shadow-md">
-                    {unlocking ? '處理中...' : '🔓 解鎖提案 (100 代幣)'}
+                    {unlocking ? '處理中...' : '🔓 解鎖提案 - 與對方聊聊 (100 代幣)'}
                   </Button>
                 </div>
               )}
 
-              {/* 等待回應提示 */}
-              {conversation.type === 'project_proposal' && isInitiator && !conversation.recipient_paid && (
+              {/* 等待回應提示（接案者視角） */}
+              {isInitiator && !conversation.recipient_paid && (
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-3">
                     <p className="text-sm text-blue-700 flex items-center gap-2">
@@ -568,12 +600,24 @@ export default function ConversationPage() {
                           </div>
                         </div>
                         
-                        <span className="text-[10px] mt-1 mx-1 text-gray-400">
-                          {new Date(message.created_at).toLocaleString('zh-TW', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
+                        <div className="flex items-center gap-1.5 mt-1 mx-1">
+                          <span className="text-[10px] text-gray-400">
+                            {new Date(message.created_at).toLocaleString('zh-TW', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                          {/* 已讀狀態顯示（只對自己發送的訊息顯示） */}
+                          {isMine && (
+                            <span className="text-[10px] text-gray-400">
+                              {message.is_read ? (
+                                <span className="text-blue-500">✓ 已讀</span>
+                              ) : (
+                                <span className="text-gray-300">✓</span>
+                              )}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -629,7 +673,7 @@ export default function ConversationPage() {
           ) : (
              <div className="text-center py-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
                <span className="text-sm text-gray-500 font-medium">
-                 {needsUnlock ? '🔒 請先解鎖提案以開始對話' : '⏳ 等待對方解鎖...'}
+                 {needsUnlock ? '🔒 請先解鎖提案才能回覆' : (isInitiator ? '⏳ 等待對方解鎖...' : '🔒 請先解鎖提案才能回覆')}
                </span>
              </div>
           )}

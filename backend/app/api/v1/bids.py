@@ -715,12 +715,12 @@ async def create_bid(
     conversation_id = uuid.uuid4()
     insert_conv_sql = """
         INSERT INTO conversations (
-            id, type, project_id, initiator_id, recipient_id, 
+            id, type, project_id, bid_id, initiator_id, recipient_id, 
             initiator_paid, recipient_paid, is_unlocked, 
             created_at, updated_at
         )
         VALUES (
-            :id, :type, :project_id, :initiator_id, :recipient_id,
+            :id, :type, :project_id, :bid_id, :initiator_id, :recipient_id,
             TRUE, FALSE, FALSE, NOW(), NOW()
         )
     """
@@ -728,6 +728,7 @@ async def create_bid(
         'id': str(conversation_id),
         'type': ConversationType.PROJECT_PROPOSAL.value,
         'project_id': str(project_id),
+        'bid_id': str(bid_id),
         'initiator_id': str(current_user.id),
         'recipient_id': str(project.client_id)
     })
@@ -753,6 +754,19 @@ async def create_bid(
         'connection_type': ConversationType.PROJECT_PROPOSAL.value,
         'conversation_id': str(conversation_id),
         'expires_at': expires_at
+    })
+    
+    # 建立初始提案訊息（接案者發送提案內容）
+    initial_message_id = uuid.uuid4()
+    insert_message_sql = """
+        INSERT INTO messages (id, conversation_id, sender_id, content, is_read, created_at)
+        VALUES (:id, :conversation_id, :sender_id, :content, FALSE, NOW())
+    """
+    await db.execute(text(insert_message_sql), {
+        'id': str(initial_message_id),
+        'conversation_id': str(conversation_id),
+        'sender_id': str(current_user.id),
+        'content': data.proposal
     })
     
     # 扣除代幣（100 代幣）

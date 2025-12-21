@@ -35,6 +35,7 @@ interface Conversation {
     content: string;
     created_at: string;
   } | null;
+  unread_count?: number;
 }
 
 export default function ConversationsPage() {
@@ -154,17 +155,24 @@ export default function ConversationsPage() {
               {conversations.map((conv) => {
                 const otherUser = getOtherUser(conv);
                 const lastMessage = conv.last_message;
-                const needsUnlock = conv.type === 'project_proposal' && !conv.recipient_paid && !isInitiator(conv);
+                const isConvInitiator = isInitiator(conv);
+                const needsUnlock = conv.type === 'project_proposal' && !conv.recipient_paid && !isConvInitiator;
 
                 return (
                   <Card
                     key={conv.id}
                     className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() => router.push(`/conversations/${conv.id}`)}
+                    onClick={() => {
+                      router.push(`/conversations/${conv.id}`);
+                      // 觸發未讀數量更新事件
+                      setTimeout(() => {
+                        window.dispatchEvent(new Event('unread-count-updated'));
+                      }, 1000);
+                    }}
                   >
                     <div className="flex items-start gap-4">
                       {/* 頭像 */}
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 relative">
                         {otherUser.avatar_url ? (
                           <img
                             src={otherUser.avatar_url}
@@ -174,6 +182,14 @@ export default function ConversationsPage() {
                         ) : (
                           <div className="w-14 h-14 rounded-full bg-[#20263e] text-white flex items-center justify-center text-xl font-bold">
                             {otherUser.name[0]}
+                          </div>
+                        )}
+                        {/* 未讀訊息藍點 */}
+                        {conv.unread_count && conv.unread_count > 0 && (
+                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white">
+                            <span className="text-xs font-bold text-white">
+                              {conv.unread_count > 99 ? '99+' : conv.unread_count}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -200,6 +216,11 @@ export default function ConversationsPage() {
                               ✓ 已解鎖
                             </Badge>
                           )}
+                          {conv.type === 'project_proposal' && !conv.is_unlocked && isConvInitiator && (
+                            <Badge variant="info" className="text-xs">
+                              ⏳ 等待回應
+                            </Badge>
+                          )}
                         </div>
 
                         {conv.project && (
@@ -209,9 +230,14 @@ export default function ConversationsPage() {
                         )}
 
                         {lastMessage ? (
-                          <p className="text-sm text-gray-500 truncate" title={lastMessage.content}>
-                            {getMessagePreview(lastMessage.content, 50)}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className={`text-sm truncate flex-1 ${conv.unread_count && conv.unread_count > 0 ? 'text-[#20263e] font-semibold' : 'text-gray-500'}`} title={lastMessage.content}>
+                              {getMessagePreview(lastMessage.content, 50)}
+                            </p>
+                            {conv.unread_count && conv.unread_count > 0 && (
+                              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                            )}
+                          </div>
                         ) : (
                           <p className="text-sm text-gray-400 italic">
                             尚無訊息
