@@ -69,38 +69,83 @@ async def create_review(
     
     # 確定 reviewee（被評價者）
     reviewee_id = None
+    
+    # 對於 closed 狀態的項目，允許評價即使沒有 accepted bid
+    # 對於 completed 狀態的項目，需要 accepted bid
+    is_closed_status = project.status == ProjectStatus.CLOSED.value
+    
     if str(current_user.id) == str(project.client_id):
-        # 發案者評價接案者 - 找出被接受的投標者
-        bid_sql = """
-            SELECT freelancer_id
-            FROM bids
-            WHERE project_id = :project_id AND status = :status
-            LIMIT 1
-        """
-        bid_result = await db.execute(text(bid_sql), {
-            'project_id': str(project_id),
-            'status': BidStatus.ACCEPTED.value
-        })
-        accepted_bid = bid_result.fetchone()
-        if accepted_bid:
-            reviewee_id = accepted_bid.freelancer_id
+        # 發案者評價接案者
+        if is_closed_status:
+            # closed 狀態：找出任何提交過投標的接案者（優先選擇 accepted，否則選擇第一個）
+            bid_sql = """
+                SELECT freelancer_id
+                FROM bids
+                WHERE project_id = :project_id 
+                  AND (status = :accepted_status OR status = :pending_status)
+                ORDER BY CASE WHEN status = :accepted_status THEN 1 ELSE 2 END
+                LIMIT 1
+            """
+            bid_result = await db.execute(text(bid_sql), {
+                'project_id': str(project_id),
+                'accepted_status': BidStatus.ACCEPTED.value,
+                'pending_status': BidStatus.PENDING.value
+            })
+            bid_row = bid_result.fetchone()
+            if bid_row:
+                reviewee_id = bid_row.freelancer_id
+        else:
+            # completed 狀態：只允許評價 accepted bid 的接案者
+            bid_sql = """
+                SELECT freelancer_id
+                FROM bids
+                WHERE project_id = :project_id AND status = :status
+                LIMIT 1
+            """
+            bid_result = await db.execute(text(bid_sql), {
+                'project_id': str(project_id),
+                'status': BidStatus.ACCEPTED.value
+            })
+            accepted_bid = bid_result.fetchone()
+            if accepted_bid:
+                reviewee_id = accepted_bid.freelancer_id
     else:
-        # 接案者評價發案者 - 確認當前使用者是接案者
-        bid_sql = """
-            SELECT id
-            FROM bids
-            WHERE project_id = :project_id 
-              AND freelancer_id = :freelancer_id
-              AND status = :status
-            LIMIT 1
-        """
-        bid_result = await db.execute(text(bid_sql), {
-            'project_id': str(project_id),
-            'freelancer_id': str(current_user.id),
-            'status': BidStatus.ACCEPTED.value
-        })
-        if bid_result.fetchone():
-            reviewee_id = project.client_id
+        # 接案者評價發案者
+        if is_closed_status:
+            # closed 狀態：只要提交過投標就可以評價發案者
+            bid_sql = """
+                SELECT id
+                FROM bids
+                WHERE project_id = :project_id 
+                  AND freelancer_id = :freelancer_id
+                  AND (status = :accepted_status OR status = :pending_status)
+                LIMIT 1
+            """
+            bid_result = await db.execute(text(bid_sql), {
+                'project_id': str(project_id),
+                'freelancer_id': str(current_user.id),
+                'accepted_status': BidStatus.ACCEPTED.value,
+                'pending_status': BidStatus.PENDING.value
+            })
+            if bid_result.fetchone():
+                reviewee_id = project.client_id
+        else:
+            # completed 狀態：需要 accepted bid
+            bid_sql = """
+                SELECT id
+                FROM bids
+                WHERE project_id = :project_id 
+                  AND freelancer_id = :freelancer_id
+                  AND status = :status
+                LIMIT 1
+            """
+            bid_result = await db.execute(text(bid_sql), {
+                'project_id': str(project_id),
+                'freelancer_id': str(current_user.id),
+                'status': BidStatus.ACCEPTED.value
+            })
+            if bid_result.fetchone():
+                reviewee_id = project.client_id
     
     if not reviewee_id:
         raise HTTPException(

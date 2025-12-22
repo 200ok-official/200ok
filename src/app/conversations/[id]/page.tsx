@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { confirmPayment, paymentPresets } from '@/utils/paymentConfirm';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -53,6 +54,7 @@ interface Conversation {
   project?: {
     id: string;
     title: string;
+    status?: string;
   };
   bid?: {
     id: string;
@@ -79,6 +81,25 @@ export default function ConversationPage() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isInitialLoad = useRef(true);
   const lastScrollTop = useRef(0);
+  
+  // 获取项目状态标签
+  const getProjectStatusBadge = (status: string) => {
+    const statusMap: Record<string, { label: string; className: string }> = {
+      draft: { label: "草稿", className: "bg-gray-100 text-gray-800" },
+      open: { label: "開放中", className: "bg-green-100 text-green-800" },
+      in_progress: { label: "進行中", className: "bg-blue-100 text-blue-800" },
+      completed: { label: "已完成", className: "bg-purple-100 text-purple-800" },
+      closed: { label: "已關閉", className: "bg-gray-500 text-white" },
+      cancelled: { label: "已取消", className: "bg-red-100 text-red-800" },
+    };
+    
+    const statusInfo = statusMap[status] || { label: status, className: "bg-gray-100 text-gray-800" };
+    return (
+      <Badge className={statusInfo.className}>
+        {statusInfo.label}
+      </Badge>
+    );
+  };
   
   // 评价相关状态
   const [canReview, setCanReview] = useState(false);
@@ -384,41 +405,55 @@ export default function ConversationPage() {
     }
   };
 
-  // 檢查評價權限
+  // 檢查評價權限 - 直接檢查項目狀態
   const checkReviewPermission = async (projectId: string) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/16ae40bb-efbb-40e4-8ead-681f5fa1e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conversations/[id]/page.tsx:388',message:'checkReviewPermission called',data:{projectId},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     try {
-      // 先獲取項目詳情以查看實際狀態
+      // 獲取項目詳情以查看實際狀態
       const projectResponse = await apiGet(`/api/v1/projects/${projectId}`) as any;
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/16ae40bb-efbb-40e4-8ead-681f5fa1e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conversations/[id]/page.tsx:392',message:'Project detail fetched',data:{projectId,status:projectResponse.data?.status,title:projectResponse.data?.title},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'G'})}).catch(()=>{});
-      // #endregion
       
-      const response = await apiGet(`/api/v1/projects/${projectId}/can-review`) as any;
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/16ae40bb-efbb-40e4-8ead-681f5fa1e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conversations/[id]/page.tsx:397',message:'API response received',data:{success:response.success,canReview:response.data?.can_review,reason:response.data?.reason,fullResponse:response.data,projectStatus:projectResponse.data?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
-      if (response.success && response.data) {
-        const canReviewValue = response.data.can_review || false;
-        const hasReviewedValue = response.data.reason === '您已經評價過此案件';
-        const reasonValue = response.data.reason || null;
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/16ae40bb-efbb-40e4-8ead-681f5fa1e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conversations/[id]/page.tsx:373',message:'Setting review states',data:{canReviewValue,hasReviewedValue,reasonValue},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
-        setCanReview(canReviewValue);
-        setHasReviewed(hasReviewedValue);
-        setReviewReason(reasonValue);
+      if (projectResponse.success && projectResponse.data) {
+        const projectStatus = projectResponse.data.status;
+        
+        // 更新 conversation 中的項目狀態
+        if (conversation?.project) {
+          setConversation({
+            ...conversation,
+            project: {
+              ...conversation.project,
+              status: projectStatus
+            }
+          });
+        }
+        
+        // 只有 closed 或 completed 狀態的項目可以評價
+        if (projectStatus === 'closed' || projectStatus === 'completed') {
+          setCanReview(true);
+          setHasReviewed(false);
+          setReviewReason(null);
+        } else {
+          // 根據狀態顯示相應的錯誤消息
+          const statusMap: Record<string, string> = {
+            'draft': '草稿',
+            'open': '開放中',
+            'in_progress': '進行中',
+            'cancelled': '已取消'
+          };
+          const statusText = statusMap[projectStatus] || projectStatus;
+          setCanReview(false);
+          setHasReviewed(false);
+          setReviewReason(`案件狀態為「${statusText}」，只有已關閉的案件可以評價`);
+        }
+      } else {
+        setCanReview(false);
+        setHasReviewed(false);
+        setReviewReason('案件不存在');
       }
     } catch (error: any) {
       // 靜默失敗，不影響頁面載入
       console.error('Failed to check review permission:', error);
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/16ae40bb-efbb-40e4-8ead-681f5fa1e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conversations/[id]/page.tsx:377',message:'checkReviewPermission error',data:{error:error.message,errorString:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
       setCanReview(false);
       setHasReviewed(false);
+      setReviewReason('檢查評價權限失敗');
     }
   };
 
@@ -436,6 +471,17 @@ export default function ConversationPage() {
       if (!isAuthenticated()) {
         router.push('/login');
         return;
+      }
+
+      // 提交前再次確認項目狀態
+      const projectResponse = await apiGet(`/api/v1/projects/${conversation.project.id}`) as any;
+      if (projectResponse.success && projectResponse.data) {
+        const projectStatus = projectResponse.data.status;
+        if (projectStatus !== 'closed' && projectStatus !== 'completed') {
+          setReviewError(`案件狀態為「${projectStatus}」，只有已關閉的案件可以評價`);
+          setSubmittingReview(false);
+          return;
+        }
       }
 
       const response = await apiPost(`/api/v1/projects/${conversation.project.id}/reviews`, {
@@ -607,6 +653,7 @@ export default function ConversationPage() {
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-gray-200 rounded-full text-xs text-gray-700">
                       {conversation.type === 'direct' ? '💬 直接聯絡' : '📝 提案對話'}
                     </span>
+                    {conversation.project?.status && getProjectStatusBadge(conversation.project.status)}
                     {conversation.is_unlocked && (
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 border border-green-200 rounded-full text-xs text-green-700 font-medium">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
@@ -931,14 +978,13 @@ export default function ConversationPage() {
 
               {/* 評分選擇 */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-[#20263e] mb-2">評分</label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center gap-2">
                   {[1, 2, 3, 4, 5].map((rating) => (
                     <button
                       key={rating}
                       type="button"
                       onClick={() => setReviewRating(rating)}
-                      className={`w-10 h-10 rounded-lg transition-all ${
+                      className={`w-9 h-9 rounded-full transition-all flex items-center justify-center ${
                         reviewRating >= rating
                           ? 'bg-[#c5ae8c] text-white'
                           : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
@@ -948,22 +994,14 @@ export default function ConversationPage() {
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20"
                         fill="currentColor"
-                        className="w-5 h-5"
+                        className="w-4 h-4"
                       >
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
                     </button>
                   ))}
                 </div>
-                {reviewRating > 0 && (
-                  <p className="text-sm text-gray-600 mt-2">
-                    {reviewRating === 1 && '非常不滿意'}
-                    {reviewRating === 2 && '不滿意'}
-                    {reviewRating === 3 && '普通'}
-                    {reviewRating === 4 && '滿意'}
-                    {reviewRating === 5 && '非常滿意'}
-                  </p>
-                )}
+
               </div>
 
               {/* 評論輸入 */}
