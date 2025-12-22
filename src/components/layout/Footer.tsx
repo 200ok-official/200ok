@@ -35,7 +35,7 @@ export const Footer: React.FC = () => {
               </p>
               <div className="flex flex-col space-y-2">
                 <a 
-                  href="mailto:contact@200ok.io" 
+                  href="mailto:200okoffic@gmail.com" 
                   className="inline-flex items-center text-gray-400 hover:text-[#c5ae8c] transition-colors group"
                 >
                   <span className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center mr-3 group-hover:bg-[#c5ae8c] group-hover:text-[#20263e] transition-all duration-300">
@@ -43,7 +43,7 @@ export const Footer: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                   </span>
-                  contact@200ok.io
+                  200okoffic@gmail.com
                 </a>
               </div>
             </div>
