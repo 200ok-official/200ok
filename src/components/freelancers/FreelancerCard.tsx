@@ -81,12 +81,12 @@ export const FreelancerCard: React.FC<FreelancerCardProps> = ({
   return (
     <Link href={`/users/${freelancer.id}`} className="block h-full">
       <div
-        className="group relative w-full bg-white rounded-3xl border border-gray-200 hover:border-[#c5ae8c] shadow-sm hover:shadow-[0_8px_30px_rgb(197,174,140,0.15)] transition-all duration-300 overflow-hidden h-full flex flex-col"
+        className="group relative w-full bg-white rounded-3xl border-0 hover:border-[#c5ae8c] shadow-sm hover:shadow-[0_8px_30px_rgb(197,174,140,0.15)] transition-all duration-300 overflow-hidden h-full flex flex-col"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Decorative Top Line - Gradient Theme Colors */}
-        <div className="h-1.5 w-full bg-[#20263e] relative z-20"></div>
+        <div className="h-1.5 w-full bg-gradient-to-r from-[#20263e] via-[#4b5563] to-[#c5ae8c] relative z-20"></div>
 
         <div className={`p-5 flex flex-col flex-1 relative ${!hasSkills ? 'justify-center' : ''}`}>
             {/* Top Section: Avatar & Info */}
