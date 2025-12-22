@@ -5,7 +5,7 @@ Conversations & Messages Endpoints
 """
 from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from pydantic import BaseModel
 from sqlalchemy import text
 import uuid
@@ -45,6 +45,7 @@ class UnlockProposalRequest(BaseModel):
 
 @router.get("", response_model=SuccessResponse[list])
 async def get_user_conversations(
+    response: Response,
     db = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -56,6 +57,9 @@ async def get_user_conversations(
     
     RLS 邏輯: 只能查看自己參與的對話
     """
+    # 設定瀏覽器快取為 5 分鐘
+    response.headers["Cache-Control"] = "private, max-age=300"
+
     # 一次性取得所有資料（conversations + users + projects + last_message + unread_count + user_connections）
     sql = """
         SELECT 
@@ -383,6 +387,7 @@ async def unlock_proposal(
 @router.get("/{conversation_id}", response_model=SuccessResponse[dict])
 async def get_conversation(
     conversation_id: UUID,
+    response: Response,
     db = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -394,6 +399,9 @@ async def get_conversation(
     
     RLS 邏輯: 必須是對話參與者
     """
+    # 設定瀏覽器快取為 5 分鐘
+    response.headers["Cache-Control"] = "private, max-age=300"
+
     # 查詢對話（包含 user_connections 的解鎖狀態和 bid 資訊）
     sql = """
         SELECT 
@@ -503,6 +511,7 @@ async def get_conversation(
 @router.get("/{conversation_id}/messages", response_model=SuccessResponse[list])
 async def get_messages(
     conversation_id: UUID,
+    response: Response,
     limit: int = 50,
     offset: int = 0,
     db = Depends(get_db),
@@ -516,6 +525,9 @@ async def get_messages(
     
     RLS 邏輯: 必須是對話參與者；未解鎖只能看自己的訊息
     """
+    # 設定瀏覽器快取為 5 分鐘
+    response.headers["Cache-Control"] = "private, max-age=300"
+
     # 檢查對話權限
     conv_sql = """
         SELECT id, initiator_id, recipient_id, is_unlocked
@@ -692,6 +704,7 @@ async def send_message(
 
 @router.get("/me/unread-count", response_model=SuccessResponse[dict])
 async def get_unread_count(
+    response: Response,
     db = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -703,6 +716,9 @@ async def get_unread_count(
     
     RLS 邏輯: 只能查看自己的未讀數
     """
+    # 設定瀏覽器快取為 5 分鐘
+    response.headers["Cache-Control"] = "private, max-age=300"
+
     # 一次性查詢未讀數（超快）
     sql = """
         SELECT COUNT(*)
