@@ -70,6 +70,27 @@ export default function ConversationsPage() {
     }
   }, [status, session, router]);
 
+  // 監聽未讀數量更新事件和頁面可見性變化
+  useEffect(() => {
+    const handleUnreadUpdate = () => {
+      fetchConversations();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && userId) {
+        fetchConversations();
+      }
+    };
+
+    window.addEventListener('unread-count-updated', handleUnreadUpdate);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('unread-count-updated', handleUnreadUpdate);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [userId]);
+
   const fetchConversations = async () => {
     try {
       if (!isAuthenticated()) {
@@ -164,10 +185,6 @@ export default function ConversationsPage() {
                     className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
                     onClick={() => {
                       router.push(`/conversations/${conv.id}`);
-                      // 觸發未讀數量更新事件
-                      setTimeout(() => {
-                        window.dispatchEvent(new Event('unread-count-updated'));
-                      }, 1000);
                     }}
                   >
                     <div className="flex items-start gap-4">

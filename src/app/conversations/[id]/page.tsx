@@ -177,6 +177,8 @@ export default function ConversationPage() {
           // 標記對話中的所有未讀訊息為已讀
           try {
             await apiPost(`/api/v1/conversations/${params.id}/mark-read`, {});
+            // 觸發未讀數量更新事件，更新導航欄
+            window.dispatchEvent(new Event('unread-count-updated'));
           } catch (error) {
             console.error('Failed to mark messages as read:', error);
             // 不阻擋頁面載入，靜默失敗
@@ -287,6 +289,8 @@ export default function ConversationPage() {
       // 標記新訊息為已讀
       try {
         await apiPost(`/api/v1/conversations/${params.id}/mark-read`, {});
+        // 觸發未讀數量更新事件，更新導航欄
+        window.dispatchEvent(new Event('unread-count-updated'));
       } catch (error) {
         console.error('Failed to mark messages as read:', error);
       }
