@@ -206,21 +206,20 @@ export default function ConversationsPage() {
                           >
                             {conv.type === 'direct' ? '直接聯絡' : '提案聯絡'}
                           </Badge>
-                          {needsUnlock && (
-                            <Badge variant="warning" className="text-xs">
-                              🔒 待解鎖
-                            </Badge>
-                          )}
-                          {conv.is_unlocked && (
+                          {/* 狀態標籤 - 互斥顯示 */}
+                          {conv.is_unlocked ? (
                             <Badge variant="success" className="text-xs">
                               ✓ 已解鎖
                             </Badge>
-                          )}
-                          {conv.type === 'project_proposal' && !conv.is_unlocked && isConvInitiator && (
+                          ) : needsUnlock ? (
+                            <Badge variant="warning" className="text-xs">
+                              🔒 待解鎖
+                            </Badge>
+                          ) : conv.type === 'project_proposal' && isConvInitiator ? (
                             <Badge variant="info" className="text-xs">
                               ⏳ 等待回應
                             </Badge>
-                          )}
+                          ) : null}
                         </div>
 
                         {conv.project && (
