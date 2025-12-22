@@ -60,11 +60,11 @@ async def create_review(
             detail="案件不存在"
         )
     
-    # 專案必須是已完成狀態
-    if project.status != ProjectStatus.COMPLETED.value:
+    # 專案必須是已完成或已關閉狀態
+    if project.status not in [ProjectStatus.COMPLETED.value, ProjectStatus.CLOSED.value]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="只有已完成的案件可以評價"
+            detail="只有已完成或已關閉的案件可以評價"
         )
     
     # 確定 reviewee（被評價者）
@@ -196,11 +196,26 @@ async def can_review_project(
             "data": {"can_review": False, "reason": "案件不存在"}
         }
     
-    # 專案必須是已完成狀態
-    if project.status != ProjectStatus.COMPLETED.value:
+    # 記錄項目狀態用於調試
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Project {project_id} status: {project.status}, checking against: {[ProjectStatus.COMPLETED.value, ProjectStatus.CLOSED.value]}")
+    logger.info(f"Status check: project.status={project.status}, COMPLETED.value={ProjectStatus.COMPLETED.value}, CLOSED.value={ProjectStatus.CLOSED.value}")
+    logger.info(f"Status in allowed list: {project.status in [ProjectStatus.COMPLETED.value, ProjectStatus.CLOSED.value]}")
+    
+    # 專案必須是已完成或已關閉狀態
+    if project.status not in [ProjectStatus.COMPLETED.value, ProjectStatus.CLOSED.value]:
+        logger.info(f"Status check FAILED: returning reason with status_text")
+        status_map = {
+            ProjectStatus.DRAFT.value: "草稿",
+            ProjectStatus.OPEN.value: "開放中",
+            ProjectStatus.IN_PROGRESS.value: "進行中",
+            ProjectStatus.CANCELLED.value: "已取消"
+        }
+        status_text = status_map.get(project.status, project.status)
         return {
             "success": True,
-            "data": {"can_review": False, "reason": "案件尚未完成"}
+            "data": {"can_review": False, "reason": f"案件狀態為「{status_text}」，只有已完成或已關閉的案件可以評價"}
         }
     
     # 確定是否為參與者

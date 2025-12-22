@@ -80,10 +80,23 @@ export default function MyProjectsPage() {
     e.preventDefault();
     e.stopPropagation();
 
-    if (project.status !== 'open' && project.status !== 'closed') return;
+    // 只允许 open、closed、completed 状态切换
+    if (project.status !== 'open' && project.status !== 'closed' && project.status !== 'completed') return;
 
-    const newStatus = project.status === 'open' ? 'closed' : 'open';
-    const actionName = project.status === 'open' ? '關閉' : '開放';
+    // 切换逻辑：open → closed, closed → open, completed → closed
+    let newStatus: string;
+    let actionName: string;
+    
+    if (project.status === 'open') {
+      newStatus = 'closed';
+      actionName = '關閉';
+    } else if (project.status === 'completed') {
+      newStatus = 'closed';
+      actionName = '標記為已關閉';
+    } else { // closed
+      newStatus = 'open';
+      actionName = '重新開放';
+    }
 
     if (!confirm(`確定要${actionName}此案件嗎？`)) return;
     
@@ -184,7 +197,7 @@ export default function MyProjectsPage() {
                           </h2>
                           {getStatusBadge(project.status)}
                           
-                          {(project.status === 'open' || project.status === 'closed') && (
+                          {(project.status === 'open' || project.status === 'closed' || project.status === 'completed') && (
                             <button
                               onClick={(e) => handleStatusToggle(e, project)}
                               className={`px-3 py-1 text-xs rounded-full border transition-colors ${
@@ -193,7 +206,7 @@ export default function MyProjectsPage() {
                                   : 'border-green-600 text-green-600 hover:bg-green-50'
                               }`}
                             >
-                              {project.status === 'open' ? '關閉案件' : '重新開放'}
+                              {project.status === 'open' ? '關閉案件' : project.status === 'completed' ? '標記為已關閉' : '重新開放'}
                             </button>
                           )}
                         </div>

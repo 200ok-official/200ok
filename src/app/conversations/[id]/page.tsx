@@ -83,6 +83,7 @@ export default function ConversationPage() {
   // 评价相关状态
   const [canReview, setCanReview] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
+  const [reviewReason, setReviewReason] = useState<string | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
@@ -147,6 +148,10 @@ export default function ConversationPage() {
           setConversation(convRes.data);
           setMessages(msgsRes.data);
           
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/16ae40bb-efbb-40e4-8ead-681f5fa1e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conversations/[id]/page.tsx:147',message:'Conversation loaded',data:{type:convRes.data.type,projectId:convRes.data.project?.id,hasProject:!!convRes.data.project},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
+          
           // 標記對話中的所有未讀訊息為已讀
           try {
             await apiPost(`/api/v1/conversations/${params.id}/mark-read`, {});
@@ -157,7 +162,14 @@ export default function ConversationPage() {
           
           // 如果是提案對話，檢查是否可以評價
           if (convRes.data.type === 'project_proposal' && convRes.data.project?.id) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/16ae40bb-efbb-40e4-8ead-681f5fa1e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conversations/[id]/page.tsx:159',message:'Calling checkReviewPermission',data:{projectId:convRes.data.project.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
             checkReviewPermission(convRes.data.project.id);
+          } else {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/16ae40bb-efbb-40e4-8ead-681f5fa1e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conversations/[id]/page.tsx:163',message:'Not checking review - not project_proposal or no project',data:{type:convRes.data.type,hasProject:!!convRes.data.project},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion
           }
         } catch (error: any) {
           console.error('Failed to load conversation data:', error);
@@ -177,6 +189,16 @@ export default function ConversationPage() {
 
     initPage();
   }, [status, session, params.id, router]);
+
+  // 當對話更新時，檢查評價權限
+  useEffect(() => {
+    if (conversation?.type === 'project_proposal' && conversation?.project?.id) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/16ae40bb-efbb-40e4-8ead-681f5fa1e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conversations/[id]/page.tsx:172',message:'useEffect - conversation changed, checking review',data:{type:conversation.type,projectId:conversation.project.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'F'})}).catch(()=>{});
+      // #endregion
+      checkReviewPermission(conversation.project.id);
+    }
+  }, [conversation?.type, conversation?.project?.id]);
 
   useEffect(() => {
     // 當訊息更新時，標記未讀訊息為已讀
@@ -258,6 +280,9 @@ export default function ConversationPage() {
       setConversation(data);
       // 如果是提案對話，重新檢查評價權限
       if (data.type === 'project_proposal' && data.project?.id) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/16ae40bb-efbb-40e4-8ead-681f5fa1e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conversations/[id]/page.tsx:261',message:'refreshConversation - calling checkReviewPermission',data:{projectId:data.project.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         checkReviewPermission(data.project.id);
       }
     } catch (error) {
@@ -361,15 +386,37 @@ export default function ConversationPage() {
 
   // 檢查評價權限
   const checkReviewPermission = async (projectId: string) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/16ae40bb-efbb-40e4-8ead-681f5fa1e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conversations/[id]/page.tsx:388',message:'checkReviewPermission called',data:{projectId},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     try {
+      // 先獲取項目詳情以查看實際狀態
+      const projectResponse = await apiGet(`/api/v1/projects/${projectId}`) as any;
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/16ae40bb-efbb-40e4-8ead-681f5fa1e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conversations/[id]/page.tsx:392',message:'Project detail fetched',data:{projectId,status:projectResponse.data?.status,title:projectResponse.data?.title},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'G'})}).catch(()=>{});
+      // #endregion
+      
       const response = await apiGet(`/api/v1/projects/${projectId}/can-review`) as any;
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/16ae40bb-efbb-40e4-8ead-681f5fa1e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conversations/[id]/page.tsx:397',message:'API response received',data:{success:response.success,canReview:response.data?.can_review,reason:response.data?.reason,fullResponse:response.data,projectStatus:projectResponse.data?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       if (response.success && response.data) {
-        setCanReview(response.data.can_review || false);
-        setHasReviewed(response.data.reason === '您已經評價過此案件');
+        const canReviewValue = response.data.can_review || false;
+        const hasReviewedValue = response.data.reason === '您已經評價過此案件';
+        const reasonValue = response.data.reason || null;
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/16ae40bb-efbb-40e4-8ead-681f5fa1e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conversations/[id]/page.tsx:373',message:'Setting review states',data:{canReviewValue,hasReviewedValue,reasonValue},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        setCanReview(canReviewValue);
+        setHasReviewed(hasReviewedValue);
+        setReviewReason(reasonValue);
       }
     } catch (error: any) {
       // 靜默失敗，不影響頁面載入
       console.error('Failed to check review permission:', error);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/16ae40bb-efbb-40e4-8ead-681f5fa1e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conversations/[id]/page.tsx:377',message:'checkReviewPermission error',data:{error:error.message,errorString:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       setCanReview(false);
       setHasReviewed(false);
     }
@@ -594,6 +641,12 @@ export default function ConversationPage() {
                   )}
 
                   {/* 評價按鈕或狀態 */}
+                  {(() => {
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/16ae40bb-efbb-40e4-8ead-681f5fa1e1b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conversations/[id]/page.tsx:600',message:'Rendering review button section',data:{type:conversation.type,isProjectProposal:conversation.type==='project_proposal',canReview,hasReviewed,reviewReason},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'E'})}).catch(()=>{});
+                    // #endregion
+                    return null;
+                  })()}
                   {conversation.type === 'project_proposal' && (
                     <div className="mt-3">
                       {hasReviewed ? (
@@ -614,6 +667,13 @@ export default function ConversationPage() {
                           </svg>
                           給對方留評價
                         </Button>
+                      ) : reviewReason ? (
+                        <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-xs text-gray-600 font-medium">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+                          </svg>
+                          {reviewReason}
+                        </span>
                       ) : null}
                     </div>
                   )}
