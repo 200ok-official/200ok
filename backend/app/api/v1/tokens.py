@@ -5,7 +5,7 @@ Tokens (代幣系統) Endpoints
 """
 from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from pydantic import BaseModel
 from sqlalchemy import text
 import uuid
@@ -169,7 +169,7 @@ async def get_token_transactions(
 
 @router.post("/validate-discount", response_model=SuccessResponse[DiscountCodeValidationResponse])
 async def validate_discount_code(
-    discount_code: str,
+    discount_code: str = Query(..., description="折扣碼"),
     db = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):

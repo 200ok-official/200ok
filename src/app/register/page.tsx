@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { apiPost, apiGet } from "@/lib/api";
+import { LegalModal } from "@/components/ui/LegalModal";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -24,6 +25,15 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
+  
+  // Legal Modal State
+  const [legalModalOpen, setLegalModalOpen] = useState(false);
+  const [legalType, setLegalType] = useState<"terms" | "privacy">("terms");
+
+  const openLegalModal = (type: "terms" | "privacy") => {
+    setLegalType(type);
+    setLegalModalOpen(true);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -412,22 +422,28 @@ export default function RegisterPage() {
                   error={!!fieldErrors.terms}
                   label={
                     <>
-                  我同意{" "}
-                  <a
-                    href="#"
-                    className="text-[#20263e] hover:text-[#c5ae8c] transition underline font-semibold"
-                        onClick={(e) => e.stopPropagation()}
-                  >
-                    服務條款
-                  </a>{" "}
-                  和{" "}
-                  <a
-                    href="#"
-                    className="text-[#20263e] hover:text-[#c5ae8c] transition underline font-semibold"
-                        onClick={(e) => e.stopPropagation()}
-                  >
-                    隱私政策
-                  </a>
+                      我同意{" "}
+                      <button
+                        type="button"
+                        className="text-[#20263e] hover:text-[#c5ae8c] transition underline font-semibold"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openLegalModal("terms");
+                        }}
+                      >
+                        服務條款
+                      </button>{" "}
+                      和{" "}
+                      <button
+                        type="button"
+                        className="text-[#20263e] hover:text-[#c5ae8c] transition underline font-semibold"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openLegalModal("privacy");
+                        }}
+                      >
+                        隱私政策
+                      </button>
                     </>
                   }
                 />
@@ -462,6 +478,11 @@ export default function RegisterPage() {
         </div>
       </main>
       <Footer />
+      <LegalModal 
+        isOpen={legalModalOpen} 
+        onClose={() => setLegalModalOpen(false)} 
+        type={legalType}
+      />
     </div>
   );
 }

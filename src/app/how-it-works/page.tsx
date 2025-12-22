@@ -371,7 +371,7 @@ export default function HowItWorksPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="relative py-20 px-4 overflow-hidden bg-[#e6dfcf]">
+      <section id="faq" className="relative py-20 px-4 overflow-hidden bg-[#e6dfcf]">
         <div className="container mx-auto max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
