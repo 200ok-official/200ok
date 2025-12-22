@@ -108,7 +108,7 @@ export default function TokensPage() {
     const types: { [key: string]: string } = {
       unlock_direct_contact: relatedUserName ? `解鎖與 ${relatedUserName} 的聯絡` : '解鎖直接聯絡',
       submit_proposal: relatedUserName ? `向 ${relatedUserName} 提交提案` : '提交提案',
-      view_proposal: relatedUserName ? `查看 ${relatedUserName} 的提案` : '查看提案',
+      view_proposal: relatedUserName ? `解鎖 ${relatedUserName} 的提案` : '解鎖提案',
       refund: '提案退款',
       platform_fee: '平台贈送',
     };

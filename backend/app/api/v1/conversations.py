@@ -369,7 +369,7 @@ async def unlock_proposal(
         'balance_after': new_balance_row.balance,
         'transaction_type': TransactionType.VIEW_PROPOSAL.value,
         'reference_id': str(data.conversation_id),
-        'description': "查看提案"
+        'description': "解鎖提案"
     })
     
     return {

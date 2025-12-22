@@ -279,7 +279,7 @@ export class ConversationService extends BaseService {
       100,
       'view_proposal',
       conversationId,
-      `查看提案 ${conversation.bid_id}`
+      `解鎖提案 ${conversation.bid_id}`
     );
 
     // 更新連接狀態為 connected
