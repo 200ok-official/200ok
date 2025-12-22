@@ -146,7 +146,8 @@ async def register(
                 id=UUID(user.id) if isinstance(user.id, str) else user.id,
                 name=user.name,
                 email=user.email,
-                roles=user_roles
+                roles=user_roles,
+                avatar_url=None
             )
         )
     }
@@ -176,7 +177,7 @@ async def login(
     """
     # 查找使用者
     sql = """
-        SELECT id, name, email, password_hash, roles, email_verified
+        SELECT id, name, email, password_hash, roles, email_verified, avatar_url
         FROM users
         WHERE email = :email
     """
@@ -249,7 +250,8 @@ async def login(
                 id=UUID(user.id) if isinstance(user.id, str) else user.id,
                 name=user.name,
                 email=user.email,
-                roles=user_roles
+                roles=user_roles,
+                avatar_url=user.avatar_url
             )
         )
     }
@@ -283,7 +285,8 @@ async def refresh_token(
             u.id as user_id,
             u.name,
             u.email,
-            u.roles
+            u.roles,
+            u.avatar_url
         FROM refresh_tokens rt
         INNER JOIN users u ON u.id = rt.user_id
         WHERE rt.token = :token
@@ -349,7 +352,8 @@ async def refresh_token(
                 id=UUID(token_record.user_id) if isinstance(token_record.user_id, str) else token_record.user_id,
                 name=token_record.name,
                 email=token_record.email,
-                roles=user_roles
+                roles=user_roles,
+                avatar_url=token_record.avatar_url
             )
         )
     }

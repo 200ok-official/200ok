@@ -10,7 +10,7 @@ export const Navbar: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<{ name: string; email: string; id: string } | null>(null);
+  const [user, setUser] = useState<{ name: string; email: string; id: string; avatar_url?: string } | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [tokenBalance, setTokenBalance] = useState<number | null>(null);
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -207,12 +207,17 @@ export const Navbar: React.FC = () => {
                     onClick={() => setShowDropdown(!showDropdown)}
                     className="flex items-center space-x-2 hover:text-[#c5ae8c] transition-colors"
                   >
-                    <div className="w-8 h-8 bg-[#c5ae8c] rounded-full flex items-center justify-center">
-                      <span className="text-[#20263e] font-bold text-sm">
-                        {user?.name?.charAt(0).toUpperCase() || "U"}
-                      </span>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden border border-[#c5ae8c]">
+                      {user?.avatar_url ? (
+                        <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-[#c5ae8c] flex items-center justify-center">
+                          <span className="text-[#20263e] font-bold text-sm">
+                            {user?.name?.charAt(0).toUpperCase() || "U"}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    <span className="hidden md:inline">{user?.name}</span>
                     <svg
                       className="w-4 h-4"
                       fill="none"

@@ -64,6 +64,7 @@ class UserInfo(BaseModel):
     name: str
     email: str
     roles: List[str]
+    avatar_url: Optional[str] = None
     
     class Config:
         from_attributes = True

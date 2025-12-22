@@ -190,7 +190,7 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
       <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-hidden flex flex-col">
         
         {/* Top Half: Projects */}
-        <div className="flex-[1.1] border-b border-[#c5ae8c]/30 flex flex-col justify-center bg-[#e6dfcf] overflow-hidden relative group">
+        <div className="flex-[1.1] border-b border-[#c5ae8c]/30 flex flex-col justify-end pb-8 bg-[#e6dfcf] overflow-hidden relative group">
           <motion.div 
             style={{ x: xProjectTitle }}
             className="absolute top-4 left-4 z-10 md:left-8 md:top-6"
@@ -297,7 +297,7 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
         </div>
 
         {/* Bottom Half: Freelancers */}
-        <div className="flex-1 flex flex-col justify-center bg-white overflow-hidden relative">
+        <div className="flex-1 flex flex-col justify-end pb-8 bg-white overflow-hidden relative">
           <motion.div 
             style={{ x: xFreelancerTitle }}
             className="absolute top-4 left-4 z-10 md:left-8 md:top-6"
@@ -316,7 +316,7 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
                 <>
                   {freelancers.slice(0, 6).map((freelancer) => (
                     <Link key={freelancer.id} href={`/users/${freelancer.id}`}>
-                      <Card className="p-6 transition-all duration-300 border-2 border-[#c5ae8c] hover:border-[#20263e] flex-shrink-0 w-80 cursor-pointer hover:shadow-lg hover:-translate-y-1 bg-white/90 backdrop-blur-sm flex flex-col justify-between" style={{ height: 'calc((100vh - 4rem) / 2 - 40px)', maxHeight: '230px' }}>
+                      <Card className="p-6 transition-all duration-300 border-2 border-[#c5ae8c] hover:border-[#20263e] flex-shrink-0 w-80 cursor-pointer hover:shadow-lg hover:-translate-y-1 bg-white/90 backdrop-blur-sm flex flex-col justify-between" style={{ height: 'calc((100vh - 4rem) / 2 - 40px)', maxHeight: '200px' }}>
                         {/* Avatar & Name Section */}
                         <div className="flex items-center gap-3 mb-3">
                           <div className="flex-shrink-0">

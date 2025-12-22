@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Badge } from "@/components/ui/Badge";
-import { apiGet } from "@/lib/api";
+import { apiGet, apiPut } from "@/lib/api";
 
 interface MyProject {
   id: string;
@@ -64,6 +64,7 @@ export default function MyProjectsPage() {
       open: { label: "開放中", className: "bg-green-100 text-green-800" },
       in_progress: { label: "進行中", className: "bg-blue-100 text-blue-800" },
       completed: { label: "已完成", className: "bg-purple-100 text-purple-800" },
+      closed: { label: "已關閉", className: "bg-gray-500 text-white" },
       cancelled: { label: "已取消", className: "bg-red-100 text-red-800" },
     };
     
@@ -73,6 +74,33 @@ export default function MyProjectsPage() {
         {statusInfo.label}
       </Badge>
     );
+  };
+
+  const handleStatusToggle = async (e: React.MouseEvent, project: MyProject) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (project.status !== 'open' && project.status !== 'closed') return;
+
+    const newStatus = project.status === 'open' ? 'closed' : 'open';
+    const actionName = project.status === 'open' ? '關閉' : '開放';
+
+    if (!confirm(`確定要${actionName}此案件嗎？`)) return;
+    
+    try {
+      const response = await apiPut(`/api/v1/projects/${project.id}`, { status: newStatus });
+      
+      if (response.success) {
+        setProjects(projects.map(p => 
+          p.id === project.id ? { ...p, status: newStatus } : p
+        ));
+      } else {
+        alert(response.message || "更新狀態失敗");
+      }
+    } catch (err: any) {
+      console.error("Failed to update status:", err);
+      alert(err.message || "更新狀態時發生錯誤");
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -155,6 +183,19 @@ export default function MyProjectsPage() {
                             {project.title}
                           </h2>
                           {getStatusBadge(project.status)}
+                          
+                          {(project.status === 'open' || project.status === 'closed') && (
+                            <button
+                              onClick={(e) => handleStatusToggle(e, project)}
+                              className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                                project.status === 'open' 
+                                  ? 'border-gray-400 text-gray-600 hover:bg-gray-100' 
+                                  : 'border-green-600 text-green-600 hover:bg-green-50'
+                              }`}
+                            >
+                              {project.status === 'open' ? '關閉案件' : '重新開放'}
+                            </button>
+                          )}
                         </div>
                         <div className="flex items-center gap-6 text-sm text-[#c5ae8c]">
                           <span>預算：{formatBudget(project.budget_min, project.budget_max)}</span>

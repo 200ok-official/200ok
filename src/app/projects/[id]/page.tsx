@@ -325,23 +325,83 @@ export default function ProjectDetailPage({
                     {project.title}
                   </h1>
                 )}
-                <Badge
-                  variant={
-                    project.status === "open"
-                      ? "success"
-                      : project.status === "draft"
-                      ? "default"
+                {isOwner ? (
+                  <div className="relative group">
+                    <select
+                      value={project.status}
+                      onChange={async (e) => {
+                        const newStatus = e.target.value;
+                        if (newStatus === project.status) return;
+                        
+                        if (!confirm(`確定要將案件狀態更改為${e.target.options[e.target.selectedIndex].text}嗎？`)) {
+                          e.target.value = project.status; // Revert
+                          return;
+                        }
+
+                        try {
+                          const response = await apiPut(`/api/v1/projects/${params.id}`, { status: newStatus });
+                          if (response.success) {
+                            setProject((prev: any) => ({ ...prev, status: newStatus }));
+                            setEditedProject((prev: any) => ({ ...prev, status: newStatus }));
+                          } else {
+                            alert(response.message || "更新狀態失敗");
+                          }
+                        } catch (err: any) {
+                          console.error("Failed to update status:", err);
+                          alert(err.message || "更新狀態時發生錯誤");
+                        }
+                      }}
+                      className={`appearance-none pl-3 pr-8 py-1 rounded-full text-sm font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#20263e] ${
+                        project.status === "open"
+                          ? "bg-green-100 text-green-800 border border-green-200"
+                          : project.status === "closed"
+                          ? "bg-gray-500 text-white border border-gray-600"
+                          : "bg-gray-100 text-gray-800 border border-gray-200"
+                      }`}
+                    >
+                      <option value="open">開放中</option>
+                      <option value="closed">已關閉</option>
+                      {!['open', 'closed'].includes(project.status) && (
+                        <option value={project.status}>
+                          {project.status === 'draft' ? '草稿' :
+                           project.status === 'in_progress' ? '進行中' :
+                           project.status === 'completed' ? '已完成' :
+                           project.status === 'cancelled' ? '已取消' : project.status}
+                        </option>
+                      )}
+                    </select>
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${project.status === 'closed' ? 'text-white' : 'text-gray-500'}`} viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+                ) : (
+                  <Badge
+                    variant={
+                      project.status === "open"
+                        ? "success"
+                        : project.status === "draft"
+                        ? "default"
+                        : project.status === "in_progress"
+                        ? "khaki"
+                        : project.status === "closed"
+                        ? "default"
+                        : "danger"
+                    }
+                    className={project.status === "closed" ? "bg-gray-500 text-white" : ""}
+                  >
+                    {project.status === "open"
+                      ? "開放中"
                       : project.status === "in_progress"
-                      ? "khaki"
-                      : "danger"
-                  }
-                >
-                  {project.status === "open"
-                    ? "開放中"
-                    : project.status === "in_progress"
-                    ? "進行中"
-                    : "已結案"}
-                </Badge>
+                      ? "進行中"
+                      : project.status === "completed"
+                      ? "已完成" 
+                      : project.status === "closed"
+                      ? "已關閉"
+                      : "已結案"}
+                  </Badge>
+                )}
                 <Badge variant={isNewDevelopment ? "khaki" : "khaki"}>
                   {isNewDevelopment ? "全新開發" : "修改維護"}
                 </Badge>

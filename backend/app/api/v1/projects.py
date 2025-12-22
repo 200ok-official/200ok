@@ -88,11 +88,13 @@ async def list_projects(
                 statuses = [s.strip() for s in status_filter.split(',')]
                 status_placeholders = ','.join([f"'{s}'" for s in statuses])
                 # 狀態篩選 AND (RLS 條件)
+                # 修改：即使是自己的案件，在探索頁面也只顯示 open/in_progress
                 where_conditions.append(
-                    f"(p.status IN ({status_placeholders}) AND (p.status IN ('open', 'in_progress') OR p.client_id = :user_id))"
+                    f"(p.status IN ({status_placeholders}) AND p.status IN ('open', 'in_progress'))"
                 )
             else:
-                where_conditions.append("(p.status IN ('open', 'in_progress') OR p.client_id = :user_id)")
+                # 修改：即使是自己的案件，在探索頁面也只顯示 open/in_progress
+                where_conditions.append("p.status IN ('open', 'in_progress')")
     
     # ========== 其他篩選條件 ==========
     
