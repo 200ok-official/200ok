@@ -612,7 +612,7 @@ export default function UserProfilePage() {
                         </div>
                         {review.comment && (
                           <div className="bg-gray-50 rounded-lg p-3 relative">
-                            <span className="absolute top-2 left-2 text-gray-300 text-xl leading-none font-serif">"</span>
+                            <span className="absolute top-2 left-2 text-gray-300 text-xl leading-none font-serif">&quot;</span>
                             <p className="text-gray-600 text-sm leading-relaxed px-2 pt-1 relative z-10 italic">
                               {review.comment}
                             </p>
