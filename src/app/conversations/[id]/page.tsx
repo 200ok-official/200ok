@@ -233,14 +233,15 @@ export default function ConversationPage() {
       }
 
       await apiPost('/api/v1/conversations/unlock-proposal', { conversation_id: conversation.id });
-      alert('✅ 提案已解鎖！已扣除 100 代幣');
       triggerTokenBalanceUpdate();
       
-      // 並行更新
+      // 先更新狀態，再顯示成功訊息
       await Promise.all([
         refreshConversation(),
         refreshMessages()
       ]);
+      
+      alert('✅ 提案已解鎖！已扣除 100 代幣');
     } catch (error: any) {
       alert(`❌ 解鎖失敗：${error.message || '請稍後再試'}`);
     } finally {
@@ -361,7 +362,7 @@ export default function ConversationPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#f5f3ed] overflow-hidden">
+    <div className="fixed inset-0 flex flex-col bg-[#f5f3ed] overflow-hidden">
       {/* 頂部導航列 - 固定高度 */}
       <div className="flex-none z-20">
         <Navbar />
