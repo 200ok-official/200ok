@@ -47,6 +47,34 @@ function LoginForm() {
       localStorage.setItem('returnUrl', urlReturnUrl);
     }
     
+    // 檢查是否有 NextAuth 錯誤
+    const authError = searchParams?.get('error');
+    if (authError) {
+      let errorMessage = "登入失敗，請稍後再試";
+      
+      // 根據錯誤類型顯示不同的錯誤訊息
+      if (authError === 'OAuthSignin') {
+        errorMessage = "無法連接到 Google 登入服務";
+      } else if (authError === 'OAuthCallback') {
+        errorMessage = "Google 登入回調失敗";
+      } else if (authError === 'OAuthCreateAccount') {
+        errorMessage = "無法創建帳號，請稍後再試";
+      } else if (authError === 'EmailCreateAccount') {
+        errorMessage = "Email 已被使用";
+      } else if (authError === 'Callback') {
+        errorMessage = "登入驗證失敗";
+      } else if (authError === 'OAuthAccountNotLinked') {
+        errorMessage = "此 Email 已被其他登入方式使用";
+      } else if (authError === 'SessionRequired') {
+        errorMessage = "需要重新登入";
+      } else if (authError === 'Default') {
+        errorMessage = "登入過程中發生錯誤";
+      }
+      
+      setError(errorMessage);
+      triggerShake();
+    }
+    
     // 檢查是否有記住的 email
     const rememberedEmail = getRememberMe();
     if (rememberedEmail) {
@@ -72,47 +100,57 @@ function LoginForm() {
 
     // 檢查是否有 Google 登入的 tokens
     if (sessionStatus === 'authenticated' && session) {
-      const sessionAny = session as any;
-      const accessToken = sessionAny.accessToken;
-      const refreshToken = sessionAny.refreshToken;
-      const userAny = session.user as any;
-      const userId = userAny?.id;
-      const userEmail = session.user?.email;
-      const userName = session.user?.name;
-      const userRoles = userAny?.roles;
+      try {
+        const sessionAny = session as any;
+        const accessToken = sessionAny.accessToken;
+        const refreshToken = sessionAny.refreshToken;
+        const userAny = session.user as any;
+        const userId = userAny?.id;
+        const userEmail = session.user?.email;
+        const userName = session.user?.name;
+        const userRoles = userAny?.roles;
+        const userAvatarUrl = userAny?.avatar_url;
 
-      // 如果有 accessToken，表示 Google 登入成功
-      if (accessToken && refreshToken && userId) {
-        // 標記為已處理，避免重複處理
-        setGoogleLoginProcessed(true);
+        // 如果有 accessToken，表示 Google 登入成功
+        if (accessToken && refreshToken && userId) {
+          // 標記為已處理，避免重複處理
+          setGoogleLoginProcessed(true);
 
-        // 將 tokens 和 user 資訊保存到 localStorage
-        localStorage.setItem('access_token', accessToken);
-        localStorage.setItem('refresh_token', refreshToken);
-        localStorage.setItem('user', JSON.stringify({
-          id: userId,
-          email: userEmail,
-          name: userName,
-          roles: userRoles || [],
-        }));
+          // 將 tokens 和 user 資訊保存到 localStorage
+          localStorage.setItem('access_token', accessToken);
+          localStorage.setItem('refresh_token', refreshToken);
+          localStorage.setItem('user', JSON.stringify({
+            id: userId,
+            email: userEmail,
+            name: userName,
+            roles: userRoles || [],
+            avatar_url: userAvatarUrl || null,
+          }));
 
-        // 檢查是否有返回 URL
-        const urlReturnUrl = searchParams?.get('returnUrl');
-        const storedReturnUrl = localStorage.getItem('returnUrl');
-        const returnUrl = urlReturnUrl || storedReturnUrl;
+          // 檢查是否有返回 URL
+          const urlReturnUrl = searchParams?.get('returnUrl');
+          const storedReturnUrl = localStorage.getItem('returnUrl');
+          const returnUrl = urlReturnUrl || storedReturnUrl;
 
-        // 清除 returnUrl
-        if (storedReturnUrl) {
-          localStorage.removeItem('returnUrl');
-        }
+          // 清除 returnUrl
+          if (storedReturnUrl) {
+            localStorage.removeItem('returnUrl');
+          }
 
-        // 跳轉到返回頁面或首頁
-        if (returnUrl && returnUrl !== '/login') {
-          router.push(returnUrl);
+          // 跳轉到返回頁面或首頁
+          if (returnUrl && returnUrl !== '/login') {
+            router.push(returnUrl);
+          } else {
+            router.push('/');
+          }
+          router.refresh();
         } else {
-          router.push('/');
+          // 如果沒有 tokens，可能是 Google 登入失敗
+          console.warn('Google login failed: missing tokens or user ID');
         }
-        router.refresh();
+      } catch (error) {
+        console.error('Error processing Google login:', error);
+        // 不設置錯誤訊息，避免干擾用戶體驗
       }
     }
   }, [session, sessionStatus, router, searchParams, googleLoginProcessed]);
@@ -199,8 +237,27 @@ function LoginForm() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    signIn("google", { callbackUrl: "/" });
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      
+      // 保存當前的 returnUrl 到 localStorage
+      const urlReturnUrl = searchParams?.get('returnUrl');
+      if (urlReturnUrl) {
+        localStorage.setItem('returnUrl', urlReturnUrl);
+      }
+      
+      await signIn("google", { 
+        callbackUrl: urlReturnUrl || "/" 
+      });
+    } catch (error) {
+      console.error("Google login error:", error);
+      setError("Google 登入失敗，請稍後再試");
+      triggerShake();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

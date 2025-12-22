@@ -14,7 +14,7 @@ from ...db import get_db, parse_pg_array
 from ...models.user import User, UserRole
 from ...schemas.auth import (
     RegisterRequest, LoginRequest, RefreshTokenRequest,
-    AuthResponse, UserInfo, VerifyEmailRequest
+    AuthResponse, UserInfo, VerifyEmailRequest, GoogleAuthRequest
 )
 from ...schemas.common import SuccessResponse
 from ...security import hash_password, verify_password, create_access_token, create_refresh_token, decode_token
@@ -446,3 +446,126 @@ async def verify_email(
         "message": "Email 驗證成功",
         "data": {}
     }
+
+
+# ==================== Google OAuth ====================
+
+@router.post("/google", response_model=SuccessResponse[AuthResponse])
+async def google_auth(
+    data: GoogleAuthRequest,
+    db = Depends(get_db)
+):
+    """
+    Google OAuth 登入/註冊 - 使用 Raw SQL
+    
+    流程:
+    1. 檢查是否已有使用者（透過 google_id 或 email）
+    2. 如果不存在，建立新使用者
+    3. 如果存在但沒有 google_id，綁定 Google 帳號
+    4. 生成 JWT tokens
+    5. 儲存 refresh token
+    
+    RLS 邏輯: 無（OAuth 不需要權限）
+    """
+    try:
+        # 檢查是否已有使用者
+        check_sql = """
+            SELECT id, name, email, google_id, roles, avatar_url, email_verified
+            FROM users
+            WHERE google_id = :google_id OR email = :email
+        """
+        result = await db.execute(text(check_sql), {
+            'google_id': data.google_id,
+            'email': data.email
+        })
+        existing_user = result.fetchone()
+        
+        if existing_user:
+            # 使用者已存在
+            user = existing_user
+            
+            # 如果沒有 google_id，綁定 Google 帳號
+            if not user.google_id:
+                update_sql = """
+                    UPDATE users
+                    SET google_id = :google_id, avatar_url = COALESCE(avatar_url, :avatar_url), updated_at = NOW()
+                    WHERE id = :user_id
+                    RETURNING id, name, email, roles, avatar_url
+                """
+                result = await db.execute(text(update_sql), {
+                    'google_id': data.google_id,
+                    'avatar_url': data.picture,
+                    'user_id': str(user.id)
+                })
+                user = result.fetchone()
+        else:
+            # 建立新使用者
+            user_id = uuid.uuid4()
+            roles_array = ['freelancer']  # 預設為接案者
+            
+            insert_user_sql = """
+                INSERT INTO users (id, name, email, google_id, avatar_url, email_verified, roles, created_at, updated_at)
+                VALUES (:id, :name, :email, :google_id, :avatar_url, TRUE, :roles, NOW(), NOW())
+                RETURNING id, name, email, roles, avatar_url
+            """
+            
+            result = await db.execute(text(insert_user_sql), {
+                'id': str(user_id),
+                'name': data.name,
+                'email': data.email,
+                'google_id': data.google_id,
+                'avatar_url': data.picture,
+                'roles': roles_array
+            })
+            user = result.fetchone()
+        
+        # 轉換 roles（psycopg 返回字串格式，需要轉為 list）
+        user_roles = parse_pg_array(user.roles)
+        
+        # 生成 JWT tokens
+        access_token = create_access_token({
+            "userId": str(user.id),
+            "email": user.email,
+            "roles": user_roles
+        })
+        
+        refresh_token = create_refresh_token({
+            "userId": str(user.id),
+            "email": user.email
+        })
+        
+        # 儲存 refresh token
+        expires_at = datetime.utcnow() + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
+        insert_token_sql = """
+            INSERT INTO refresh_tokens (id, user_id, token, expires_at, created_at)
+            VALUES (:id, :user_id, :token, :expires_at, NOW())
+        """
+        await db.execute(text(insert_token_sql), {
+            'id': str(uuid.uuid4()),
+            'user_id': str(user.id),
+            'token': refresh_token,
+            'expires_at': expires_at
+        })
+        
+        return {
+            "success": True,
+            "message": "Google 登入成功",
+            "data": AuthResponse(
+                access_token=access_token,
+                refresh_token=refresh_token,
+                user=UserInfo(
+                    id=UUID(user.id) if isinstance(user.id, str) else user.id,
+                    name=user.name,
+                    email=user.email,
+                    roles=user_roles,
+                    avatar_url=user.avatar_url
+                )
+            )
+        }
+    except Exception as e:
+        # 記錄錯誤但返回友好的錯誤訊息
+        print(f"[GOOGLE_AUTH_ERROR] {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Google 登入失敗，請稍後再試"
+        )

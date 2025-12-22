@@ -123,3 +123,21 @@ class ResendVerificationRequest(BaseModel):
             }
         }
 
+
+class GoogleAuthRequest(BaseModel):
+    """Google OAuth 請求"""
+    google_id: str = Field(..., description="Google 帳號 ID")
+    email: EmailStr
+    name: str = Field(..., min_length=1, max_length=100)
+    picture: Optional[str] = None
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "google_id": "123456789012345678901",
+                "email": "user@gmail.com",
+                "name": "張小明",
+                "picture": "https://lh3.googleusercontent.com/..."
+            }
+        }
+

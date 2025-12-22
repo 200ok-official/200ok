@@ -126,7 +126,7 @@ export default function FreelancersPage() {
         {/* Header & Filter Section */}
         <div className="text-center mb-16">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#20263e] mb-6 tracking-tight">
-              尋找專業接案者
+              尋找專業接案工程師
             </h1>
             <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
               在這裡找到最適合您專案的專業人才

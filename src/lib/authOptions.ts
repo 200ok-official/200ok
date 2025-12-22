@@ -1,8 +1,5 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { AuthService } from "@/services/auth.service";
-
-const authService = new AuthService();
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -20,21 +17,37 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       if (account?.provider === "google" && profile?.email) {
         try {
-          // 使用 Google 資料建立或登入使用者
-          const result = await authService.googleAuth({
-            id: account.providerAccountId,
-            email: profile.email,
-            name: user.name || profile.email,
-            picture: user.image || undefined,
+          // 調用後端 Google OAuth API
+          const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+          const response = await fetch(`${backendUrl}/api/v1/auth/google`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              google_id: account.providerAccountId,
+              email: profile.email,
+              name: user.name || profile.email,
+              picture: user.image || null,
+            }),
           });
 
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error("Google OAuth backend error:", errorData);
+            return false;
+          }
+
+          const result = await response.json();
+          
           // 將 tokens 和 user 資訊附加到 user 物件（供後續使用）
-          (user as any).accessToken = result.access_token;
-          (user as any).refreshToken = result.refresh_token;
-          (user as any).userId = result.user.id;
-          (user as any).userEmail = result.user.email;
-          (user as any).userName = result.user.name;
-          (user as any).userRoles = result.user.roles;
+          (user as any).accessToken = result.data.access_token;
+          (user as any).refreshToken = result.data.refresh_token;
+          (user as any).userId = result.data.user.id;
+          (user as any).userEmail = result.data.user.email;
+          (user as any).userName = result.data.user.name;
+          (user as any).userRoles = result.data.user.roles;
+          (user as any).userAvatarUrl = result.data.user.avatar_url;
 
           return true;
         } catch (error) {
@@ -72,6 +85,7 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
     error: "/login",
   },
+  debug: process.env.NODE_ENV === 'development',
 };
 
 
