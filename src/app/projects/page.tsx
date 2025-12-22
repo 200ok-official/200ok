@@ -253,7 +253,7 @@ export default function ProjectsPage() {
     <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
       <Navbar />
 
-      <main className="flex-1 w-full pt-16 pb-8 px-8 md:px-16 lg:px-40 xl:px-40 2xl:px-40">
+      <main className="flex-1 w-full pt-16 pb-8 px-8 md:px-16 lg:px-40 xl:px-40 2xl:px-40 overflow-x-hidden">
         {/* Sticky Hero Section Container */}
         <div className="sticky top-20 z-30 pointer-events-none">
           {/* 
@@ -494,9 +494,9 @@ export default function ProjectsPage() {
 
         {/* 案件列表 - Masonry Layout (瀑布流，從左到右，從上到下) */}
         {!loading && projects.length > 0 && (
-          <div ref={masonryRef} className="flex gap-6">
+          <div ref={masonryRef} className="flex gap-6 w-full min-w-0">
             {columns.map((column, columnIndex) => (
-              <div key={columnIndex} className="flex-1 flex flex-col gap-6">
+              <div key={columnIndex} className="flex-1 flex flex-col gap-6 min-w-0">
                 {column.map((project) => (
                   <div key={project.id}>
                     <ProjectCard project={project} />
