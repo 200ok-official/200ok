@@ -15,6 +15,7 @@ interface Project {
   id: string;
   title: string;
   description: string;
+  ai_summary?: string;
   budget_min: number;
   budget_max: number;
   status: string;
