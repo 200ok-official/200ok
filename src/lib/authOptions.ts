@@ -28,9 +28,13 @@ export const authOptions: NextAuthOptions = {
             picture: user.image || undefined,
           });
 
-          // 將 tokens 附加到 user 物件（供後續使用）
+          // 將 tokens 和 user 資訊附加到 user 物件（供後續使用）
           (user as any).accessToken = result.access_token;
           (user as any).refreshToken = result.refresh_token;
+          (user as any).userId = result.user.id;
+          (user as any).userEmail = result.user.email;
+          (user as any).userName = result.user.name;
+          (user as any).userRoles = result.user.roles;
 
           return true;
         } catch (error) {
@@ -44,6 +48,10 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.accessToken = (user as any).accessToken;
         token.refreshToken = (user as any).refreshToken;
+        token.userId = (user as any).userId;
+        token.userEmail = (user as any).userEmail;
+        token.userName = (user as any).userName;
+        token.userRoles = (user as any).userRoles;
       }
       return token;
     },
@@ -51,6 +59,11 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session as any).accessToken = token.accessToken;
         (session as any).refreshToken = token.refreshToken;
+        // 設置 user 資訊到 session
+        (session.user as any).id = token.userId;
+        (session.user as any).email = token.userEmail || session.user.email;
+        (session.user as any).name = token.userName || session.user.name;
+        (session.user as any).roles = token.userRoles;
       }
       return session;
     },

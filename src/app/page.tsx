@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { HeroBanner } from "@/components/layout/HeroBanner";
@@ -42,6 +44,8 @@ interface Freelancer {
 }
 
 export default function HomePage() {
+  const router = useRouter();
+  const { data: session, status: sessionStatus } = useSession();
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
   const [recommendedFreelancers, setRecommendedFreelancers] = useState<Freelancer[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
@@ -51,6 +55,7 @@ export default function HomePage() {
   // 使用 ref 防止重複初始化
   const hasInitialized = useRef(false);
   const freelancersRequested = useRef(false);
+  const googleLoginProcessed = useRef(false);
 
   // 計算工程師的資訊完整度分數
   const calculateCompletenessScore = (freelancer: Freelancer): number => {
@@ -129,6 +134,53 @@ export default function HomePage() {
       fetchFreelancers();
     }
   }, [fetchFreelancers]);
+
+  // 處理 Google 登入成功後的情況
+  useEffect(() => {
+    // 如果 session 還在載入中，不處理
+    if (sessionStatus === 'loading') {
+      return;
+    }
+
+    // 如果已經處理過 Google 登入，不再重複處理
+    if (googleLoginProcessed.current) {
+      return;
+    }
+
+    // 檢查是否有 Google 登入的 tokens
+    if (sessionStatus === 'authenticated' && session) {
+      const sessionAny = session as any;
+      const accessToken = sessionAny.accessToken;
+      const refreshToken = sessionAny.refreshToken;
+      const userAny = session.user as any;
+      const userId = userAny?.id;
+      const userEmail = session.user?.email;
+      const userName = session.user?.name;
+      const userRoles = userAny?.roles;
+
+      // 如果有 accessToken，表示 Google 登入成功
+      if (accessToken && refreshToken && userId) {
+        // 標記為已處理，避免重複處理
+        googleLoginProcessed.current = true;
+
+        // 將 tokens 和 user 資訊保存到 localStorage
+        localStorage.setItem('access_token', accessToken);
+        localStorage.setItem('refresh_token', refreshToken);
+        localStorage.setItem('user', JSON.stringify({
+          id: userId,
+          email: userEmail,
+          name: userName,
+          roles: userRoles || [],
+        }));
+
+        // 更新登入狀態
+        setIsLoggedIn(true);
+        
+        // 刷新頁面以更新狀態
+        router.refresh();
+      }
+    }
+  }, [session, sessionStatus, router]);
 
   useEffect(() => {
     // 防止重複初始化（React StrictMode 會導致執行兩次）

@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -14,6 +14,7 @@ import { getRememberMe, saveRememberMe, clearRememberMe } from "@/lib/rememberMe
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session, status: sessionStatus } = useSession();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -23,6 +24,7 @@ function LoginForm() {
   const [fieldErrors, setFieldErrors] = useState<{ email?: boolean; password?: boolean }>({});
   const [loading, setLoading] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
+  const [googleLoginProcessed, setGoogleLoginProcessed] = useState(false);
 
   // 震動效果觸發器
   const triggerShake = () => {
@@ -55,6 +57,64 @@ function LoginForm() {
       }));
     }
   }, [searchParams]);
+
+  // 處理 Google 登入成功後的情況
+  useEffect(() => {
+    // 如果 session 還在載入中，不處理
+    if (sessionStatus === 'loading') {
+      return;
+    }
+
+    // 如果已經處理過 Google 登入，不再重複處理
+    if (googleLoginProcessed) {
+      return;
+    }
+
+    // 檢查是否有 Google 登入的 tokens
+    if (sessionStatus === 'authenticated' && session) {
+      const sessionAny = session as any;
+      const accessToken = sessionAny.accessToken;
+      const refreshToken = sessionAny.refreshToken;
+      const userId = session.user?.id || (session.user as any)?.id;
+      const userEmail = session.user?.email;
+      const userName = session.user?.name;
+      const userRoles = (session.user as any)?.roles;
+
+      // 如果有 accessToken，表示 Google 登入成功
+      if (accessToken && refreshToken && userId) {
+        // 標記為已處理，避免重複處理
+        setGoogleLoginProcessed(true);
+
+        // 將 tokens 和 user 資訊保存到 localStorage
+        localStorage.setItem('access_token', accessToken);
+        localStorage.setItem('refresh_token', refreshToken);
+        localStorage.setItem('user', JSON.stringify({
+          id: userId,
+          email: userEmail,
+          name: userName,
+          roles: userRoles || [],
+        }));
+
+        // 檢查是否有返回 URL
+        const urlReturnUrl = searchParams?.get('returnUrl');
+        const storedReturnUrl = localStorage.getItem('returnUrl');
+        const returnUrl = urlReturnUrl || storedReturnUrl;
+
+        // 清除 returnUrl
+        if (storedReturnUrl) {
+          localStorage.removeItem('returnUrl');
+        }
+
+        // 跳轉到返回頁面或首頁
+        if (returnUrl && returnUrl !== '/login') {
+          router.push(returnUrl);
+        } else {
+          router.push('/');
+        }
+        router.refresh();
+      }
+    }
+  }, [session, sessionStatus, router, searchParams, googleLoginProcessed]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
