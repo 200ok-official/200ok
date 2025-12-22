@@ -76,9 +76,7 @@ export const Footer: React.FC = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">聯絡我們</h3>
             <ul className="space-y-2 text-sm text-gray-300">
-              <li>Email: support@200ok.com</li>
-              <li>電話: 0800-200-200</li>
-              <li>Line: @200ok</li>
+              <li>Email: 200okoffic@gmail.com</li>
             </ul>
           </div>
         </div>

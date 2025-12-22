@@ -146,7 +146,7 @@ export function generateVerificationEmailHTML(
                 需要幫助？請聯繫我們的客服團隊
               </p>
               <p style="margin: 0 0 10px; color: #666666; font-size: 14px;">
-                <a href="mailto:support@200ok.com" style="color: #20263e; text-decoration: none;">support@200ok.com</a>
+                <a href="mailto:200okoffic@gmail.com" style="color: #20263e; text-decoration: none;">200okoffic@gmail.com</a>
               </p>
               <p style="margin: 15px 0 0; color: #999999; font-size: 12px;">
                 © 2024 200 OK. All rights reserved.
@@ -246,7 +246,7 @@ export function generatePasswordResetEmailHTML(
                 需要幫助？請聯繫我們的客服團隊
               </p>
               <p style="margin: 0 0 10px; color: #666666; font-size: 14px;">
-                <a href="mailto:support@200ok.com" style="color: #20263e; text-decoration: none;">support@200ok.com</a>
+                <a href="mailto:200okoffic@gmail.com" style="color: #20263e; text-decoration: none;">200okoffic@gmail.com</a>
               </p>
               <p style="margin: 15px 0 0; color: #999999; font-size: 12px;">
                 © 2024 200 OK. All rights reserved.
