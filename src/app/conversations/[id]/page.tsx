@@ -372,8 +372,8 @@ export default function ConversationPage() {
         
         {/* 頂部資訊欄 - 固定，更清楚的設計 */}
         <div className="flex-none bg-white z-10 border-b border-gray-200 shadow-sm">
-          {/* 返回按鈕 */}
-          <div className="px-4 md:px-6 pt-4 pb-2">
+          {/* 返回按鈕與查看案件按鈕 */}
+          <div className="px-4 md:px-6 pt-4 pb-2 flex items-center justify-between">
             <button
               onClick={() => router.push('/conversations')}
               className="text-gray-500 hover:text-[#20263e] transition-colors flex items-center gap-2 text-sm font-medium"
@@ -384,6 +384,25 @@ export default function ConversationPage() {
               </svg>
               返回對話列表
             </button>
+            
+            {/* 查看案件詳情按鈕（僅提案對話顯示） */}
+            {conversation.type === 'project_proposal' && conversation.project?.id && (
+              <Button
+                onClick={() => {
+                  if (conversation.project?.id) {
+                    router.push(`/projects/${conversation.project.id}`);
+                  }
+                }}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 text-sm"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                  <path d="M10.75 16.82A7.462 7.462 0 0115 15.5c.71 0 1.396.098 2.046.282A.75.75 0 0018 15.06v-11a.75.75 0 00-.546-.721A9.006 9.006 0 0015 3a8.963 8.963 0 00-4.25 1.065V16.82zM9.25 4.065A8.963 8.963 0 005 3c-.85 0-1.673.118-2.454.339A.75.75 0 002 4.06v11a.75.75 0 00.954.721A7.506 7.506 0 015 15.5c1.579 0 3.042.487 4.25 1.32V4.065z" />
+                </svg>
+                查看案件詳情
+              </Button>
+            )}
           </div>
 
           {/* 對話資訊卡片 */}

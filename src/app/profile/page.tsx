@@ -90,6 +90,9 @@ export default function ProfilePage() {
       await apiPut("/api/v1/users/me/profile", formData);
       setSuccess("個人資料已更新！");
       await fetchProfile();
+      
+      // 儲存成功後滾動到頁面頂端
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error: any) {
       setError(error.message || "更新失敗，請稍後再試");
     } finally {
@@ -166,6 +169,10 @@ export default function ProfilePage() {
       }
 
       setSuccess(`✓ 身份已更新！目前選擇：${newRoles.map(r => r === 'freelancer' ? '接案工程師' : '發案者').join('、')}`);
+      
+      // 身份更新成功後滾動到頁面頂端
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
       setTimeout(() => setSuccess(""), 3000);
     } catch (error: any) {
       setError(error.message || "更新身份失敗");
@@ -217,6 +224,9 @@ export default function ProfilePage() {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+      
+      // 上傳成功後滾動到頁面頂端
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error: any) {
       setError(error.message || "頭像上傳失敗");
     } finally {
@@ -235,6 +245,9 @@ export default function ProfilePage() {
       await apiDelete("/api/v1/avatar/delete");
       setProfile((prev) => prev ? { ...prev, avatar_url: undefined } : null);
       setSuccess("頭像已刪除");
+      
+      // 刪除成功後滾動到頁面頂端
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error: any) {
       setError(error.message || "刪除頭像失敗");
     } finally {
@@ -634,18 +647,135 @@ export default function ProfilePage() {
 
                 {/* 簡介 */}
                 <div>
-                  <label className="block text-sm font-semibold text-[#20263e] mb-2">
-                    個人簡介
-                  </label>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-semibold text-[#20263e]">
+                      個人簡介
+                    </label>
+                    <div className="flex gap-1 text-xs text-gray-500">
+                      <button 
+                        type="button"
+                        className="px-2 py-1 hover:bg-gray-100 rounded transition-colors"
+                        onClick={() => {
+                          const textarea = document.getElementById('bio-freelancer') as HTMLTextAreaElement;
+                          if (textarea) {
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const selected = textarea.value.substring(start, end);
+                            const before = textarea.value.substring(0, start);
+                            const after = textarea.value.substring(end);
+                            const newText = `${before}**${selected || '粗體文字'}**${after}`;
+                            setFormData({ ...formData, bio: newText });
+                            // 延遲設定游標位置，等待 React 更新
+                            setTimeout(() => {
+                              textarea.focus();
+                              textarea.setSelectionRange(start + 2, end + 2);
+                            }, 0);
+                          }
+                        }}
+                      >
+                        <strong>B</strong>
+                      </button>
+                      <button 
+                        type="button"
+                        className="px-2 py-1 hover:bg-gray-100 rounded transition-colors italic"
+                        onClick={() => {
+                          const textarea = document.getElementById('bio-freelancer') as HTMLTextAreaElement;
+                          if (textarea) {
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const selected = textarea.value.substring(start, end);
+                            const before = textarea.value.substring(0, start);
+                            const after = textarea.value.substring(end);
+                            const newText = `${before}_${selected || '斜體文字'}_${after}`;
+                            setFormData({ ...formData, bio: newText });
+                            setTimeout(() => {
+                              textarea.focus();
+                              textarea.setSelectionRange(start + 1, end + 1);
+                            }, 0);
+                          }
+                        }}
+                      >
+                        I
+                      </button>
+                      <button 
+                        type="button"
+                        className="px-2 py-1 hover:bg-gray-100 rounded transition-colors"
+                        onClick={() => {
+                          const textarea = document.getElementById('bio-freelancer') as HTMLTextAreaElement;
+                          if (textarea) {
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const selected = textarea.value.substring(start, end);
+                            const before = textarea.value.substring(0, start);
+                            const after = textarea.value.substring(end);
+                            const newText = `${before}# ${selected || '大標題'}${after}`;
+                            setFormData({ ...formData, bio: newText });
+                            setTimeout(() => {
+                              textarea.focus();
+                              textarea.setSelectionRange(start + 2, end + 2);
+                            }, 0);
+                          }
+                        }}
+                      >
+                        H1
+                      </button>
+                      <button 
+                        type="button"
+                        className="px-2 py-1 hover:bg-gray-100 rounded transition-colors"
+                        onClick={() => {
+                          const textarea = document.getElementById('bio-freelancer') as HTMLTextAreaElement;
+                          if (textarea) {
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const selected = textarea.value.substring(start, end);
+                            const before = textarea.value.substring(0, start);
+                            const after = textarea.value.substring(end);
+                            const newText = `${before}## ${selected || '中標題'}${after}`;
+                            setFormData({ ...formData, bio: newText });
+                            setTimeout(() => {
+                              textarea.focus();
+                              textarea.setSelectionRange(start + 3, end + 3);
+                            }, 0);
+                          }
+                        }}
+                      >
+                        H2
+                      </button>
+                      <button 
+                        type="button"
+                        className="px-2 py-1 hover:bg-gray-100 rounded transition-colors"
+                        onClick={() => {
+                          const textarea = document.getElementById('bio-freelancer') as HTMLTextAreaElement;
+                          if (textarea) {
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const selected = textarea.value.substring(start, end);
+                            const before = textarea.value.substring(0, start);
+                            const after = textarea.value.substring(end);
+                            const newText = `${before}### ${selected || '小標題'}${after}`;
+                            setFormData({ ...formData, bio: newText });
+                            setTimeout(() => {
+                              textarea.focus();
+                              textarea.setSelectionRange(start + 4, end + 4);
+                            }, 0);
+                          }
+                        }}
+                      >
+                        H3
+                      </button>
+                    </div>
+                  </div>
                   <textarea
+                    id="bio-freelancer"
                     value={formData.bio}
                     onChange={(e) =>
                       setFormData({ ...formData, bio: e.target.value })
                     }
-                    rows={4}
-                    className="w-full px-4 py-2 border-2 border-[#c5ae8c] rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e]"
-                    placeholder="簡單介紹您的專業背景與經驗..."
+                    rows={8}
+                    className="w-full px-4 py-2 border-2 border-[#c5ae8c] rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e] font-mono text-sm"
+                    placeholder="簡單介紹您的專業背景與經驗... (支援 Markdown)"
                   />
+                  <p className="text-xs text-gray-500 mt-1">支援 Markdown 語法：**粗體**、_斜體_、# 標題</p>
                 </div>
 
                 {/* 技能 */}
@@ -752,18 +882,134 @@ export default function ProfilePage() {
 
                 {/* 簡介 */}
                 <div>
-                  <label className="block text-sm font-semibold text-[#20263e] mb-2">
-                    公司/個人簡介
-                  </label>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-semibold text-[#20263e]">
+                      公司/個人簡介
+                    </label>
+                    <div className="flex gap-1 text-xs text-gray-500">
+                      <button 
+                        type="button"
+                        className="px-2 py-1 hover:bg-gray-100 rounded transition-colors"
+                        onClick={() => {
+                          const textarea = document.getElementById('bio-client') as HTMLTextAreaElement;
+                          if (textarea) {
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const selected = textarea.value.substring(start, end);
+                            const before = textarea.value.substring(0, start);
+                            const after = textarea.value.substring(end);
+                            const newText = `${before}**${selected || '粗體文字'}**${after}`;
+                            setFormData({ ...formData, bio: newText });
+                            setTimeout(() => {
+                              textarea.focus();
+                              textarea.setSelectionRange(start + 2, end + 2);
+                            }, 0);
+                          }
+                        }}
+                      >
+                        <strong>B</strong>
+                      </button>
+                      <button 
+                        type="button"
+                        className="px-2 py-1 hover:bg-gray-100 rounded transition-colors italic"
+                        onClick={() => {
+                          const textarea = document.getElementById('bio-client') as HTMLTextAreaElement;
+                          if (textarea) {
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const selected = textarea.value.substring(start, end);
+                            const before = textarea.value.substring(0, start);
+                            const after = textarea.value.substring(end);
+                            const newText = `${before}_${selected || '斜體文字'}_${after}`;
+                            setFormData({ ...formData, bio: newText });
+                            setTimeout(() => {
+                              textarea.focus();
+                              textarea.setSelectionRange(start + 1, end + 1);
+                            }, 0);
+                          }
+                        }}
+                      >
+                        I
+                      </button>
+                      <button 
+                        type="button"
+                        className="px-2 py-1 hover:bg-gray-100 rounded transition-colors"
+                        onClick={() => {
+                          const textarea = document.getElementById('bio-client') as HTMLTextAreaElement;
+                          if (textarea) {
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const selected = textarea.value.substring(start, end);
+                            const before = textarea.value.substring(0, start);
+                            const after = textarea.value.substring(end);
+                            const newText = `${before}# ${selected || '大標題'}${after}`;
+                            setFormData({ ...formData, bio: newText });
+                            setTimeout(() => {
+                              textarea.focus();
+                              textarea.setSelectionRange(start + 2, end + 2);
+                            }, 0);
+                          }
+                        }}
+                      >
+                        H1
+                      </button>
+                      <button 
+                        type="button"
+                        className="px-2 py-1 hover:bg-gray-100 rounded transition-colors"
+                        onClick={() => {
+                          const textarea = document.getElementById('bio-client') as HTMLTextAreaElement;
+                          if (textarea) {
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const selected = textarea.value.substring(start, end);
+                            const before = textarea.value.substring(0, start);
+                            const after = textarea.value.substring(end);
+                            const newText = `${before}## ${selected || '中標題'}${after}`;
+                            setFormData({ ...formData, bio: newText });
+                            setTimeout(() => {
+                              textarea.focus();
+                              textarea.setSelectionRange(start + 3, end + 3);
+                            }, 0);
+                          }
+                        }}
+                      >
+                        H2
+                      </button>
+                      <button 
+                        type="button"
+                        className="px-2 py-1 hover:bg-gray-100 rounded transition-colors"
+                        onClick={() => {
+                          const textarea = document.getElementById('bio-client') as HTMLTextAreaElement;
+                          if (textarea) {
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const selected = textarea.value.substring(start, end);
+                            const before = textarea.value.substring(0, start);
+                            const after = textarea.value.substring(end);
+                            const newText = `${before}### ${selected || '小標題'}${after}`;
+                            setFormData({ ...formData, bio: newText });
+                            setTimeout(() => {
+                              textarea.focus();
+                              textarea.setSelectionRange(start + 4, end + 4);
+                            }, 0);
+                          }
+                        }}
+                      >
+                        H3
+                      </button>
+                    </div>
+                  </div>
                   <textarea
+                    id="bio-client"
                     value={formData.bio}
                     onChange={(e) =>
                       setFormData({ ...formData, bio: e.target.value })
                     }
-                    rows={4}
-                    className="w-full px-4 py-2 border-2 border-[#c5ae8c] rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e]"
-                    placeholder="簡單介紹您的公司或個人背景..."
+                    rows={8}
+                    className="w-full px-4 py-2 border-2 border-[#c5ae8c] rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e] font-mono text-sm"
+                    placeholder="簡單介紹您的公司或個人背景... (支援 Markdown)"
                   />
+                  <p className="text-xs text-gray-500 mt-1">支援 Markdown 語法：**粗體**、_斜體_、# 標題</p>
                 </div>
 
                 {/* 偏好的合作方式（未來擴展） */}
