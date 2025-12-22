@@ -377,30 +377,30 @@ export default function ProjectDetailPage({
                     </div>
                   </div>
                 ) : (
-                  <Badge
-                    variant={
-                      project.status === "open"
-                        ? "success"
-                        : project.status === "draft"
-                        ? "default"
-                        : project.status === "in_progress"
-                        ? "khaki"
+                <Badge
+                  variant={
+                    project.status === "open"
+                      ? "success"
+                      : project.status === "draft"
+                      ? "default"
+                      : project.status === "in_progress"
+                      ? "khaki"
                         : project.status === "closed"
                         ? "default"
-                        : "danger"
-                    }
+                      : "danger"
+                  }
                     className={project.status === "closed" ? "bg-gray-500 text-white" : ""}
-                  >
-                    {project.status === "open"
-                      ? "開放中"
-                      : project.status === "in_progress"
-                      ? "進行中"
+                >
+                  {project.status === "open"
+                    ? "開放中"
+                    : project.status === "in_progress"
+                    ? "進行中"
                       : project.status === "completed"
                       ? "已完成" 
                       : project.status === "closed"
                       ? "已關閉"
-                      : "已結案"}
-                  </Badge>
+                    : "已結案"}
+                </Badge>
                 )}
                 <Badge variant={isNewDevelopment ? "khaki" : "khaki"}>
                   {isNewDevelopment ? "全新開發" : "修改維護"}

@@ -4,7 +4,7 @@ User related schemas
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from ..models.user import UserRole
 
 
@@ -54,11 +54,25 @@ class UserProfile(BaseModel):
 class UpdateUserRequest(BaseModel):
     """更新使用者資料請求"""
     name: Optional[str] = Field(None, min_length=1, max_length=100)
+    phone: Optional[str] = None
     bio: Optional[str] = None
     skills: Optional[List[str]] = None
     avatar_url: Optional[str] = None
     portfolio_links: Optional[List[str]] = None
-    phone: Optional[str] = None
+    roles: Optional[List[str]] = None
+    
+    @field_validator('roles')
+    @classmethod
+    def validate_roles(cls, v):
+        """驗證 roles 是否為有效的角色值"""
+        if v is not None:
+            valid_roles = {role.value for role in UserRole}
+            for role in v:
+                if role not in valid_roles:
+                    raise ValueError(f"無效的角色: {role}. 有效的角色為: {', '.join(valid_roles)}")
+            if len(v) == 0:
+                raise ValueError("至少需要一個角色")
+        return v
     
     class Config:
         json_schema_extra = {
@@ -66,7 +80,9 @@ class UpdateUserRequest(BaseModel):
                 "name": "張小明",
                 "bio": "資深全端工程師",
                 "skills": ["Python", "FastAPI", "React"],
-                "portfolio_links": ["https://github.com/user"]
+                "avatar_url": "https://example.com/avatar.jpg",
+                "portfolio_links": ["https://github.com/user"],
+                "roles": ["freelancer", "client"]
             }
         }
 
@@ -83,20 +99,3 @@ class UpdatePasswordRequest(BaseModel):
                 "new_password": "new_secure_password_123"
             }
         }
-
-
-
-# Additional schemas for user operations
-
-class UpdateUserRequest(BaseModel):
-    name: Optional[str] = Field(None, min_length=2, max_length=100)
-    phone: Optional[str] = None
-    bio: Optional[str] = None
-    skills: Optional[List[str]] = None
-    portfolio_links: Optional[List[str]] = None
-    roles: Optional[List[str]] = None  # 新增 roles 字段
-
-
-class UpdatePasswordRequest(BaseModel):
-    current_password: str
-    new_password: str = Field(..., min_length=6)
