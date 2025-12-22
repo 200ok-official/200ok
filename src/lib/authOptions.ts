@@ -6,6 +6,12 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      authorization: {
+        params: {
+          // 每次都要求用戶選擇帳號，避免自動使用上次的帳號
+          prompt: "select_account",
+        },
+      },
     }),
   ],
   session: {

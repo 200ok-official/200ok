@@ -127,6 +127,9 @@ function LoginForm() {
             avatar_url: userAvatarUrl || null,
           }));
 
+          // 觸發登入成功事件，讓 Navbar 等組件知道要更新
+          window.dispatchEvent(new CustomEvent('auth-changed'));
+
           // 檢查是否有返回 URL
           const urlReturnUrl = searchParams?.get('returnUrl');
           const storedReturnUrl = localStorage.getItem('returnUrl');
@@ -185,6 +188,9 @@ function LoginForm() {
       localStorage.setItem("access_token", data.data.access_token);
       localStorage.setItem("refresh_token", data.data.refresh_token);
       localStorage.setItem("user", JSON.stringify(data.data.user));
+
+      // 觸發登入成功事件，讓 Navbar 等組件知道要更新
+      window.dispatchEvent(new CustomEvent('auth-changed'));
 
       // 根據 rememberMe 狀態處理 email 記憶
       if (formData.rememberMe) {

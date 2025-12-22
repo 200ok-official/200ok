@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { apiGet, apiPost, clearAuth, isAuthenticated } from "@/lib/api";
+import { signOut } from "next-auth/react";
 
 export const Navbar: React.FC = () => {
   const router = useRouter();
@@ -15,8 +16,8 @@ export const Navbar: React.FC = () => {
   const [tokenBalance, setTokenBalance] = useState<number | null>(null);
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
-  useEffect(() => {
-    // 檢查是否已登入
+  // 檢查登入狀態的函數
+  const checkAuthStatus = useCallback(() => {
     if (isAuthenticated()) {
       const userData = localStorage.getItem("user");
       if (userData) {
@@ -24,15 +25,45 @@ export const Navbar: React.FC = () => {
         try {
           const parsedUser = JSON.parse(userData);
           setUser(parsedUser);
-          // 只在初始載入時取得一次代幣餘額
+          // 取得代幣餘額和未讀訊息
           fetchTokenBalance();
           fetchUnreadCount();
         } catch (e) {
           console.error("Failed to parse user data", e);
         }
       }
+    } else {
+      setIsLoggedIn(false);
+      setUser(null);
+      setTokenBalance(null);
+      setUnreadCount(0);
     }
   }, []);
+
+  useEffect(() => {
+    // 初始檢查登入狀態
+    checkAuthStatus();
+
+    // 監聽 storage 事件（當 localStorage 變化時觸發，用於跨 tab 同步）
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'access_token' || e.key === 'user') {
+        checkAuthStatus();
+      }
+    };
+
+    // 監聽自定義的登入成功事件（用於同一個 tab 內的更新）
+    const handleAuthChange = () => {
+      checkAuthStatus();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('auth-changed', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-changed', handleAuthChange);
+    };
+  }, [checkAuthStatus]);
 
   useEffect(() => {
     // 監聽代幣餘額更新事件（只在代幣操作時觸發）
@@ -104,8 +135,18 @@ export const Navbar: React.FC = () => {
       // 清除本地儲存
       clearAuth();
       
+      // 清除 NextAuth session（用於 Google 登入）
+      // redirect: false 避免自動跳轉，我們自己處理
+      await signOut({ redirect: false });
+      
       setIsLoggedIn(false);
       setUser(null);
+      setTokenBalance(null);
+      setUnreadCount(0);
+      
+      // 觸發登出事件，讓其他組件知道
+      window.dispatchEvent(new CustomEvent('auth-changed'));
+      
       router.push("/");
       router.refresh();
     }

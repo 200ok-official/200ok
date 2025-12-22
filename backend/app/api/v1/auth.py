@@ -484,11 +484,14 @@ async def google_auth(
             # 使用者已存在
             user = existing_user
             
-            # 如果沒有 google_id，綁定 Google 帳號
+            # 如果沒有 google_id，綁定 Google 帳號並驗證 email
             if not user.google_id:
                 update_sql = """
                     UPDATE users
-                    SET google_id = :google_id, avatar_url = COALESCE(avatar_url, :avatar_url), updated_at = NOW()
+                    SET google_id = :google_id, 
+                        avatar_url = COALESCE(avatar_url, :avatar_url), 
+                        email_verified = TRUE,
+                        updated_at = NOW()
                     WHERE id = :user_id
                     RETURNING id, name, email, roles, avatar_url
                 """
