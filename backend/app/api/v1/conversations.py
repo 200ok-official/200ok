@@ -716,8 +716,10 @@ async def get_unread_count(
     
     RLS 邏輯: 只能查看自己的未讀數
     """
-    # 設定瀏覽器快取為 5 分鐘
-    response.headers["Cache-Control"] = "private, max-age=300"
+    # 禁用快取，確保未讀訊息數量即時更新
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
 
     # 一次性查詢未讀數（超快）
     sql = """
