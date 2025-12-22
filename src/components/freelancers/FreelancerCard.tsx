@@ -4,7 +4,7 @@ import React, { useState, useRef, useLayoutEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { StarIcon } from "@heroicons/react/24/solid";
-import { DocumentCheckIcon, ChartBarIcon } from "@heroicons/react/24/outline";
+import { DocumentCheckIcon, ChartBarIcon, CommandLineIcon } from "@heroicons/react/24/outline";
 
 interface FreelancerCardProps {
   freelancer: {
@@ -88,9 +88,9 @@ export const FreelancerCard: React.FC<FreelancerCardProps> = ({
         {/* Decorative Top Line - Gradient Theme Colors */}
         <div className="h-1.5 w-full bg-[#20263e] relative z-20"></div>
 
-        <div className={`p-5 flex flex-col flex-1 relative ${!hasSkills ? 'justify-center items-center text-center' : ''}`}>
+        <div className={`p-5 flex flex-col flex-1 relative ${!hasSkills ? 'justify-center' : ''}`}>
             {/* Top Section: Avatar & Info */}
-            <div className={`flex gap-4 ${hasSkills ? 'items-start mb-3' : 'flex-col items-center w-full'}`}>
+            <div className="flex gap-4 items-start mb-3">
                 <div className="relative flex-shrink-0">
                     {freelancer.avatar_url ? (
                         <img
@@ -111,20 +111,20 @@ export const FreelancerCard: React.FC<FreelancerCardProps> = ({
                     </div>
                 </div>
 
-                <div className={`flex-1 min-w-0 pt-1 ${!hasSkills ? 'w-full flex flex-col items-center' : ''}`}>
-                    <div className={`flex ${hasSkills ? 'justify-between items-start' : 'flex-col items-center gap-2 mb-2'}`}>
+                <div className="flex-1 min-w-0 pt-1">
+                    <div className="flex justify-between items-start">
                         <h3 className="text-2xl font-bold text-[#20263e] truncate font-serif tracking-tight leading-tight">
                             {freelancer.name}
                         </h3>
                         {freelancer.hourly_rate && (
-                           <span className={`flex-shrink-0 text-xs font-medium text-[#20263e] bg-[#fcfbf8] px-2 py-1 rounded-full border border-gray-100 group-hover:border-[#e6dfcf] transition-colors ${hasSkills ? 'ml-1' : ''}`}>
+                           <span className="flex-shrink-0 text-xs font-medium text-[#20263e] bg-[#fcfbf8] px-2 py-1 rounded-full border border-gray-100 group-hover:border-[#e6dfcf] transition-colors ml-1">
                              ${freelancer.hourly_rate}/hr
                            </span>
                         )}
                     </div>
                     
                     {/* Stats Icons Row - Directly integrated */}
-                    <div className={`flex items-center gap-4 text-gray-500 mt-2 ${!hasSkills ? 'justify-center' : ''}`}>
+                    <div className="flex items-center gap-4 text-gray-500 mt-2">
                         <div className="flex items-center gap-1.5 group-hover:text-[#c5ae8c] transition-colors" title="投標次數">
                             <DocumentCheckIcon className="w-5 h-5 text-[#c5ae8c] group-hover:text-[#20263e] transition-colors" />
                             <span className="text-base font-bold text-[#20263e]">{bidsCount}</span>
@@ -137,20 +137,23 @@ export const FreelancerCard: React.FC<FreelancerCardProps> = ({
                 </div>
             </div>
 
-            {/* Bottom Section: Skills */}
+            {/* Bottom Section: Skills & Decoration */}
             {hasSkills && (
                 <div className="mt-auto pt-1 w-full">
-                    <div className="flex flex-wrap gap-1.5">
-                        {freelancer.skills.slice(0, 3).map((skill, i) => (
-                            <span key={i} className="px-3 py-1 bg-[#c5ae8c] text-white border border-[#c5ae8c] rounded-full text-xs font-medium shadow-sm transition-all duration-300 truncate max-w-[100px]">
-                                {skill}
-                            </span>
-                        ))}
-                        {freelancer.skills.length > 3 && (
-                            <span className="text-gray-400 text-xs self-center px-1 font-medium">
-                                +{freelancer.skills.length - 3}
-                            </span>
-                        )}
+                    <div className="flex items-start gap-3">
+                        <CommandLineIcon className="w-5 h-5 text-[#c5ae8c] mt-1 shrink-0" />
+                        <div className="flex flex-wrap gap-1.5">
+                            {freelancer.skills?.slice(0, 3).map((skill, i) => (
+                                <span key={i} className="px-3 py-1 bg-[#c5ae8c] text-white border border-[#c5ae8c] rounded-full text-xs font-medium shadow-sm transition-all duration-300 truncate max-w-[100px]">
+                                    {skill}
+                                </span>
+                            ))}
+                            {(freelancer.skills?.length ?? 0) > 3 && (
+                                <span className="text-gray-400 text-xs self-center px-1 font-medium">
+                                    +{(freelancer.skills?.length ?? 0) - 3}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
