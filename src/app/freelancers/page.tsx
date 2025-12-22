@@ -22,6 +22,7 @@ interface Freelancer {
   _count?: {
     bids: number;
     projects_created: number;
+    completed_projects: number;
   };
   bids_count?: number;
   completed_projects_count?: number;
