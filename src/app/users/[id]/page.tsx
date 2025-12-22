@@ -456,7 +456,11 @@ export default function UserProfilePage() {
 
         {/* Stats Grid */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className={`grid gap-4 mb-8 ${
+            isFreelancer 
+              ? "grid-cols-2 md:grid-cols-4" 
+              : "grid-cols-2 md:grid-cols-2 max-w-3xl mx-auto"
+          }`}>
             <Card padding="none" className="border-none shadow-md hover:shadow-lg transition-all bg-white rounded-2xl overflow-hidden group">
               <div className="h-1.5 w-full bg-[#20263e]"></div>
               <CardContent className="p-6 text-center">
