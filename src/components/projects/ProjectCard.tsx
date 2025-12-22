@@ -134,8 +134,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   };
 
   // 優先使用 fullProjectData 中的資料，因為它來自詳情 API，通常包含更完整的資訊
-  const displaySummary = fullProjectData?.ai_summary || project.ai_summary;
-  const displayDescription = fullProjectData?.description || project.description;
+  // 如果 fullProjectData 尚未加載，或是其中的欄位為空，則回退使用列表 API 提供的 project 資料
+  const displaySummary = (fullProjectData?.ai_summary) || project.ai_summary;
+  const displayDescription = (fullProjectData?.description) || project.description;
 
   return (
     <Link href={`/projects/${project.id}`} className="block h-full">

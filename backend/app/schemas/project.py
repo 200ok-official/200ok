@@ -106,6 +106,7 @@ class ProjectResponse(BaseModel):
     client_id: UUID
     title: str
     description: str
+    ai_summary: Optional[str] = None
     project_mode: str
     project_type: Optional[str] = None
     budget_min: Decimal
