@@ -12,7 +12,7 @@ import { confirmPayment, paymentPresets } from '@/utils/paymentConfirm';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
-import { apiGet, apiPost, isAuthenticated, clearAuth } from '@/lib/api';
+import { apiGet, apiPost, apiPut, isAuthenticated, clearAuth } from '@/lib/api';
 import { triggerTokenBalanceUpdate } from '@/hooks/useSession';
 
 interface Message {
@@ -72,6 +72,7 @@ export default function ConversationPage() {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [closingProject, setClosingProject] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isComposing, setIsComposing] = useState(false);
@@ -405,48 +406,83 @@ export default function ConversationPage() {
     }
   };
 
-  // 檢查評價權限 - 直接檢查項目狀態
+  // 關閉案件
+  const handleCloseProject = async () => {
+    if (!conversation?.project?.id) return;
+
+    const confirmed = confirm('確認要關閉此案件投稿，不再接收其他人的提案嗎');
+    if (!confirmed) return;
+
+    setClosingProject(true);
+    try {
+      if (!isAuthenticated()) {
+        router.push('/login');
+        return;
+      }
+
+      await apiPut(`/api/v1/projects/${conversation.project.id}`, { status: 'closed' });
+      
+      // 更新本地狀態
+      setConversation(prev => {
+        if (!prev || !prev.project) return prev;
+        return {
+          ...prev,
+          project: {
+            ...prev.project!,
+            status: 'closed'
+          }
+        };
+      });
+      
+      alert('✅ 案件已成功關閉');
+      
+      // 重新檢查評價權限
+      checkReviewPermission(conversation.project.id);
+      
+    } catch (error: any) {
+      alert(`❌ 關閉案件失敗：${error.message || '請稍後再試'}`);
+    } finally {
+      setClosingProject(false);
+    }
+  };
+
+  // 檢查評價權限 - 使用後端 API 檢查（支持雙方評價）
   const checkReviewPermission = async (projectId: string) => {
     try {
-      // 獲取項目詳情以查看實際狀態
-      const projectResponse = await apiGet(`/api/v1/projects/${projectId}`) as any;
+      // 使用後端的 can-review API，它會自動檢查：
+      // 1. 當前用戶是否為案件參與者（發案者或接案者）
+      // 2. 是否已經評價過對方
+      // 3. 案件狀態是否允許評價
+      const reviewCheckResponse = await apiGet(`/api/v1/projects/${projectId}/can-review`) as any;
       
-      if (projectResponse.success && projectResponse.data) {
-        const projectStatus = projectResponse.data.status;
+      if (reviewCheckResponse.success && reviewCheckResponse.data) {
+        const { can_review, reason } = reviewCheckResponse.data;
         
-        // 更新 conversation 中的項目狀態
+        // 更新項目狀態（如果需要）
         if (conversation?.project) {
-          setConversation({
-            ...conversation,
-            project: {
-              ...conversation.project,
-              status: projectStatus
-            }
-          });
+          const projectResponse = await apiGet(`/api/v1/projects/${projectId}`) as any;
+          if (projectResponse.success && projectResponse.data) {
+            const projectStatus = projectResponse.data.status;
+            setConversation({
+              ...conversation,
+              project: {
+                ...conversation.project,
+                status: projectStatus
+              }
+            });
+          }
         }
         
-        // 只有 closed 或 completed 狀態的項目可以評價
-        if (projectStatus === 'closed' || projectStatus === 'completed') {
-          setCanReview(true);
-          setHasReviewed(false);
-          setReviewReason(null);
-        } else {
-          // 根據狀態顯示相應的錯誤消息
-          const statusMap: Record<string, string> = {
-            'draft': '草稿',
-            'open': '開放中',
-            'in_progress': '進行中',
-            'cancelled': '已取消'
-          };
-          const statusText = statusMap[projectStatus] || projectStatus;
-          setCanReview(false);
-          setHasReviewed(false);
-          setReviewReason(`案件狀態為「${statusText}」，關閉案件後可以給予對方評價`);
-        }
+        // 檢查是否已經評價過（通過 reason 判斷）
+        const hasReviewed = reason && reason.includes('已經評價過');
+        
+        setCanReview(can_review || false);
+        setHasReviewed(hasReviewed);
+        setReviewReason(reason || null);
       } else {
         setCanReview(false);
         setHasReviewed(false);
-        setReviewReason('案件不存在');
+        setReviewReason('無法檢查評價權限');
       }
     } catch (error: any) {
       // 靜默失敗，不影響頁面載入
@@ -544,6 +580,10 @@ export default function ConversationPage() {
   const needsUnlock = conversation.type === 'project_proposal' && !conversation.recipient_paid && !isInitiator;
   const canSend = conversation.is_unlocked;
 
+  // 檢查是否為案件擁有者且案件為開放中
+  const isProjectOwner = conversation.type === 'project_proposal' && conversation.recipient_id === userId;
+  const isProjectOpen = conversation.project?.status === 'open';
+
   // 計算提案是否可撤回（7天後且未被接受）
   const canWithdraw = conversation.type === 'project_proposal' 
     && isInitiator 
@@ -590,23 +630,41 @@ export default function ConversationPage() {
               返回對話列表
             </button>
             
-            {/* 查看案件詳情按鈕（僅提案對話顯示） */}
+            {/* 查看案件詳情按鈕與關閉案件按鈕（僅提案對話顯示） */}
             {conversation.type === 'project_proposal' && conversation.project?.id && (
-              <Button
-                onClick={() => {
-                  if (conversation.project?.id) {
-                    router.push(`/projects/${conversation.project.id}`);
-                  }
-                }}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2 text-sm"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                  <path d="M10.75 16.82A7.462 7.462 0 0115 15.5c.71 0 1.396.098 2.046.282A.75.75 0 0018 15.06v-11a.75.75 0 00-.546-.721A9.006 9.006 0 0015 3a8.963 8.963 0 00-4.25 1.065V16.82zM9.25 4.065A8.963 8.963 0 005 3c-.85 0-1.673.118-2.454.339A.75.75 0 002 4.06v11a.75.75 0 00.954.721A7.506 7.506 0 015 15.5c1.579 0 3.042.487 4.25 1.32V4.065z" />
-                </svg>
-                查看案件詳情
-              </Button>
+              <div className="flex items-center gap-2">
+                {/* 關閉案件按鈕（僅案主且案件開放中顯示） */}
+                {isProjectOwner && isProjectOpen && (
+                  <Button
+                    onClick={handleCloseProject}
+                    disabled={closingProject}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                    </svg>
+                    {closingProject ? '處理中...' : '關閉案件投稿'}
+                  </Button>
+                )}
+
+                <Button
+                  onClick={() => {
+                    if (conversation.project?.id) {
+                      router.push(`/projects/${conversation.project.id}`);
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2 text-sm"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                    <path d="M10.75 16.82A7.462 7.462 0 0115 15.5c.71 0 1.396.098 2.046.282A.75.75 0 0018 15.06v-11a.75.75 0 00-.546-.721A9.006 9.006 0 0015 3a8.963 8.963 0 00-4.25 1.065V16.82zM9.25 4.065A8.963 8.963 0 005 3c-.85 0-1.673.118-2.454.339A.75.75 0 002 4.06v11a.75.75 0 00.954.721A7.506 7.506 0 015 15.5c1.579 0 3.042.487 4.25 1.32V4.065z" />
+                  </svg>
+                  查看案件詳情
+                </Button>
+              </div>
             )}
           </div>
 
