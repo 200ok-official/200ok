@@ -19,6 +19,12 @@ interface Freelancer {
   portfolio_links?: string[];
   hourly_rate?: number | null;
   created_at: string;
+  _count?: {
+    bids: number;
+    projects_created: number;
+  };
+  bids_count?: number;
+  completed_projects_count?: number;
 }
 
 export default function FreelancersPage() {
@@ -189,16 +195,12 @@ export default function FreelancersPage() {
           </div>
         )}
 
-        {/* Masonry Grid */}
+        {/* Grid Layout (Replaced Masonry) */}
         {!loading && filteredFreelancers.length > 0 && (
-          <div className="flex gap-6 items-start">
-            {columns.map((column, columnIndex) => (
-              <div key={columnIndex} className="flex-1 flex flex-col gap-6">
-                {column.map((freelancer) => (
-                  <div key={freelancer.id}>
-                    <FreelancerCard freelancer={freelancer} />
-                  </div>
-                ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-[200px]">
+            {filteredFreelancers.map((freelancer) => (
+              <div key={freelancer.id} className="h-full">
+                <FreelancerCard freelancer={freelancer} />
               </div>
             ))}
           </div>

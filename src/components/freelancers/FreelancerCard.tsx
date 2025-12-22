@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { StarIcon } from "@heroicons/react/24/solid";
+import { DocumentCheckIcon, ChartBarIcon } from "@heroicons/react/24/outline";
 
 interface FreelancerCardProps {
   freelancer: {
@@ -11,125 +13,132 @@ interface FreelancerCardProps {
     skills: string[];
     rating: number | null;
     hourly_rate?: number | null;
+    _count?: {
+        projects_created: number;
+        bids: number;
+        completed_projects: number;
+    };
+    bids_count?: number;
+    completed_projects_count?: number;
   };
 }
 
 export const FreelancerCard: React.FC<FreelancerCardProps> = ({
   freelancer,
 }) => {
+  const bidsCount = freelancer.bids_count ?? freelancer._count?.bids ?? 0;
+  const completedCount = freelancer.completed_projects_count ?? 0; 
+  
   const [isHovered, setIsHovered] = useState(false);
 
-  // Animation variants (same as ProjectCard)
-  const liquidVariants = {
+  // Animation variants
+  const overlayVariants = {
     initial: { 
-      clipPath: "polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)",
+      opacity: 0,
     },
     hover: { 
-      clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
+      opacity: 1, 
       transition: { 
-        duration: 0.5, 
+        duration: 0.2,
         ease: [0.4, 0, 0.2, 1] as const
       }
     }
   };
 
-  const contentVariants = {
-    initial: { opacity: 0, y: 10 },
-    hover: { 
-      opacity: 1, 
-      y: 0, 
-      transition: { delay: 0.2, duration: 0.3 } 
-    }
-  };
+  const hasSkills = freelancer.skills && freelancer.skills.length > 0;
 
   return (
     <Link href={`/users/${freelancer.id}`} className="block h-full">
-      <motion.div
-        className="group relative w-full rounded-[2rem] bg-white/40 shadow-none border-2 border-[#c5ae8c] hover:border-[#20263e] overflow-hidden h-full backdrop-blur-sm"
-        onHoverStart={() => setIsHovered(true)}
-        onHoverEnd={() => setIsHovered(false)}
-        whileHover={{ y: -5 }}
-        transition={{ type: "spring", stiffness: 300 }}
+      <div
+        className="group relative w-full bg-white rounded-3xl border border-gray-200 hover:border-[#c5ae8c] shadow-sm hover:shadow-[0_8px_30px_rgb(197,174,140,0.15)] transition-all duration-300 overflow-hidden h-full flex flex-col"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        {/* === 1. 原始內容層 (白色背景) === */}
-        <div className="relative z-10 p-8 h-full flex flex-col">
-           {/* Header: Avatar & Name */}
-           <div className="mb-6 flex flex-col items-center text-center">
-             <div className="mb-4 relative">
-                {freelancer.avatar_url ? (
-                    <img
-                        src={freelancer.avatar_url}
-                        alt={freelancer.name}
-                        className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
-                    />
-                ) : (
-                    <div className="w-24 h-24 rounded-full bg-[#20263e] flex items-center justify-center text-white text-3xl font-bold border-4 border-white shadow-md">
-                        {freelancer.name.charAt(0).toUpperCase()}
+        {/* Decorative Top Line - Gradient Theme Colors */}
+        <div className="h-1.5 w-full bg-[#20263e] relative z-20"></div>
+
+        <div className={`p-5 flex flex-col flex-1 relative ${!hasSkills ? 'justify-center items-center text-center' : ''}`}>
+            {/* Top Section: Avatar & Info */}
+            <div className={`flex gap-4 ${hasSkills ? 'items-start mb-3' : 'flex-col items-center w-full'}`}>
+                <div className="relative flex-shrink-0">
+                    {freelancer.avatar_url ? (
+                        <img
+                            src={freelancer.avatar_url}
+                            alt={freelancer.name}
+                            className="w-20 h-20 rounded-full object-cover border-2 border-white ring-2 ring-[#e6dfcf] group-hover:ring-[#c5ae8c] shadow-md transition-all duration-300"
+                        />
+                    ) : (
+                        <div className="w-20 h-20 rounded-full bg-[#20263e] flex items-center justify-center text-white text-3xl font-bold border-2 border-white ring-2 ring-[#e6dfcf] group-hover:ring-[#c5ae8c] shadow-md transition-all duration-300">
+                            {freelancer.name.charAt(0).toUpperCase()}
+                        </div>
+                    )}
+                    {freelancer.rating !== null && (
+                        <div className="absolute -bottom-1 -right-1 bg-white px-2 py-0.5 rounded-full shadow border border-gray-100 flex items-center gap-0.5">
+                            <StarIcon className="w-4 h-4 text-[#fbbf24]" />
+                            <span className="text-sm font-bold text-[#20263e]">{freelancer.rating.toFixed(1)}</span>
+                        </div>
+                    )}
+                </div>
+
+                <div className={`flex-1 min-w-0 pt-1 ${!hasSkills ? 'w-full flex flex-col items-center' : ''}`}>
+                    <div className={`flex ${hasSkills ? 'justify-between items-start' : 'flex-col items-center gap-2 mb-2'}`}>
+                        <h3 className="text-2xl font-bold text-[#20263e] truncate font-serif tracking-tight leading-tight">
+                            {freelancer.name}
+                        </h3>
+                        {freelancer.hourly_rate && (
+                           <span className={`flex-shrink-0 text-xs font-medium text-[#20263e] bg-[#fcfbf8] px-2 py-1 rounded-full border border-gray-100 group-hover:border-[#e6dfcf] transition-colors ${hasSkills ? 'ml-1' : ''}`}>
+                             ${freelancer.hourly_rate}/hr
+                           </span>
+                        )}
                     </div>
-                )}
-                {freelancer.rating !== null && (
-                    <div className="absolute -bottom-2 -right-2 bg-white px-2 py-1 rounded-full shadow-sm border border-gray-100 flex items-center gap-1">
-                        <span className="text-[#fbbf24]">★</span>
-                        <span className="text-sm font-bold text-[#20263e]">{freelancer.rating.toFixed(1)}</span>
+                    
+                    {/* Stats Icons Row - Directly integrated */}
+                    <div className={`flex items-center gap-4 text-gray-500 mt-2 ${!hasSkills ? 'justify-center' : ''}`}>
+                        <div className="flex items-center gap-1.5 group-hover:text-[#c5ae8c] transition-colors" title="投標次數">
+                            <DocumentCheckIcon className="w-5 h-5 text-[#c5ae8c] group-hover:text-[#20263e] transition-colors" />
+                            <span className="text-base font-bold text-[#20263e]">{bidsCount}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 group-hover:text-[#c5ae8c] transition-colors" title="完成專案">
+                            <ChartBarIcon className="w-5 h-5 text-[#c5ae8c] group-hover:text-[#20263e] transition-colors" />
+                            <span className="text-base font-bold text-[#20263e]">{completedCount}</span>
+                        </div>
                     </div>
-                )}
-             </div>
-             
-             <h3 className="text-2xl font-bold text-[#20263e] tracking-tight mb-1" style={{ fontFamily: "'Noto Serif TC', serif" }}>
-               {freelancer.name}
-             </h3>
-             
-             {freelancer.hourly_rate && (
-                <p className="text-[#c5ae8c] font-medium">
-                    ${freelancer.hourly_rate} <span className="text-gray-400 text-sm">/ hr</span>
-                </p>
-             )}
-           </div>
-           
-           {/* Skills */}
-           <div className="mt-auto w-full">
-              <div className="flex flex-wrap gap-2 justify-center">
-                {freelancer.skills && freelancer.skills.slice(0, 5).map((skill, i) => (
-                  <span key={i} className="bg-[#f5f3ed] text-[#20263e] px-3 py-1 rounded-full text-sm font-medium">
-                    {skill}
-                  </span>
-                ))}
-                {freelancer.skills && freelancer.skills.length > 5 && (
-                  <span className="text-gray-400 text-xs self-center">+{freelancer.skills.length - 5}</span>
-                )}
-              </div>
-           </div>
+                </div>
+            </div>
+
+            {/* Bottom Section: Skills */}
+            {hasSkills && (
+                <div className="mt-auto pt-1 w-full">
+                    <div className="flex flex-wrap gap-1.5">
+                        {freelancer.skills.slice(0, 3).map((skill, i) => (
+                            <span key={i} className="px-3 py-1 bg-gray-50 text-gray-600 border border-gray-100 rounded-full text-xs font-medium shadow-sm group-hover:bg-[#f5f3ed] group-hover:text-[#20263e] group-hover:border-[#e6dfcf] transition-all duration-300 truncate max-w-[100px]">
+                                {skill}
+                            </span>
+                        ))}
+                        {freelancer.skills.length > 3 && (
+                            <span className="text-gray-400 text-xs self-center px-1 font-medium group-hover:text-[#c5ae8c] transition-colors">
+                                +{freelancer.skills.length - 3}
+                            </span>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
 
-        {/* === 2. 液體填充層 (深色背景) === */}
+        {/* Hover Overlay - Compact Bio */}
         <motion.div
-          className="absolute inset-0 bg-[#20263e] z-20 flex flex-col p-8 text-white text-center items-center justify-center"
-          initial="initial"
-          animate={isHovered ? "hover" : "initial"}
-          variants={liquidVariants}
+            className="absolute inset-0 bg-[#20263e]/90 backdrop-blur-md z-20 p-6 flex flex-col justify-center items-center text-center"
+            initial="initial"
+            animate={isHovered ? "hover" : "initial"}
+            variants={overlayVariants}
         >
-          <motion.div 
-            className="flex flex-col items-center w-full"
-            variants={contentVariants}
-          >
-            <h3 className="text-xl font-bold mb-4 text-[#c5ae8c]" style={{ fontFamily: "'Noto Serif TC', serif" }}>
-                關於我
-            </h3>
-            <div className="w-12 h-1 bg-[#c5ae8c] rounded-full mb-6"></div>
-            
-            <p className="text-white/90 text-lg leading-relaxed line-clamp-3 mb-8">
+            <h4 className="text-[#c5ae8c] font-serif font-bold text-lg mb-3">關於我</h4>
+            <div className="w-8 h-1 bg-[#c5ae8c] rounded-full mb-4"></div>
+            <p className="text-white/90 text-sm leading-relaxed line-clamp-5">
                 {freelancer.bio || "這位接案者尚未填寫自我介紹。"}
             </p>
-            
-            <div>
-                 <span className="text-sm text-[#c5ae8c] border border-[#c5ae8c] px-4 py-2 rounded-full">
-                    查看完整檔案
-                 </span>
-            </div>
-          </motion.div>
         </motion.div>
-      </motion.div>
+      </div>
     </Link>
   );
 };
-
