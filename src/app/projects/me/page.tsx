@@ -80,16 +80,30 @@ export default function MyProjectsPage() {
     e.preventDefault();
     e.stopPropagation();
 
-    // 只允许 open、closed、completed 状态切换
-    if (project.status !== 'open' && project.status !== 'closed' && project.status !== 'completed') return;
+    // 只允许 open、closed、completed、in_progress 状态切换
+    if (!['open', 'closed', 'completed', 'in_progress'].includes(project.status)) return;
 
-    // 切换逻辑：open → closed, closed → open, completed → closed
+    // 切换逻辑：
+    // open → completed (完成) 或 closed (關閉)
+    // in_progress → completed (完成)
+    // completed → closed (關閉)
+    // closed → open (重新開放)
     let newStatus: string;
     let actionName: string;
     
     if (project.status === 'open') {
-      newStatus = 'closed';
-      actionName = '關閉';
+      // 詢問要完成還是關閉
+      const choice = confirm('點擊「確定」標記為已完成，點擊「取消」標記為已關閉');
+      if (choice) {
+        newStatus = 'completed';
+        actionName = '完成';
+      } else {
+        newStatus = 'closed';
+        actionName = '關閉';
+      }
+    } else if (project.status === 'in_progress') {
+      newStatus = 'completed';
+      actionName = '完成';
     } else if (project.status === 'completed') {
       newStatus = 'closed';
       actionName = '標記為已關閉';
@@ -197,7 +211,7 @@ export default function MyProjectsPage() {
                           </h2>
                           {getStatusBadge(project.status)}
                           
-                          {(project.status === 'open' || project.status === 'closed' || project.status === 'completed') && (
+                          {(project.status === 'open' || project.status === 'closed' || project.status === 'completed' || project.status === 'in_progress') && (
                             <button
                               onClick={(e) => handleStatusToggle(e, project)}
                               className={`px-3 py-1 text-xs rounded-full border transition-colors ${

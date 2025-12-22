@@ -33,16 +33,17 @@ export class ReviewService extends BaseService {
       throw new NotFoundError("案件不存在");
     }
 
-    // 專案必須是已完成或已關閉狀態
-    if ((project as any).status !== 'completed' && (project as any).status !== 'closed') {
+    // 專案必須是已完成狀態
+    if ((project as any).status !== 'completed') {
       const statusMap: Record<string, string> = {
         'draft': '草稿',
         'open': '開放中',
         'in_progress': '進行中',
+        'closed': '已關閉',
         'cancelled': '已取消'
       };
       const statusText = statusMap[(project as any).status] || (project as any).status;
-      throw new BadRequestError(`案件狀態為「${statusText}」，只有已完成或已關閉的案件可以評價`);
+      throw new BadRequestError(`案件狀態為「${statusText}」，只有已完成的案件可以評價`);
     }
 
     // 取得接受的投標
@@ -261,18 +262,19 @@ export class ReviewService extends BaseService {
       throw new NotFoundError("案件不存在");
     }
 
-    // 專案必須是已完成或已關閉狀態
-    if ((project as any).status !== 'completed' && (project as any).status !== 'closed') {
+    // 專案必須是已完成狀態
+    if ((project as any).status !== 'completed') {
       const statusMap: Record<string, string> = {
         'draft': '草稿',
         'open': '開放中',
         'in_progress': '進行中',
+        'closed': '已關閉',
         'cancelled': '已取消'
       };
       const statusText = statusMap[(project as any).status] || (project as any).status;
       return {
         can_review: false,
-        reason: `案件狀態為「${statusText}」，只有已完成或已關閉的案件可以評價`,
+        reason: `案件狀態為「${statusText}」，只有已完成的案件可以評價`,
       };
     }
 

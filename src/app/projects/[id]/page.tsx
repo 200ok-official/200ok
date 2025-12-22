@@ -357,16 +357,18 @@ export default function ProjectDetailPage({
                           ? "bg-green-100 text-green-800 border border-green-200"
                           : project.status === "closed"
                           ? "bg-gray-500 text-white border border-gray-600"
+                          : project.status === "completed"
+                          ? "bg-purple-100 text-purple-800 border border-purple-200"
                           : "bg-gray-100 text-gray-800 border border-gray-200"
                       }`}
                     >
                       <option value="open">開放中</option>
+                      <option value="completed">已完成</option>
                       <option value="closed">已關閉</option>
-                      {!['open', 'closed'].includes(project.status) && (
+                      {!['open', 'closed', 'completed'].includes(project.status) && (
                         <option value={project.status}>
                           {project.status === 'draft' ? '草稿' :
                            project.status === 'in_progress' ? '進行中' :
-                           project.status === 'completed' ? '已完成' :
                            project.status === 'cancelled' ? '已取消' : project.status}
                         </option>
                       )}

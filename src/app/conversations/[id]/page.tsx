@@ -406,6 +406,46 @@ export default function ConversationPage() {
     }
   };
 
+  // 完成案件
+  const handleCompleteProject = async () => {
+    if (!conversation?.project?.id) return;
+
+    const confirmed = confirm('確認要標記此案件為已完成嗎？完成後可以給予對方評價。');
+    if (!confirmed) return;
+
+    setClosingProject(true);
+    try {
+      if (!isAuthenticated()) {
+        router.push('/login');
+        return;
+      }
+
+      await apiPut(`/api/v1/projects/${conversation.project.id}`, { status: 'completed' });
+      
+      // 更新本地狀態
+      setConversation(prev => {
+        if (!prev || !prev.project) return prev;
+        return {
+          ...prev,
+          project: {
+            ...prev.project!,
+            status: 'completed'
+          }
+        };
+      });
+      
+      alert('✅ 案件已標記為已完成');
+      
+      // 重新檢查評價權限
+      checkReviewPermission(conversation.project.id);
+      
+    } catch (error: any) {
+      alert(`❌ 完成案件失敗：${error.message || '請稍後再試'}`);
+    } finally {
+      setClosingProject(false);
+    }
+  };
+
   // 關閉案件
   const handleCloseProject = async () => {
     if (!conversation?.project?.id) return;
@@ -513,8 +553,8 @@ export default function ConversationPage() {
       const projectResponse = await apiGet(`/api/v1/projects/${conversation.project.id}`) as any;
       if (projectResponse.success && projectResponse.data) {
         const projectStatus = projectResponse.data.status;
-        if (projectStatus !== 'closed' && projectStatus !== 'completed') {
-          setReviewError(`案件狀態為「${projectStatus}」，關閉案件後可以給予對方評價`);
+        if (projectStatus !== 'completed') {
+          setReviewError(`案件狀態為「${projectStatus}」，完成案件後可以給予對方評價`);
           setSubmittingReview(false);
           return;
         }
@@ -583,6 +623,8 @@ export default function ConversationPage() {
   // 檢查是否為案件擁有者且案件為開放中
   const isProjectOwner = conversation.type === 'project_proposal' && conversation.recipient_id === userId;
   const isProjectOpen = conversation.project?.status === 'open';
+  const isProjectInProgress = conversation.project?.status === 'in_progress';
+  const canCompleteProject = isProjectOwner && (isProjectOpen || isProjectInProgress);
 
   // 計算提案是否可撤回（7天後且未被接受）
   const canWithdraw = conversation.type === 'project_proposal' 
@@ -630,9 +672,24 @@ export default function ConversationPage() {
               返回對話列表
             </button>
             
-            {/* 查看案件詳情按鈕與關閉案件按鈕（僅提案對話顯示） */}
+            {/* 查看案件詳情按鈕與案件狀態操作按鈕（僅提案對話顯示） */}
             {conversation.type === 'project_proposal' && conversation.project?.id && (
               <div className="flex items-center gap-2">
+                {/* 完成案件按鈕（僅案主且案件開放中或進行中顯示） */}
+                {canCompleteProject && (
+                  <Button
+                    onClick={handleCompleteProject}
+                    disabled={closingProject}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2 text-sm text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+                    </svg>
+                    {closingProject ? '處理中...' : '完成案件'}
+                  </Button>
+                )}
                 {/* 關閉案件按鈕（僅案主且案件開放中顯示） */}
                 {isProjectOwner && isProjectOpen && (
                   <Button
