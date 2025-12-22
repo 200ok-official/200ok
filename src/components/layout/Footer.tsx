@@ -70,6 +70,12 @@ export const Footer: React.FC = () => {
                     如何運作
                   </Link>
                 </li>
+                <li>
+                  <Link href="/team" className="text-gray-400 hover:text-[#c5ae8c] transition-colors flex items-center group">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#c5ae8c] mr-2 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                    開發團隊
+                  </Link>
+                </li>
               </ul>
             </div>
 
