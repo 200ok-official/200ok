@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -36,6 +36,7 @@ export default function SubmitProposalPage() {
   const [estimatedDays, setEstimatedDays] = useState('');
   const [error, setError] = useState('');
   const [showPreview, setShowPreview] = useState(true);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     fetchProjectInfo();
@@ -87,6 +88,32 @@ export default function SubmitProposalPage() {
     ];
 
     return patterns.some(pattern => pattern.test(text));
+  };
+
+  // Markdown 快捷按鈕插入函數
+  const insertMarkdown = (prefix: string, suffix: string = "") => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = proposalContent.substring(start, end);
+    const before = proposalContent.substring(0, start);
+    const after = proposalContent.substring(end);
+    
+    // 如果沒有選中文字，且是標題類型，提供預設文字
+    const defaultText = selected || (prefix.includes('#') ? '標題' : '文字');
+    
+    const newText = `${before}${prefix}${defaultText}${suffix}${after}`;
+    setProposalContent(newText);
+    
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(
+        start + prefix.length, 
+        start + prefix.length + defaultText.length
+      );
+    }, 0);
   };
 
   const handleSubmit = async () => {
@@ -360,13 +387,85 @@ ${proposalContent}`;
                     提案內容 <span className="text-red-500">*</span>
                     <span className="text-gray-500 font-normal ml-2">(支援 Markdown)</span>
                   </label>
-                  <textarea
-                    value={proposalContent}
-                    onChange={(e) => setProposalContent(e.target.value)}
-                    placeholder="請詳細說明您的提案內容，包括：&#10;• 您對案件的理解&#10;• 技術方案與實作計畫&#10;• 相關經驗與作品集&#10;• 為何您是最佳人選&#10;&#10;支援 Markdown 語法：**粗體**、*斜體*、[連結](url)、清單等"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c5ae8c] focus:border-transparent font-mono text-sm"
-                    rows={20}
-                  />
+                  <div className="space-y-0">
+                    {/* Markdown Toolbar */}
+                    <div className="flex items-center gap-1 p-1 bg-gray-50 border rounded-t-md border-b-0">
+                      <button 
+                        type="button"
+                        onClick={() => insertMarkdown('**', '**')} 
+                        className="p-2 hover:bg-gray-200 rounded text-sm font-bold" 
+                        title="粗體"
+                        disabled={submitting}
+                      >
+                        B
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => insertMarkdown('_', '_')} 
+                        className="p-2 hover:bg-gray-200 rounded text-sm italic" 
+                        title="斜體"
+                        disabled={submitting}
+                      >
+                        I
+                      </button>
+                      <div className="w-px h-4 bg-gray-300 mx-1"></div>
+                      <button 
+                        type="button"
+                        onClick={() => insertMarkdown('# ')} 
+                        className="p-2 hover:bg-gray-200 rounded text-sm font-bold" 
+                        title="大標題"
+                        disabled={submitting}
+                      >
+                        H1
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => insertMarkdown('## ')} 
+                        className="p-2 hover:bg-gray-200 rounded text-sm font-bold" 
+                        title="中標題"
+                        disabled={submitting}
+                      >
+                        H2
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => insertMarkdown('- ')} 
+                        className="p-2 hover:bg-gray-200 rounded text-sm" 
+                        title="清單"
+                        disabled={submitting}
+                      >
+                        • List
+                      </button>
+                      <div className="w-px h-4 bg-gray-300 mx-1"></div>
+                      <button 
+                        type="button"
+                        onClick={() => insertMarkdown('[', '](url)')} 
+                        className="p-2 hover:bg-gray-200 rounded text-sm" 
+                        title="連結"
+                        disabled={submitting}
+                      >
+                        🔗 Link
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => insertMarkdown('`', '`')} 
+                        className="p-2 hover:bg-gray-200 rounded text-sm font-mono" 
+                        title="行內代碼"
+                        disabled={submitting}
+                      >
+                        Code
+                      </button>
+                    </div>
+                    <textarea
+                      ref={textareaRef}
+                      value={proposalContent}
+                      onChange={(e) => setProposalContent(e.target.value)}
+                      placeholder="請詳細說明您的提案內容，包括：&#10;• 您對案件的理解&#10;• 技術方案與實作計畫&#10;• 相關經驗與作品集&#10;• 為何您是最佳人選&#10;&#10;支援 Markdown 語法：**粗體**、*斜體*、[連結](url)、清單等"
+                      className="w-full px-4 py-3 border border-t-0 border-gray-300 rounded-b-lg focus:ring-2 focus:ring-[#c5ae8c] focus:border-transparent font-mono text-sm"
+                      rows={20}
+                      disabled={submitting}
+                    />
+                  </div>
                 </div>
 
                 {/* 操作按鈕 */}
