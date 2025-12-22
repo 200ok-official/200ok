@@ -75,8 +75,11 @@ export default function ConversationPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isComposing, setIsComposing] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
+  const [showHeader, setShowHeader] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isInitialLoad = useRef(true);
+  const lastScrollTop = useRef(0);
 
   // 初始化並載入資料
   useEffect(() => {
@@ -187,6 +190,37 @@ export default function ConversationPage() {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  // 處理滾動事件 - 向下隱藏，向上顯示
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const currentScrollTop = container.scrollTop;
+      
+      // 如果在最頂部，總是顯示
+      if (currentScrollTop <= 10) {
+        setShowHeader(true);
+        lastScrollTop.current = currentScrollTop;
+        return;
+      }
+
+      // 向下滾動時隱藏，向上滾動時顯示
+      if (currentScrollTop > lastScrollTop.current && currentScrollTop > 50) {
+        // 向下滾動
+        setShowHeader(false);
+      } else if (currentScrollTop < lastScrollTop.current) {
+        // 向上滾動
+        setShowHeader(true);
+      }
+
+      lastScrollTop.current = currentScrollTop;
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // 重新獲取訊息 (用於發送後更新)
   const refreshMessages = async () => {
@@ -371,8 +405,12 @@ export default function ConversationPage() {
       {/* 主要內容區 - 使用固定高度佈局 */}
       <div className="flex-1 flex flex-col w-full max-w-5xl mx-auto bg-white shadow-sm md:border-x border-gray-100 overflow-hidden">
         
-        {/* 頂部資訊欄 - 固定，更清楚的設計 */}
-        <div className="flex-none bg-white z-10 border-b border-gray-200 shadow-sm">
+        {/* 頂部資訊欄 - 可滾動隱藏 */}
+        <div 
+          className={`flex-none bg-white z-10 border-b border-gray-200 shadow-sm transition-transform duration-300 ${
+            showHeader ? 'translate-y-0' : '-translate-y-full'
+          }`}
+        >
           {/* 返回按鈕與查看案件按鈕 */}
           <div className="px-4 md:px-6 pt-4 pb-2 flex items-center justify-between">
             <button
@@ -488,7 +526,10 @@ export default function ConversationPage() {
         </div>
 
         {/* 訊息列表區 - 可滾動 */}
-        <div className="flex-1 overflow-y-auto bg-[#fafaf8] px-4 md:px-6 py-4">
+        <div 
+          ref={messagesContainerRef}
+          className="flex-1 overflow-y-auto bg-[#fafaf8] px-4 md:px-6 py-4"
+        >
           
           {/* 提示橫幅 */}
           {conversation.type === 'project_proposal' && !conversation.is_unlocked && (
