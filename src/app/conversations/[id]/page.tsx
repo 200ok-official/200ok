@@ -80,6 +80,15 @@ export default function ConversationPage() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isInitialLoad = useRef(true);
   const lastScrollTop = useRef(0);
+  
+  // 评价相关状态
+  const [canReview, setCanReview] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   // 初始化並載入資料
   useEffect(() => {
@@ -145,6 +154,11 @@ export default function ConversationPage() {
           } catch (error) {
             console.error('Failed to mark messages as read:', error);
             // 不阻擋頁面載入，靜默失敗
+          }
+          
+          // 如果是提案對話，檢查是否可以評價
+          if (convRes.data.type === 'project_proposal' && convRes.data.project?.id) {
+            checkReviewPermission(convRes.data.project.id);
           }
         } catch (error: any) {
           console.error('Failed to load conversation data:', error);
@@ -243,6 +257,10 @@ export default function ConversationPage() {
     try {
       const { data } = await apiGet(`/api/v1/conversations/${params.id}`);
       setConversation(data);
+      // 如果是提案對話，重新檢查評價權限
+      if (data.type === 'project_proposal' && data.project?.id) {
+        checkReviewPermission(data.project.id);
+      }
     } catch (error) {
       console.error('Failed to refresh conversation', error);
     }
@@ -339,6 +357,62 @@ export default function ConversationPage() {
       alert(`❌ 撤回失敗：${error.message || '請稍後再試'}`);
     } finally {
       setWithdrawing(false);
+    }
+  };
+
+  // 檢查評價權限
+  const checkReviewPermission = async (projectId: string) => {
+    try {
+      const response = await apiGet(`/api/v1/projects/${projectId}/can-review`) as any;
+      if (response.success && response.data) {
+        setCanReview(response.data.can_review || false);
+        setHasReviewed(response.data.reason === '您已經評價過此案件');
+      }
+    } catch (error: any) {
+      // 靜默失敗，不影響頁面載入
+      console.error('Failed to check review permission:', error);
+      setCanReview(false);
+      setHasReviewed(false);
+    }
+  };
+
+  // 提交評價
+  const handleSubmitReview = async () => {
+    if (!conversation?.project?.id || reviewRating === 0 || !reviewComment.trim()) {
+      setReviewError('請填寫評分和評論');
+      return;
+    }
+
+    setSubmittingReview(true);
+    setReviewError(null);
+
+    try {
+      if (!isAuthenticated()) {
+        router.push('/login');
+        return;
+      }
+
+      const response = await apiPost(`/api/v1/projects/${conversation.project.id}/reviews`, {
+        rating: reviewRating,
+        comment: reviewComment,
+        tags: []
+      }) as any;
+
+      if (response.success) {
+        setShowReviewModal(false);
+        setHasReviewed(true);
+        setCanReview(false);
+        setReviewRating(0);
+        setReviewComment('');
+        alert('✅ 評價已提交');
+      } else {
+        setReviewError(response.error || '提交失敗');
+      }
+    } catch (error: any) {
+      console.error('Failed to submit review:', error);
+      setReviewError(error.message || '提交評價失敗，請稍後再試');
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -517,6 +591,31 @@ export default function ConversationPage() {
                           {otherUser.phone}
                         </a>
                       )}
+                    </div>
+                  )}
+
+                  {/* 評價按鈕或狀態 */}
+                  {conversation.type === 'project_proposal' && (
+                    <div className="mt-3">
+                      {hasReviewed ? (
+                        <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 border border-green-200 rounded-full text-xs text-green-700 font-medium">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                            <path fillRule="evenodd" d="M16.403 12.652a3 3 0 000-5.304 3 3 0 00-3.75-3.751 3 3 0 00-5.305 0 3 3 0 00-3.751 3.75 3 3 0 000 5.305 3 3 0 003.75 3.751 3 3 0 005.305 0 3 3 0 003.751-3.75zm-2.546-4.46a.75.75 0 00-1.214-.883l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+                          </svg>
+                          已評價
+                        </span>
+                      ) : canReview ? (
+                        <Button
+                          onClick={() => setShowReviewModal(true)}
+                          size="sm"
+                          className="bg-[#c5ae8c] text-white hover:bg-[#b09a75]"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 mr-1.5">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          給對方留評價
+                        </Button>
+                      ) : null}
                     </div>
                   )}
                 </div>
@@ -741,6 +840,120 @@ export default function ConversationPage() {
           )}
         </div>
       </div>
+
+      {/* 評價彈窗 */}
+      {showReviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="p-6">
+              {/* 標題 */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-[#20263e]">給 {otherUser.name} 留評價</h2>
+                <button
+                  onClick={() => {
+                    setShowReviewModal(false);
+                    setReviewError(null);
+                    setReviewRating(0);
+                    setReviewComment('');
+                  }}
+                  className="text-gray-400 hover:text-gray-600 text-2xl transition-colors"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* 專案資訊 */}
+              {conversation.project && (
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-1">專案</p>
+                  <p className="text-base font-semibold text-[#20263e]">{conversation.project.title}</p>
+                </div>
+              )}
+
+              {/* 評分選擇 */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#20263e] mb-2">評分</label>
+                <div className="flex items-center gap-2">
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <button
+                      key={rating}
+                      type="button"
+                      onClick={() => setReviewRating(rating)}
+                      className={`w-10 h-10 rounded-lg transition-all ${
+                        reviewRating >= rating
+                          ? 'bg-[#c5ae8c] text-white'
+                          : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                      }`}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="w-5 h-5"
+                      >
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    </button>
+                  ))}
+                </div>
+                {reviewRating > 0 && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    {reviewRating === 1 && '非常不滿意'}
+                    {reviewRating === 2 && '不滿意'}
+                    {reviewRating === 3 && '普通'}
+                    {reviewRating === 4 && '滿意'}
+                    {reviewRating === 5 && '非常滿意'}
+                  </p>
+                )}
+              </div>
+
+              {/* 評論輸入 */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#20263e] mb-2">評論</label>
+                <textarea
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  placeholder="請分享您的使用體驗..."
+                  rows={4}
+                  className="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#20263e] focus:border-[#20263e] resize-none text-sm transition-all"
+                />
+              </div>
+
+              {/* 錯誤訊息 */}
+              {reviewError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-700">{reviewError}</p>
+                </div>
+              )}
+
+              {/* 按鈕 */}
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={() => {
+                    setShowReviewModal(false);
+                    setReviewError(null);
+                    setReviewRating(0);
+                    setReviewComment('');
+                  }}
+                  variant="outline"
+                  className="flex-1"
+                  disabled={submittingReview}
+                >
+                  取消
+                </Button>
+                <Button
+                  onClick={handleSubmitReview}
+                  className="flex-1 bg-[#20263e] text-white hover:bg-[#2d3550]"
+                  disabled={submittingReview || reviewRating === 0 || !reviewComment.trim()}
+                  loading={submittingReview}
+                >
+                  提交評價
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
