@@ -75,10 +75,11 @@ function LoginForm() {
       const sessionAny = session as any;
       const accessToken = sessionAny.accessToken;
       const refreshToken = sessionAny.refreshToken;
-      const userId = session.user?.id || (session.user as any)?.id;
+      const userAny = session.user as any;
+      const userId = userAny?.id;
       const userEmail = session.user?.email;
       const userName = session.user?.name;
-      const userRoles = (session.user as any)?.roles;
+      const userRoles = userAny?.roles;
 
       // 如果有 accessToken，表示 Google 登入成功
       if (accessToken && refreshToken && userId) {
