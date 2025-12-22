@@ -43,11 +43,22 @@ export default function TokensPage() {
     fetchTokenData();
   }, [router]);
 
-  const handlePurchase = async (amount: number) => {
+  const handlePurchase = async (amount: number, discountCode?: string) => {
     try {
-      const data = await apiPost('/api/v1/tokens/purchase', { amount });
+      const requestBody: any = { amount };
+      if (discountCode) {
+        requestBody.discount_code = discountCode;
+      }
+      
+      const data = await apiPost('/api/v1/tokens/purchase', requestBody);
       if (data.success) {
-        alert(`✅ ${data.message || '購買成功！'}\n\n實際獲得：${data.data.total_received} 代幣\n當前餘額：${data.data.new_balance} 代幣`);
+        let message = `✅ ${data.message || '購買成功！'}\n\n`;
+        message += `實際獲得：${data.data.total_received} 代幣\n`;
+        message += `當前餘額：${data.data.new_balance} 代幣`;
+        if (data.data.discount_amount > 0) {
+          message += `\n折扣金額：NT$ ${data.data.discount_amount}`;
+        }
+        alert(message);
         // 重新載入代幣資料
         await fetchTokenData();
         // 通知 Navbar 更新代幣餘額
@@ -57,7 +68,8 @@ export default function TokensPage() {
       }
     } catch (error: any) {
       console.error('Purchase error:', error);
-      alert(`購買失敗：${error.message || '請稍後再試'}`);
+      const errorMessage = error.response?.data?.detail || error.message || '請稍後再試';
+      alert(`購買失敗：${errorMessage}`);
       throw error;
     }
   };
