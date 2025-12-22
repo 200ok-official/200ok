@@ -18,7 +18,11 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === "google" && profile?.email) {
         try {
           // 調用後端 Google OAuth API
-          const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+          // 使用與專案統一的環境變數名稱
+          const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+          
+          console.log('[Google OAuth] Backend URL:', backendUrl);
+          
           const response = await fetch(`${backendUrl}/api/v1/auth/google`, {
             method: 'POST',
             headers: {
