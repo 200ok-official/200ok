@@ -72,12 +72,12 @@ export const FreelancerCard: React.FC<FreelancerCardProps> = ({
                             {freelancer.name.charAt(0).toUpperCase()}
                         </div>
                     )}
-                    {freelancer.rating !== null && (
-                        <div className="absolute -bottom-1 -right-1 bg-white px-2 py-0.5 rounded-full shadow border border-gray-100 flex items-center gap-0.5">
-                            <StarIcon className="w-4 h-4 text-[#fbbf24]" />
-                            <span className="text-sm font-bold text-[#20263e]">{freelancer.rating.toFixed(1)}</span>
-                        </div>
-                    )}
+                    <div className="absolute -bottom-1 -right-1 bg-white px-2 py-0.5 rounded-full shadow border border-gray-100 flex items-center gap-0.5">
+                        <StarIcon className="w-4 h-4 text-[#fbbf24]" />
+                        <span className="text-sm font-bold text-[#20263e]">
+                            {freelancer.rating !== null ? freelancer.rating.toFixed(1) : 'N/A'}
+                        </span>
+                    </div>
                 </div>
 
                 <div className={`flex-1 min-w-0 pt-1 ${!hasSkills ? 'w-full flex flex-col items-center' : ''}`}>
