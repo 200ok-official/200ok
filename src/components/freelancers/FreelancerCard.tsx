@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+"use client";
+
+import React, { useState, useRef, useLayoutEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { StarIcon } from "@heroicons/react/24/solid";
@@ -30,20 +32,49 @@ export const FreelancerCard: React.FC<FreelancerCardProps> = ({
   const completedCount = freelancer.completed_projects_count ?? 0; 
   
   const [isHovered, setIsHovered] = useState(false);
+  const bioRef = useRef<HTMLParagraphElement>(null);
+  const bioContainerRef = useRef<HTMLDivElement>(null);
+  const [scrollDistance, setScrollDistance] = useState(0);
+  const [isOverflowing, setIsOverflowing] = useState(false);
 
-  // Animation variants
-  const overlayVariants = {
+  // Animation variants - Liquid Effect (Fill from top)
+  const liquidVariants = {
     initial: { 
-      opacity: 0,
+      clipPath: "polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)",
     },
     hover: { 
-      opacity: 1, 
+      clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
       transition: { 
-        duration: 0.2,
+        duration: 0.5, 
         ease: [0.4, 0, 0.2, 1] as const
       }
     }
   };
+
+  const contentVariants = {
+    initial: { opacity: 0, y: 10 },
+    hover: { 
+      opacity: 1, 
+      y: 0, 
+      transition: { delay: 0.2, duration: 0.3 } 
+    }
+  };
+
+  // Measure content for auto-scrolling
+  useLayoutEffect(() => {
+    if (bioRef.current && bioContainerRef.current) {
+        const contentHeight = bioRef.current.offsetHeight;
+        const containerHeight = bioContainerRef.current.offsetHeight;
+        
+        if (contentHeight > containerHeight) {
+            setScrollDistance(contentHeight - containerHeight);
+            setIsOverflowing(true);
+        } else {
+            setScrollDistance(0);
+            setIsOverflowing(false);
+        }
+    }
+  }, [freelancer.bio, isHovered]);
 
   const hasSkills = freelancer.skills && freelancer.skills.length > 0;
 
@@ -111,12 +142,12 @@ export const FreelancerCard: React.FC<FreelancerCardProps> = ({
                 <div className="mt-auto pt-1 w-full">
                     <div className="flex flex-wrap gap-1.5">
                         {freelancer.skills.slice(0, 3).map((skill, i) => (
-                            <span key={i} className="px-3 py-1 bg-gray-50 text-gray-600 border border-gray-100 rounded-full text-xs font-medium shadow-sm group-hover:bg-[#f5f3ed] group-hover:text-[#20263e] group-hover:border-[#e6dfcf] transition-all duration-300 truncate max-w-[100px]">
+                            <span key={i} className="px-3 py-1 bg-[#c5ae8c] text-white border border-[#c5ae8c] rounded-full text-xs font-medium shadow-sm transition-all duration-300 truncate max-w-[100px]">
                                 {skill}
                             </span>
                         ))}
                         {freelancer.skills.length > 3 && (
-                            <span className="text-gray-400 text-xs self-center px-1 font-medium group-hover:text-[#c5ae8c] transition-colors">
+                            <span className="text-gray-400 text-xs self-center px-1 font-medium">
                                 +{freelancer.skills.length - 3}
                             </span>
                         )}
@@ -125,18 +156,46 @@ export const FreelancerCard: React.FC<FreelancerCardProps> = ({
             )}
         </div>
 
-        {/* Hover Overlay - Compact Bio */}
+        {/* Hover Overlay - Liquid Effect & Auto-scroll Bio */}
         <motion.div
-            className="absolute inset-0 bg-[#20263e]/90 backdrop-blur-md z-20 p-6 flex flex-col justify-center items-center text-center"
+            className="absolute inset-0 bg-[#20263e]/95 backdrop-blur-md z-20 flex flex-col p-6 items-center"
             initial="initial"
             animate={isHovered ? "hover" : "initial"}
-            variants={overlayVariants}
+            variants={liquidVariants}
         >
-            <h4 className="text-[#c5ae8c] font-serif font-bold text-lg mb-3">關於我</h4>
-            <div className="w-8 h-1 bg-[#c5ae8c] rounded-full mb-4"></div>
-            <p className="text-white/90 text-sm leading-relaxed line-clamp-5">
-                {freelancer.bio || "這位接案者尚未填寫自我介紹。"}
-            </p>
+            <motion.div 
+               className="w-full h-full flex flex-col items-center justify-center"
+               variants={contentVariants}
+            >
+                <h4 className="text-[#c5ae8c] font-serif font-bold text-lg mb-3 shrink-0">關於我</h4>
+                <div className="w-8 h-1 bg-[#c5ae8c] rounded-full mb-4 shrink-0"></div>
+                
+                <div 
+                    ref={bioContainerRef}
+                    className={`w-full relative overflow-hidden flex-1 min-h-0 flex ${isOverflowing ? 'items-start' : 'items-center'} justify-center`}
+                    style={{
+                        maskImage: isOverflowing 
+                            ? 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' 
+                            : 'none',
+                        WebkitMaskImage: isOverflowing 
+                            ? 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)' 
+                            : 'none'
+                    }}
+                >
+                    <motion.p 
+                        ref={bioRef}
+                        className={`text-white/90 text-sm leading-relaxed text-center ${isOverflowing ? 'py-4' : ''}`}
+                        animate={isHovered && scrollDistance > 0 ? { y: -scrollDistance } : { y: 0 }}
+                        transition={{ 
+                            delay: 1.5,
+                            duration: Math.max(scrollDistance * 0.05, 3), 
+                            ease: "linear"
+                        }}
+                    >
+                        {freelancer.bio || "這位接案者尚未填寫自我介紹。"}
+                    </motion.p>
+                </div>
+            </motion.div>
         </motion.div>
       </div>
     </Link>
