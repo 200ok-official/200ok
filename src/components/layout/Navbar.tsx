@@ -167,8 +167,7 @@ export const Navbar: React.FC = () => {
                 {/* 訊息通知 */}
                 <Link 
                   href="/conversations" 
-                  className="relative p-2 hover:text-[#c5ae8c] transition-all duration-300 hover:scale-110"
-                  title="聊天室"
+                  className="relative p-2 hover:text-[#c5ae8c] transition-all duration-300 hover:scale-110 group"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -178,27 +177,38 @@ export const Navbar: React.FC = () => {
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
+                  {/* Tooltip */}
+                  <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-[#20263e] text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-lg">
+                    聊天室
+                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 -mb-1 border-4 border-transparent border-b-[#20263e]"></span>
+                  </span>
                 </Link>
 
                 {/* 發布案件按鈕 - 加號圖標 */}
                 <Link 
                   href="/projects/new" 
-                  className="hidden md:flex items-center justify-center p-2 text-white hover:text-[#c5ae8c] transition-all duration-300 hover:rotate-90"
-                  title="發布案件"
+                  className="hidden md:flex items-center justify-center p-2 text-white hover:text-[#c5ae8c] relative group transition-all duration-300 hover:scale-110"
                 >
-                  <svg 
-                    className="w-6 h-6" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={3} 
-                      d="M12 4v16m8-8H4" 
-                    />
-                  </svg>
+                  <div className="transition-all duration-300 group-hover:rotate-90">
+                    <svg 
+                      className="w-6 h-6" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={3} 
+                        d="M12 4v16m8-8H4" 
+                      />
+                    </svg>
+                  </div>
+                  {/* Tooltip - 不受旋轉和放大影響，使用固定定位避免繼承 transform */}
+                  <span className="absolute top-full left-1/2 mt-2 px-3 py-1.5 bg-[#20263e] text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-lg" style={{ transform: 'translateX(-50%)', willChange: 'opacity' }}>
+                    發布案件
+                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 -mb-1 border-4 border-transparent border-b-[#20263e]"></span>
+                  </span>
                 </Link>
 
                 {/* 使用者選單 */}
