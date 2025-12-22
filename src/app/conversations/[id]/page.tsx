@@ -441,7 +441,7 @@ export default function ConversationPage() {
           const statusText = statusMap[projectStatus] || projectStatus;
           setCanReview(false);
           setHasReviewed(false);
-          setReviewReason(`案件狀態為「${statusText}」，只有已關閉的案件可以評價`);
+          setReviewReason(`案件狀態為「${statusText}」，關閉案件後可以給予對方評價`);
         }
       } else {
         setCanReview(false);
@@ -478,7 +478,7 @@ export default function ConversationPage() {
       if (projectResponse.success && projectResponse.data) {
         const projectStatus = projectResponse.data.status;
         if (projectStatus !== 'closed' && projectStatus !== 'completed') {
-          setReviewError(`案件狀態為「${projectStatus}」，只有已關閉的案件可以評價`);
+          setReviewError(`案件狀態為「${projectStatus}」，關閉案件後可以給予對方評價`);
           setSubmittingReview(false);
           return;
         }
@@ -563,8 +563,8 @@ export default function ConversationPage() {
 
   return (
     <div className="fixed inset-0 flex flex-col bg-[#f5f3ed] overflow-hidden">
-      {/* 頂部導航列 - 固定高度 */}
-      <div className="flex-none z-20">
+      {/* 頂部導航列 - 固定高度，保留空間給 fixed 的 Navbar */}
+      <div className="flex-none z-20 h-16">
         <Navbar />
       </div>
 
