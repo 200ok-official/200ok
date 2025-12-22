@@ -316,9 +316,9 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
                 <>
                   {freelancers.slice(0, 6).map((freelancer) => (
                     <Link key={freelancer.id} href={`/users/${freelancer.id}`}>
-                      <Card className="p-6 transition-all duration-300 border-2 border-[#c5ae8c] hover:border-[#20263e] flex-shrink-0 w-80 cursor-pointer hover:shadow-lg hover:-translate-y-1 bg-white/90 backdrop-blur-sm flex flex-col justify-between" style={{ height: 'calc((100vh - 4rem) / 2 - 40px)', maxHeight: '200px' }}>
+                      <Card className="p-6 transition-all duration-300 border-2 border-[#c5ae8c] hover:border-[#20263e] flex-shrink-0 w-80 cursor-pointer hover:shadow-lg hover:-translate-y-1 bg-white/90 backdrop-blur-sm flex flex-col" style={{ height: 'calc((100vh - 4rem) / 2 - 40px)', maxHeight: '220px' }}>
                         {/* Avatar & Name Section */}
-                        <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center gap-3 mb-3 flex-shrink-0">
                           <div className="flex-shrink-0">
                             {freelancer.avatar_url ? (
                               <img
@@ -355,18 +355,18 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
                         
                         {/* Bio Section */}
                         {freelancer.bio && (
-                          <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-3">
+                          <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-3 flex-shrink-0">
                             {freelancer.bio}
                           </p>
                         )}
                         
                         {/* Skills Section */}
                             {freelancer.skills && freelancer.skills.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-2 mt-auto">
                             {freelancer.skills.slice(0, 5).map((skill, index) => (
                               <span
                                     key={index}
-                                className="bg-[#f5f3ed] text-[#20263e] px-3 py-1 rounded-full text-xs font-medium"
+                                className="bg-[#f5f3ed] text-[#20263e] px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap"
                                   >
                                     {skill}
                               </span>

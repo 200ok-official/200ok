@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -938,9 +939,12 @@ export default function ProjectDetailPage({
                 </div>
                 <div className="flex items-center gap-6">
                 <div>
-                  <p className="font-bold text-lg text-[#20263e]">
+                  <Link 
+                    href={`/users/${project.client.id || project.client_id}`}
+                    className="font-bold text-lg text-[#20263e] hover:text-[#c5ae8c] transition-colors cursor-pointer"
+                  >
                     {project.client.name}
-                  </p>
+                  </Link>
                     <div className="flex items-center gap-0.5">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <svg
