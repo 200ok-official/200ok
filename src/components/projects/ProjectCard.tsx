@@ -133,6 +133,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     }
   };
 
+  // 優先使用 fullProjectData 中的資料，因為它來自詳情 API，通常包含更完整的資訊
+  const displaySummary = fullProjectData?.ai_summary || project.ai_summary;
+  const displayDescription = fullProjectData?.description || project.description;
+
   return (
     <Link href={`/projects/${project.id}`} className="block h-full">
       <motion.div
@@ -161,7 +165,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
            
            {/* Body: Description - 優先顯示 AI 摘要 */}
            <p className="text-gray-600 text-lg mb-8 leading-relaxed line-clamp-3 flex-grow">
-             {project.ai_summary ? project.ai_summary : (project.description || "暫無專案描述")}
+             {displaySummary ? displaySummary : (displayDescription || "暫無專案描述")}
            </p>
 
            {/* Technical Specs Preview */}
@@ -281,7 +285,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                     <h4 className="text-xl font-bold text-white">項目詳情</h4>
                   </div>
                   <p className="text-lg text-white/90 leading-relaxed">
-                    {project.ai_summary ? project.ai_summary : (project.description || "暫無專案描述")}
+                    {displaySummary ? displaySummary : (displayDescription || "暫無專案描述")}
                   </p>
                 </div>
               )}
