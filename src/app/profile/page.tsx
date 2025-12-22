@@ -349,15 +349,28 @@ export default function ProfilePage() {
               <p className="text-[#c5ae8c]">管理您的帳號資訊與偏好設定</p>
             </div>
             {!isEditMode ? (
-              <Button
-                onClick={() => setIsEditMode(true)}
-                className="flex items-center gap-2"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                  <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
-                </svg>
-                編輯個人資料
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => router.push(`/users/${profile.id}`)}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                  </svg>
+                  檢視我的頁面
+                </Button>
+                <Button
+                  onClick={() => setIsEditMode(true)}
+                  className="flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                    <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+                  </svg>
+                  編輯個人資料
+                </Button>
+              </div>
             ) : (
               <div className="flex gap-2">
                 <Button
