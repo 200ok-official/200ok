@@ -186,7 +186,7 @@ export const DualScrollSection: React.FC<DualScrollSectionProps> = ({
   return (
     // Height 300vh creates the scroll space. Adjust this to control how "fast" the horizontal scroll feels relative to vertical scroll.
     // Increased to 350vh to make the animation slower and smoother per user request.
-    <section ref={targetRef} className="relative h-[300vh] bg-[#e6dfcf]">
+    <section ref={targetRef} className="relative h-[250vh] bg-[#e6dfcf]">
       <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-hidden flex flex-col">
         
         {/* Top Half: Projects */}
