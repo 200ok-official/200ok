@@ -279,6 +279,8 @@ async def create_project(
             ai_generated_summary = await gemini_service.generate_project_summary(project_data)
             if ai_generated_summary:
                 project_data['ai_summary'] = ai_generated_summary
+                # 如果有 ai_summary，就把它寫進 description，不要複製 scenario
+                project_data['description'] = ai_generated_summary
         except Exception as e:
             print(f"AI 生成摘要失敗: {str(e)}")
     
