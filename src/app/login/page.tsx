@@ -140,13 +140,16 @@ function LoginForm() {
             localStorage.removeItem('returnUrl');
           }
 
-          // 跳轉到返回頁面或首頁
-          if (returnUrl && returnUrl !== '/login') {
-            router.push(returnUrl);
-          } else {
-            router.push('/');
-          }
-          router.refresh();
+          // 使用 setTimeout 確保狀態更新完成後再跳轉
+          setTimeout(() => {
+            // 跳轉到返回頁面或首頁
+            if (returnUrl && returnUrl !== '/login') {
+              router.push(returnUrl);
+            } else {
+              router.push('/');
+            }
+            router.refresh();
+          }, 100);
         } else {
           // 如果沒有 tokens，可能是 Google 登入失敗
           console.warn('Google login failed: missing tokens or user ID');
@@ -209,13 +212,16 @@ function LoginForm() {
         localStorage.removeItem("returnUrl");
       }
 
-      // 跳轉到返回頁面或首頁
-      if (returnUrl && returnUrl !== '/login') {
-        router.push(returnUrl);
-      } else {
-        router.push("/");
-      }
-      router.refresh();
+      // 使用 setTimeout 確保狀態更新完成後再跳轉
+      setTimeout(() => {
+        // 跳轉到返回頁面或首頁
+        if (returnUrl && returnUrl !== '/login') {
+          router.push(returnUrl);
+        } else {
+          router.push("/");
+        }
+        router.refresh();
+      }, 100);
     } catch (err: any) {
       setError(err.message || "登入失敗，請稍後再試");
       setFieldErrors({ email: true, password: true });

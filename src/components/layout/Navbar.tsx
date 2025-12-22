@@ -65,6 +65,11 @@ export const Navbar: React.FC = () => {
     };
   }, [checkAuthStatus]);
 
+  // 當路由變化時也重新檢查登入狀態（確保登入後立即更新 UI）
+  useEffect(() => {
+    checkAuthStatus();
+  }, [pathname, checkAuthStatus]);
+
   useEffect(() => {
     // 監聽代幣餘額更新事件（只在代幣操作時觸發）
     const handleTokenBalanceUpdate = () => {
