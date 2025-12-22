@@ -34,7 +34,6 @@ export default function FreelancersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
   const [popularSkills, setPopularSkills] = useState<string[]>([]);
-  const [columns, setColumns] = useState<Freelancer[][]>([[], [], []]);
 
   useEffect(() => {
     fetchFreelancers();
@@ -51,37 +50,6 @@ export default function FreelancersPage() {
       skill.toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
-
-  // Masonry Layout Logic
-  useEffect(() => {
-    const distributeMasonry = () => {
-        if (filteredFreelancers.length === 0) {
-            setColumns([[], [], []]);
-            return;
-        }
-        
-        // Determine number of columns based on window width
-        const numColumns = typeof window !== 'undefined' 
-            ? window.innerWidth >= 1024 ? 3 : window.innerWidth >= 768 ? 2 : 1
-            : 3;
-            
-        const newColumns: Freelancer[][] = Array.from({ length: numColumns }, () => []);
-        
-        // Distribute items to the shortest column
-        filteredFreelancers.forEach((freelancer) => {
-            const shortestColumnIndex = newColumns.reduce((minIndex, column, index) => 
-                column.length < newColumns[minIndex].length ? index : minIndex, 0
-            );
-            newColumns[shortestColumnIndex].push(freelancer);
-        });
-        
-        setColumns(newColumns);
-    };
-
-    distributeMasonry();
-    window.addEventListener('resize', distributeMasonry);
-    return () => window.removeEventListener('resize', distributeMasonry);
-  }, [freelancers, searchTerm, selectedSkill]); // Re-run when data or filter changes
 
   const fetchPopularSkills = async () => {
     try {
@@ -198,7 +166,7 @@ export default function FreelancersPage() {
 
         {/* Grid Layout (Replaced Masonry) */}
         {!loading && filteredFreelancers.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-[200px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
             {filteredFreelancers.map((freelancer) => (
               <div key={freelancer.id} className="h-full">
                 <FreelancerCard freelancer={freelancer} />
