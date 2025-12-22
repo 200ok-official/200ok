@@ -27,7 +27,7 @@ export const HeroBanner: React.FC = () => {
 
   // ========== 動畫參數配置 ==========
   const animationConfig = {
-    animationDistanceMultiplier: 6, // 增加滾動距離，讓動畫更從容
+    animationDistanceMultiplier: 4, // 增加滾動距離，讓動畫更從容
     initialOffset: 300,
     leftOffset: -200,
     leftDownOffset: 80,
