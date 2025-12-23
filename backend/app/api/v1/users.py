@@ -78,7 +78,6 @@ async def search_users(
             u.rating, 
             u.portfolio_links, 
             u.created_at,
-            u.hourly_rate,
             (SELECT COUNT(*) FROM bids WHERE freelancer_id = u.id) as bids_count,
             (
                 SELECT COUNT(*)
@@ -105,7 +104,6 @@ async def search_users(
             "rating": float(row.rating) if row.rating else None,
             "portfolio_links": parse_pg_array(row.portfolio_links),
             "created_at": row.created_at,
-            "hourly_rate": float(row.hourly_rate) if row.hourly_rate else None,
             "bids_count": int(row.bids_count) or 0,
             "completed_projects_count": int(row.completed_projects_count) or 0
         }
