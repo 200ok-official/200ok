@@ -372,6 +372,19 @@ async def unlock_proposal(
         'description': "解鎖提案"
     })
     
+    # 更新 user_connections 表的 recipient_unlocked_at
+    update_connection_sql = """
+        UPDATE user_connections
+        SET recipient_unlocked_at = NOW(),
+            status = 'connected',
+            updated_at = NOW()
+        WHERE conversation_id = :conversation_id
+    """
+    await db.execute(text(update_connection_sql), {'conversation_id': str(data.conversation_id)})
+    
+    # 提交事務
+    await db.commit()
+    
     return {
         "success": True,
         "message": "提案已解鎖，扣除 100 代幣",
