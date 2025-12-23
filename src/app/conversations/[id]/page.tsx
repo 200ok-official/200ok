@@ -893,7 +893,10 @@ export default function ConversationPage() {
                         disabled={withdrawing}
                         variant="outline"
                         size="sm"
-                        className="whitespace-nowrap border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400"
+                        className={withdrawing 
+                          ? "whitespace-nowrap border-[#20263e] text-[#20263e]" 
+                          : "whitespace-nowrap border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400"
+                        }
                       >
                         {withdrawing ? '處理中...' : '🔄 撤回提案並退回 100 代幣'}
                       </Button>
