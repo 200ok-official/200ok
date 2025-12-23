@@ -7,7 +7,7 @@ Disallow: /profile/
 Disallow: /tokens/
 
 # Sitemap
-Sitemap: https://200ok.tw/sitemap.xml
+Sitemap: https://200ok.superb-tutor.com/sitemap.xml
 
 # Crawl-delay
 Crawl-delay: 1
