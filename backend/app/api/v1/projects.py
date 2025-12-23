@@ -726,6 +726,25 @@ async def update_project(
     
     result = await db.execute(text(update_sql), params)
     updated_project = result.fetchone()
+    
+    # 如果狀態改為 completed，自動將對話關聯的 bid 設為 accepted
+    # 這樣雙方都可以給評價
+    if update_dict.get('status') == 'completed':
+        # 找到該專案的所有對話關聯的 bid，將狀態改為 accepted（如果還是 pending）
+        accept_bids_sql = """
+            UPDATE bids
+            SET status = 'accepted'
+            WHERE project_id = :project_id
+              AND status = 'pending'
+              AND id IN (
+                  SELECT bid_id FROM conversations 
+                  WHERE project_id = :project_id 
+                    AND bid_id IS NOT NULL
+                    AND is_unlocked = TRUE
+              )
+        """
+        await db.execute(text(accept_bids_sql), {'project_id': str(project_id)})
+    
     await db.commit()
     
     return {

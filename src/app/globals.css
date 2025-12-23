@@ -139,4 +139,33 @@
     -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
     mask-image: linear-gradient(to right, black 85%, transparent 100%);
   }
+
+  /* Markdown 標題樣式 - 明體、小字體、大行距 */
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4 {
+    font-family: 'Noto Serif TC', serif !important;
+    line-height: 2 !important;
+  }
+
+  .prose h1 {
+    font-size: 1.25rem !important; /* text-xl */
+    font-weight: 600 !important;
+  }
+
+  .prose h2 {
+    font-size: 1.125rem !important; /* text-lg */
+    font-weight: 600 !important;
+  }
+
+  .prose h3 {
+    font-size: 1rem !important; /* text-base */
+    font-weight: 600 !important;
+  }
+
+  .prose h4 {
+    font-size: 0.875rem !important; /* text-sm */
+    font-weight: 600 !important;
+  }
 }

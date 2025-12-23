@@ -734,6 +734,7 @@ async def create_bid(
     })
     
     # 建立 user_connection 記錄（initiator 已付費，recipient 未付費，7 天後過期）
+    # 使用 ON CONFLICT 處理可能的重複記錄（例如之前撤回投標但 connection 未正確刪除的情況）
     connection_id = uuid.uuid4()
     expires_at = datetime.utcnow() + timedelta(days=7)
     insert_connection_sql = """
@@ -746,6 +747,14 @@ async def create_bid(
             :id, :initiator_id, :recipient_id, :connection_type,
             'pending', :conversation_id, NOW(), NULL, :expires_at, NOW(), NOW()
         )
+        ON CONFLICT (initiator_id, recipient_id, connection_type)
+        DO UPDATE SET
+            status = 'pending',
+            conversation_id = :conversation_id,
+            initiator_unlocked_at = NOW(),
+            recipient_unlocked_at = NULL,
+            expires_at = :expires_at,
+            updated_at = NOW()
     """
     await db.execute(text(insert_connection_sql), {
         'id': str(connection_id),

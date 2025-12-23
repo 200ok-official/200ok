@@ -70,9 +70,10 @@ async def create_review(
     # 確定 reviewee（被評價者）
     reviewee_id = None
     
-    # 只有 completed 狀態才能評價，需要 accepted bid
+    # 檢查參與者身份（支援 accepted bid 或透過已解鎖的對話關聯）
     if str(current_user.id) == str(project.client_id):
-        # 發案者評價接案者（需要 accepted bid）
+        # 發案者評價接案者
+        # 優先檢查 accepted bid
         bid_sql = """
             SELECT freelancer_id
             FROM bids
@@ -86,8 +87,24 @@ async def create_review(
         accepted_bid = bid_result.fetchone()
         if accepted_bid:
             reviewee_id = accepted_bid.freelancer_id
+        else:
+            # 如果沒有 accepted bid，檢查是否有已解鎖的對話（表示雙方已有合作意向）
+            conv_sql = """
+                SELECT b.freelancer_id
+                FROM conversations c
+                INNER JOIN bids b ON b.id = c.bid_id
+                WHERE c.project_id = :project_id 
+                  AND c.is_unlocked = TRUE
+                  AND c.bid_id IS NOT NULL
+                LIMIT 1
+            """
+            conv_result = await db.execute(text(conv_sql), {'project_id': str(project_id)})
+            conv_bid = conv_result.fetchone()
+            if conv_bid:
+                reviewee_id = conv_bid.freelancer_id
     else:
-        # 接案者評價發案者（需要 accepted bid）
+        # 接案者評價發案者
+        # 優先檢查 accepted bid
         bid_sql = """
             SELECT id
             FROM bids
@@ -103,6 +120,23 @@ async def create_review(
         })
         if bid_result.fetchone():
             reviewee_id = project.client_id
+        else:
+            # 如果沒有 accepted bid，檢查是否有已解鎖的對話（表示雙方已有合作意向）
+            conv_sql = """
+                SELECT c.id
+                FROM conversations c
+                INNER JOIN bids b ON b.id = c.bid_id
+                WHERE c.project_id = :project_id 
+                  AND c.is_unlocked = TRUE
+                  AND b.freelancer_id = :freelancer_id
+                LIMIT 1
+            """
+            conv_result = await db.execute(text(conv_sql), {
+                'project_id': str(project_id),
+                'freelancer_id': str(current_user.id)
+            })
+            if conv_result.fetchone():
+                reviewee_id = project.client_id
     
     if not reviewee_id:
         raise HTTPException(
@@ -221,13 +255,14 @@ async def can_review_project(
             "data": {"can_review": False, "reason": f"案件狀態為「{status_text}」，只有已完成的案件可以評價"}
         }
     
-    # 確定是否為參與者（只有 completed 狀態才能評價，需要 accepted bid）
+    # 確定是否為參與者（支援 accepted bid 或透過已解鎖的對話關聯）
     is_participant = False
     reviewee_id = None
     
     if str(current_user.id) == str(project.client_id):
-        # 是發案者，評價 accepted bid 的接案者
+        # 是發案者，評價接案者
         is_participant = True
+        # 優先檢查 accepted bid
         bid_sql = """
             SELECT freelancer_id
             FROM bids
@@ -241,8 +276,24 @@ async def can_review_project(
         accepted_bid = bid_result.fetchone()
         if accepted_bid:
             reviewee_id = accepted_bid.freelancer_id
+        else:
+            # 如果沒有 accepted bid，檢查是否有已解鎖的對話（表示雙方已有合作意向）
+            conv_sql = """
+                SELECT b.freelancer_id
+                FROM conversations c
+                INNER JOIN bids b ON b.id = c.bid_id
+                WHERE c.project_id = :project_id 
+                  AND c.is_unlocked = TRUE
+                  AND c.bid_id IS NOT NULL
+                LIMIT 1
+            """
+            conv_result = await db.execute(text(conv_sql), {'project_id': str(project_id)})
+            conv_bid = conv_result.fetchone()
+            if conv_bid:
+                reviewee_id = conv_bid.freelancer_id
     else:
-        # 檢查是否為接案者（需要 accepted bid）
+        # 檢查是否為接案者
+        # 優先檢查 accepted bid
         bid_sql = """
             SELECT id
             FROM bids
@@ -259,6 +310,24 @@ async def can_review_project(
         if bid_result.fetchone():
             is_participant = True
             reviewee_id = project.client_id
+        else:
+            # 如果沒有 accepted bid，檢查是否有已解鎖的對話（表示雙方已有合作意向）
+            conv_sql = """
+                SELECT c.id
+                FROM conversations c
+                INNER JOIN bids b ON b.id = c.bid_id
+                WHERE c.project_id = :project_id 
+                  AND c.is_unlocked = TRUE
+                  AND b.freelancer_id = :freelancer_id
+                LIMIT 1
+            """
+            conv_result = await db.execute(text(conv_sql), {
+                'project_id': str(project_id),
+                'freelancer_id': str(current_user.id)
+            })
+            if conv_result.fetchone():
+                is_participant = True
+                reviewee_id = project.client_id
     
     if not is_participant or not reviewee_id:
         return {

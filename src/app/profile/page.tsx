@@ -544,9 +544,33 @@ export default function ProfilePage() {
                     />
                   </div>
                 ) : (
-                  <div className="prose prose-slate max-w-none">
+                  <div className="prose prose-slate max-w-none text-gray-700 text-base
+                    prose-headings:text-[#20263e] prose-headings:font-semibold prose-headings:font-serif prose-headings:leading-[2] prose-headings:mb-4 prose-headings:mt-6
+                    prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-h4:text-sm
+                    prose-p:leading-loose prose-p:mb-4
+                    prose-li:leading-loose
+                    prose-a:text-[#c5ae8c] prose-a:no-underline hover:prose-a:underline hover:prose-a:text-[#b09675]
+                    prose-strong:text-[#20263e] prose-strong:font-semibold
+                    prose-ul:list-disc prose-ul:pl-5 prose-ul:my-4 prose-ul:leading-loose
+                    prose-ol:list-decimal prose-ol:pl-5 prose-ol:my-4 prose-ol:leading-loose
+                    prose-li:my-2
+                    prose-blockquote:border-l-4 prose-blockquote:border-[#c5ae8c] prose-blockquote:bg-gray-50 prose-blockquote:py-3 prose-blockquote:px-5 prose-blockquote:rounded-r-lg prose-blockquote:italic prose-blockquote:text-gray-600
+                    prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-[#c7254e] prose-code:font-mono prose-code:text-sm prose-code:before:content-none prose-code:after:content-none
+                    prose-pre:bg-[#20263e] prose-pre:text-white prose-pre:rounded-lg prose-pre:p-4 prose-pre:shadow-inner
+                    prose-img:rounded-xl prose-img:shadow-md
+                    prose-hr:border-gray-200
+                  ">
                     {formData.bio ? (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
+                      <ReactMarkdown 
+                        remarkPlugins={[remarkGfm]} 
+                        rehypePlugins={[rehypeSanitize]}
+                        components={{
+                          h1: ({node, ...props}) => <h1 className="text-xl font-semibold font-serif leading-[2] mb-4 mt-6 text-[#20263e]" style={{fontFamily: "'Noto Serif TC', serif"}} {...props} />,
+                          h2: ({node, ...props}) => <h2 className="text-lg font-semibold font-serif leading-[2] mb-4 mt-6 text-[#20263e]" style={{fontFamily: "'Noto Serif TC', serif"}} {...props} />,
+                          h3: ({node, ...props}) => <h3 className="text-base font-semibold font-serif leading-[2] mb-4 mt-6 text-[#20263e]" style={{fontFamily: "'Noto Serif TC', serif"}} {...props} />,
+                          h4: ({node, ...props}) => <h4 className="text-sm font-semibold font-serif leading-[2] mb-4 mt-6 text-[#20263e]" style={{fontFamily: "'Noto Serif TC', serif"}} {...props} />,
+                        }}
+                      >
                         {formData.bio}
                       </ReactMarkdown>
                     ) : (

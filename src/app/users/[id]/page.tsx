@@ -91,6 +91,7 @@ export default function UserProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [totalReviews, setTotalReviews] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unlocking, setUnlocking] = useState(false);
@@ -185,7 +186,9 @@ export default function UserProfilePage() {
   const fetchUserReviews = async () => {
     try {
       const data = await apiGet(`/api/v1/users/${userId}/reviews`, { limit: '10' });
-      setReviews(data.data || []);
+      // API 回傳格式: { success: true, data: { reviews: [...], pagination: {...} } }
+      setReviews(data.data?.reviews || []);
+      setTotalReviews(data.data?.pagination?.total || 0);
     } catch (err) {
       console.error("Failed to fetch reviews:", err);
     }
@@ -528,20 +531,31 @@ export default function UserProfilePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-8">
-                  <article className="prose prose-slate prose-lg max-w-none text-gray-700
-                    prose-headings:text-[#20263e] prose-headings:font-bold prose-headings:font-serif
+                  <article className="prose prose-slate max-w-none text-gray-700 text-base
+                    prose-headings:text-[#20263e] prose-headings:font-semibold prose-headings:font-serif prose-headings:leading-[2] prose-headings:mb-4 prose-headings:mt-6
+                    prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-h4:text-sm
+                    prose-p:leading-loose prose-p:mb-4
+                    prose-li:leading-loose
                     prose-a:text-[#c5ae8c] prose-a:no-underline hover:prose-a:underline hover:prose-a:text-[#b09675]
                     prose-strong:text-[#20263e] prose-strong:font-semibold
-                    prose-ul:list-disc prose-ul:pl-5 prose-ul:my-4
-                    prose-ol:list-decimal prose-ol:pl-5 prose-ol:my-4
-                    prose-li:my-1
+                    prose-ul:list-disc prose-ul:pl-5 prose-ul:my-4 prose-ul:leading-loose
+                    prose-ol:list-decimal prose-ol:pl-5 prose-ol:my-4 prose-ol:leading-loose
+                    prose-li:my-2
                     prose-blockquote:border-l-4 prose-blockquote:border-[#c5ae8c] prose-blockquote:bg-gray-50 prose-blockquote:py-3 prose-blockquote:px-5 prose-blockquote:rounded-r-lg prose-blockquote:italic prose-blockquote:text-gray-600
                     prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-[#c7254e] prose-code:font-mono prose-code:text-sm prose-code:before:content-none prose-code:after:content-none
                     prose-pre:bg-[#20263e] prose-pre:text-white prose-pre:rounded-lg prose-pre:p-4 prose-pre:shadow-inner
                     prose-img:rounded-xl prose-img:shadow-md
                     prose-hr:border-gray-200
                   ">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        h1: ({node, ...props}) => <h1 className="text-xl font-semibold font-serif leading-[2] mb-4 mt-6 text-[#20263e]" style={{fontFamily: "'Noto Serif TC', serif"}} {...props} />,
+                        h2: ({node, ...props}) => <h2 className="text-lg font-semibold font-serif leading-[2] mb-4 mt-6 text-[#20263e]" style={{fontFamily: "'Noto Serif TC', serif"}} {...props} />,
+                        h3: ({node, ...props}) => <h3 className="text-lg font-semibold font-serif leading-[2] mb-4 mt-6 text-[#20263e]" style={{fontFamily: "'Noto Serif TC', serif"}} {...props} />,
+                        h4: ({node, ...props}) => <h4 className="text-base font-semibold font-serif leading-[2] mb-4 mt-6 text-[#20263e]" style={{fontFamily: "'Noto Serif TC', serif"}} {...props} />,
+                      }}
+                    >
                       {user.bio}
                     </ReactMarkdown>
                   </article>
@@ -561,9 +575,9 @@ export default function UserProfilePage() {
               <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 p-6 flex flex-row items-center justify-between">
                 <CardTitle className="text-xl font-bold text-[#20263e] flex items-center gap-2">
                   <StarIcon className="w-5 h-5 text-[#fbbf24]" />
-                  評價 ({reviews.length})
+                  評價 ({totalReviews} 則)
                 </CardTitle>
-                {user._count && user._count.reviews_received > reviews.length && (
+                {totalReviews > reviews.length && (
                   <Link href={`/users/${userId}/reviews`} className="text-sm text-[#c5ae8c] hover:text-[#20263e] font-medium transition-colors">
                     查看全部 →
                   </Link>
@@ -573,10 +587,11 @@ export default function UserProfilePage() {
                 {reviews.length > 0 ? (
                   <div className="divide-y divide-gray-50">
                     {reviews.map((review) => (
-                      <div key={review.id} className="p-6 hover:bg-gray-50/50 transition-colors">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
+                      <div key={review.id} className="p-5 hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0">
+                        <div className="flex gap-3">
+                          {/* 左側：頭像 */}
+                          <div className="flex-shrink-0">
+                            <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
                               {review.reviewer.avatar_url ? (
                                 <img
                                   src={review.reviewer.avatar_url}
@@ -589,48 +604,61 @@ export default function UserProfilePage() {
                                 </div>
                               )}
                             </div>
-                            <div className="flex flex-col">
-                              <div className="font-bold text-[#20263e] text-sm leading-tight">
+                          </div>
+
+                          {/* 右側：主要內容 */}
+                          <div className="flex-1 min-w-0">
+                            {/* 第一行：名字與日期 */}
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <div className="font-bold text-[#20263e] text-sm truncate">
                                 {review.reviewer.name}
                               </div>
+                              <div className="text-xs text-gray-400 flex-shrink-0 whitespace-nowrap">
+                                {formatDate(review.created_at)}
+                              </div>
+                            </div>
+
+                            {/* 第二行：專案標題 */}
+                            <div className="mb-2">
                               <Link
                                 href={`/projects/${review.project.id}`}
-                                className="text-xs text-gray-400 hover:text-[#c5ae8c] truncate max-w-[150px] transition-colors mt-0.5"
+                                className="text-xs text-gray-500 hover:text-[#c5ae8c] truncate transition-colors flex items-center gap-1"
                               >
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#c5ae8c] flex-shrink-0"></span>
                                 {review.project.title}
                               </Link>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="flex justify-end">
+
+                            {/* 第三行：評分 */}
+                            <div className="mb-3">
                               <StarRating
                                 rating={review.rating}
                                 size="sm"
                                 showNumber={true}
                               />
                             </div>
-                            <div className="text-xs text-gray-400 mt-1">
-                              {formatDate(review.created_at)}
-                            </div>
+
+                            {/* 評論內容 */}
+                            {review.comment && (
+                              <div className="bg-gray-50 rounded-xl p-3 relative group-hover:bg-white transition-colors border border-transparent group-hover:border-gray-100">
+                                <p className="text-gray-600 text-sm leading-relaxed">
+                                  {review.comment}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Tags */}
+                            {review.tags && review.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-3">
+                                {review.tags.map((tag, i) => (
+                                  <span key={i} className="px-2 py-0.5 bg-white border border-gray-200 text-gray-500 text-xs rounded-full shadow-sm">
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
-                        {review.comment && (
-                          <div className="bg-gray-50 rounded-lg p-3 relative">
-                            <span className="absolute top-2 left-2 text-gray-300 text-xl leading-none font-serif">&quot;</span>
-                            <p className="text-gray-600 text-sm leading-relaxed px-2 pt-1 relative z-10 italic">
-                              {review.comment}
-                            </p>
-                          </div>
-                        )}
-                        {review.tags && review.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mt-3">
-                            {review.tags.map((tag, i) => (
-                              <span key={i} className="px-2 py-0.5 bg-white border border-gray-200 text-gray-500 text-xs rounded-full shadow-sm">
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
