@@ -82,8 +82,7 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   verification: {
-    // 可在未來加入 Google Search Console 和其他驗證碼
-    // google: 'your-google-site-verification',
+    google: 'I_Hcgwx2ddbvZetJlUgo0sOhZ86r3qc8J4scuXRY-tE',
     // bing: 'your-bing-site-verification',
   },
 };
