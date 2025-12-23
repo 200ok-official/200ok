@@ -194,6 +194,7 @@ export async function apiGet<T = any>(path: string, params?: Record<string, stri
   
   return apiFetchJson<T>(url, {
     method: 'GET',
+    cache: 'no-store',  // 禁用瀏覽器快取，確保每次都獲取最新資料
   });
 }
 

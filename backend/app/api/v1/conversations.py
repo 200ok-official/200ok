@@ -57,8 +57,10 @@ async def get_user_conversations(
     
     RLS 邏輯: 只能查看自己參與的對話
     """
-    # 設定瀏覽器快取為 5 分鐘
-    response.headers["Cache-Control"] = "private, max-age=300"
+    # 禁用快取，確保對話狀態即時更新
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
 
     # 一次性取得所有資料（conversations + users + projects + last_message + unread_count + user_connections）
     sql = """
@@ -115,12 +117,14 @@ async def get_user_conversations(
     for row in rows:
         initiator_paid = row.initiator_unlocked_at is not None
         recipient_paid = row.recipient_unlocked_at is not None
+        # 判斷是否已解鎖：優先使用 conversations.is_unlocked，或者雙方都已付費
+        is_unlocked = bool(row.is_unlocked) or (initiator_paid and recipient_paid)
         
         conversations_data.append({
             "id": str(row.id),
             "type": row.type,
             "project_id": str(row.project_id) if row.project_id else None,
-            "is_unlocked": row.is_unlocked or (initiator_paid and recipient_paid),
+            "is_unlocked": is_unlocked,
             "initiator_id": str(row.initiator_id),
             "recipient_id": str(row.recipient_id),
             "initiator_paid": initiator_paid,
@@ -412,8 +416,10 @@ async def get_conversation(
     
     RLS 邏輯: 必須是對話參與者
     """
-    # 設定瀏覽器快取為 5 分鐘
-    response.headers["Cache-Control"] = "private, max-age=300"
+    # 禁用快取，確保解鎖狀態即時更新
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
 
     # 查詢對話（包含 user_connections 的解鎖狀態和 bid 資訊）
     sql = """
@@ -474,6 +480,9 @@ async def get_conversation(
     initiator_unlocked = row.initiator_unlocked_at is not None
     recipient_unlocked = row.recipient_unlocked_at is not None
     
+    # 判斷是否已解鎖：優先使用 conversations.is_unlocked，或者雙方都已付費
+    is_unlocked = bool(row.is_unlocked) or (initiator_unlocked and recipient_unlocked)
+    
     # 只有在對方也解鎖時，才顯示對方的聯絡資訊
     show_initiator_contact = recipient_unlocked if not is_current_user_initiator else True
     show_recipient_contact = initiator_unlocked if is_current_user_initiator else True
@@ -485,7 +494,7 @@ async def get_conversation(
             "type": row.type,
             "project_id": str(row.project_id) if row.project_id else None,
             "bid_id": str(row.bid_id) if row.bid_id else None,
-            "is_unlocked": row.is_unlocked or (initiator_unlocked and recipient_unlocked),
+            "is_unlocked": is_unlocked,
             "initiator_id": str(row.initiator_id),
             "recipient_id": str(row.recipient_id),
             "initiator_paid": initiator_unlocked,
@@ -538,8 +547,10 @@ async def get_messages(
     
     RLS 邏輯: 必須是對話參與者；未解鎖只能看自己的訊息
     """
-    # 設定瀏覽器快取為 5 分鐘
-    response.headers["Cache-Control"] = "private, max-age=300"
+    # 禁用快取，確保訊息即時更新
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
 
     # 檢查對話權限
     conv_sql = """
