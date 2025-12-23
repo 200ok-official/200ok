@@ -11,6 +11,8 @@ import { DualScrollSection } from "@/components/home/DualScrollSection";
 import { FeatureSection } from "@/components/home/FeatureSection";
 import { WorkflowSection } from "@/components/home/WorkflowSection";
 import { CTASection } from "@/components/home/CTASection";
+import { HomePageStructuredData } from "@/components/seo/StructuredData";
+import { SEOHead } from "@/components/seo/SEOHead";
 import { apiGet, isAuthenticated } from "@/lib/api";
 
 interface Project {
@@ -198,8 +200,26 @@ export default function HomePage() {
   }, [fetchProjects]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
-      <Navbar />
+    <>
+      <SEOHead 
+        title="首頁 - 專業軟體接案平台"
+        description="200 OK 是台灣領先的軟體開發接案媒合平台。發案者可以快速找到專業的開發者，工程師可以接到優質的外包案件。支援網站開發、App 開發、UI/UX 設計等多種專案類型。"
+        keywords={[
+          '接案平台',
+          '軟體開發',
+          '程式外包',
+          'freelance',
+          '案件媒合',
+          '網站開發',
+          'App開發',
+          '自由工作者',
+          '遠端工作',
+          '外包平台'
+        ]}
+      />
+      <HomePageStructuredData />
+      <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
+        <Navbar />
 
       {/* Hero Banner */}
       <HeroBanner />
@@ -221,6 +241,7 @@ export default function HomePage() {
       <CTASection />
 
       <Footer />
-    </div>
+      </div>
+    </>
   );
 }

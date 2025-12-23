@@ -6,6 +6,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { FreelancerCard } from "@/components/freelancers/FreelancerCard";
 import { Button } from "@/components/ui/Button";
+import { SEOHead } from "@/components/seo/SEOHead";
 import { apiGet } from "@/lib/api";
 
 interface Freelancer {
@@ -93,8 +94,26 @@ export default function FreelancersPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
-      <Navbar />
+    <>
+      <SEOHead 
+        title="尋找專業工程師"
+        description="在 200 OK 平台上找到最優秀的軟體開發工程師、設計師和自由工作者。瀏覽專業人才的作品集、技能和評價，找到最適合您專案的合作夥伴。"
+        keywords={[
+          '軟體工程師',
+          '程式設計師',
+          '自由工作者',
+          'freelancer',
+          '接案工程師',
+          '外包工程師',
+          '網站開發工程師',
+          'App開發工程師',
+          'UI設計師',
+          'UX設計師',
+          '遠端工程師'
+        ]}
+      />
+      <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
+        <Navbar />
 
       <main className="flex-1 w-full pt-32 pb-16 px-8 md:px-16 lg:px-40 xl:px-40 2xl:px-40">
         
@@ -226,6 +245,7 @@ export default function FreelancersPage() {
       </main>
 
       <Footer />
-    </div>
+      </div>
+    </>
   );
 }

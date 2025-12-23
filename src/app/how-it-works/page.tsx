@@ -7,6 +7,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { SEOHead } from "@/components/seo/SEOHead";
 import {
   UserPlusIcon,
   DocumentTextIcon,
@@ -31,8 +32,23 @@ export default function HowItWorksPage() {
   const opacity = useTransform(scrollYProgress, [0, 0.3], [0, 1]);
   
   return (
-    <div ref={containerRef} className="min-h-screen flex flex-col bg-[#e6dfcf]">
-      <Navbar />
+    <>
+      <SEOHead 
+        title="如何運作 - 了解平台使用流程"
+        description="了解 200 OK 平台的運作方式。從註冊帳號、發布案件、提交提案到完成專案，完整的流程說明讓您快速上手。無論您是發案者還是接案者，都能輕鬆使用我們的平台。"
+        keywords={[
+          '使用說明',
+          '平台介紹',
+          '接案流程',
+          '發案流程',
+          '如何接案',
+          '如何發案',
+          '平台使用教學',
+          '接案平台說明'
+        ]}
+      />
+      <div ref={containerRef} className="min-h-screen flex flex-col bg-[#e6dfcf]">
+        <Navbar />
 
       {/* Hero Section */}
       <motion.div 
@@ -472,6 +488,7 @@ export default function HowItWorksPage() {
       </section>
 
       <Footer />
-    </div>
+      </div>
+    </>
   );
 }

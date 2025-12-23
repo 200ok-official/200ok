@@ -8,6 +8,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { SEOHead } from '@/components/seo/SEOHead';
 import { confirmPayment, paymentPresets } from '@/utils/paymentConfirm';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -590,27 +591,41 @@ export default function ConversationPage() {
 
   if (loading || (status === 'loading' && !userId)) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
-        <Navbar />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-2">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#20263e]"></div>
-            <p className="text-[#20263e] text-sm">載入對話中...</p>
-          </div>
-        </main>
-      </div>
+      <>
+        <SEOHead 
+          title="對話"
+          description="查看您的對話訊息"
+          noindex={true}
+        />
+        <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
+          <Navbar />
+          <main className="flex-1 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#20263e]"></div>
+              <p className="text-[#20263e] text-sm">載入對話中...</p>
+            </div>
+          </main>
+        </div>
+      </>
     );
   }
 
   if (!conversation) {
      return (
-      <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
-        <Navbar />
-        <main className="flex-1 flex items-center justify-center">
-          <p className="text-[#20263e]">無法載入對話，請稍後再試。</p>
-        </main>
-        <Footer />
-      </div>
+      <>
+        <SEOHead 
+          title="對話"
+          description="查看您的對話訊息"
+          noindex={true}
+        />
+        <div className="min-h-screen flex flex-col bg-[#f5f3ed]">
+          <Navbar />
+          <main className="flex-1 flex items-center justify-center">
+            <p className="text-[#20263e]">無法載入對話，請稍後再試。</p>
+          </main>
+          <Footer />
+        </div>
+      </>
     );
   }
 
@@ -619,8 +634,6 @@ export default function ConversationPage() {
   function getOtherUser() {
     return isInitiator ? conversation!.recipient : conversation!.initiator;
   }
-  
-  const otherUser = getOtherUser();
   const needsUnlock = conversation.type === 'project_proposal' && !conversation.recipient_paid && !isInitiator;
   const canSend = conversation.is_unlocked;
 
@@ -647,8 +660,19 @@ export default function ConversationPage() {
     canWithdrawNow = daysPassedSinceProposal >= 7;
   }
 
+  const otherUser = getOtherUser();
+  const conversationTitle = conversation.project?.title 
+    ? `與 ${otherUser.name} 的對話 - ${conversation.project.title}`
+    : `與 ${otherUser.name} 的對話`;
+
   return (
-    <div className="fixed inset-0 flex flex-col bg-[#f5f3ed] overflow-hidden">
+    <>
+      <SEOHead 
+        title={conversationTitle}
+        description={`在 200 OK 平台上與 ${otherUser.name} 的對話訊息`}
+        noindex={true}
+      />
+      <div className="fixed inset-0 flex flex-col bg-[#f5f3ed] overflow-hidden">
       {/* 頂部導航列 - 固定高度，保留空間給 fixed 的 Navbar */}
       <div className="flex-none z-20 h-16">
         <Navbar />
@@ -1173,6 +1197,7 @@ export default function ConversationPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

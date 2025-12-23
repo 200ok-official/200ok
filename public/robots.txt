@@ -1,0 +1,14 @@
+# robots.txt for 200 OK Platform
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /debug-auth/
+Disallow: /profile/
+Disallow: /tokens/
+
+# Sitemap
+Sitemap: https://200ok.tw/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 1
+

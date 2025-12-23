@@ -6,6 +6,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { Button } from "@/components/ui/Button";
+import { SEOHead } from "@/components/seo/SEOHead";
 import { apiGet } from "@/lib/api";
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion";
 
@@ -250,8 +251,24 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
-      <Navbar />
+    <>
+      <SEOHead 
+        title="瀏覽所有案件"
+        description="瀏覽 200 OK 平台上的所有軟體開發案件。包含網站開發、App 開發、UI/UX 設計等各類專案。立即接案，開啟您的自由工作之旅。"
+        keywords={[
+          '接案',
+          '外包案件',
+          '軟體開發案件',
+          '網站開發案件',
+          'App開發案件',
+          'UI設計案件',
+          'UX設計案件',
+          '程式案件',
+          '自由接案'
+        ]}
+      />
+      <div className="min-h-screen flex flex-col bg-[#e6dfcf]">
+        <Navbar />
 
       <main className="flex-1 w-full pt-16 pb-8 px-8 md:px-16 lg:px-40 xl:px-40 2xl:px-40 overflow-x-hidden">
         {/* Sticky Hero Section Container */}
@@ -553,6 +570,7 @@ export default function ProjectsPage() {
       </main>
 
       <Footer />
-    </div>
+      </div>
+    </>
   );
 }
