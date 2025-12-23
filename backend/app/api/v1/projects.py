@@ -13,6 +13,7 @@ from sqlalchemy import text
 from ...db import get_db, parse_pg_array
 from ...models.user import User
 from ...models.project import ProjectStatus
+from ...models.bid import BidStatus
 from ...schemas.project import ProjectCreate, ProjectUpdate, ProjectResponse, ClientBasic
 from ...schemas.common import SuccessResponse
 from ...dependencies import get_current_user, get_current_user_optional, PaginationParams
@@ -453,7 +454,7 @@ async def get_project(
     # ========== RLS 邏輯實作 ==========
     can_view = False
     
-    # 1. 案件是 open 或 in_progress
+    # 1. 案件是 open 或 in_progress（所有人可查看）
     if row.status in ['open', 'in_progress']:
         can_view = True
     
@@ -464,6 +465,42 @@ async def get_project(
     # 3. 是管理員
     if current_user and check_is_admin(current_user.roles):
         can_view = True
+    
+    # 4. 如果是已完成的案件，檢查是否為案件參與者（接案者）
+    if not can_view and current_user and row.status == ProjectStatus.COMPLETED.value:
+        # 檢查是否有 accepted bid
+        bid_sql = """
+            SELECT id
+            FROM bids
+            WHERE project_id = :project_id 
+              AND freelancer_id = :freelancer_id
+              AND status = :status
+            LIMIT 1
+        """
+        bid_result = await db.execute(text(bid_sql), {
+            'project_id': str(project_id),
+            'freelancer_id': str(current_user.id),
+            'status': BidStatus.ACCEPTED.value
+        })
+        if bid_result.fetchone():
+            can_view = True
+        else:
+            # 如果沒有 accepted bid，檢查是否有已解鎖的對話（表示雙方已有合作意向）
+            conv_sql = """
+                SELECT c.id
+                FROM conversations c
+                INNER JOIN bids b ON b.id = c.bid_id
+                WHERE c.project_id = :project_id 
+                  AND c.is_unlocked = TRUE
+                  AND b.freelancer_id = :freelancer_id
+                LIMIT 1
+            """
+            conv_result = await db.execute(text(conv_sql), {
+                'project_id': str(project_id),
+                'freelancer_id': str(current_user.id)
+            })
+            if conv_result.fetchone():
+                can_view = True
     
     if not can_view:
         raise HTTPException(

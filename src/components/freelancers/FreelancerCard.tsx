@@ -29,7 +29,7 @@ export const FreelancerCard: React.FC<FreelancerCardProps> = ({
   freelancer,
 }) => {
   const bidsCount = freelancer.bids_count ?? freelancer._count?.bids ?? 0;
-  const completedCount = freelancer.completed_projects_count ?? 0; 
+  const completedCount = freelancer.completed_projects_count ?? freelancer._count?.completed_projects ?? 0; 
   
   const [isHovered, setIsHovered] = useState(false);
   const bioRef = useRef<HTMLParagraphElement>(null);

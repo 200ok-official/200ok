@@ -67,14 +67,28 @@ async def search_users(
     count_result = await db.execute(text(count_sql), params)
     total = count_result.scalar() or 0
     
-    # 主查詢
+    # 主查詢 - 包含統計資訊
     sql = f"""
         SELECT 
-            id, name, bio, skills, avatar_url, 
-            rating, portfolio_links, created_at
-        FROM users
+            u.id, 
+            u.name, 
+            u.bio, 
+            u.skills, 
+            u.avatar_url, 
+            u.rating, 
+            u.portfolio_links, 
+            u.created_at,
+            u.hourly_rate,
+            (SELECT COUNT(*) FROM bids WHERE freelancer_id = u.id) as bids_count,
+            (
+                SELECT COUNT(*)
+                FROM projects p
+                WHERE p.status = 'completed'
+                  AND p.id IN (SELECT project_id FROM bids WHERE freelancer_id = u.id)
+            ) as completed_projects_count
+        FROM users u
         WHERE {where_clause}
-        ORDER BY rating DESC NULLS LAST
+        ORDER BY u.rating DESC NULLS LAST
         LIMIT :limit OFFSET :offset
     """
     
@@ -90,7 +104,10 @@ async def search_users(
             "avatar_url": row.avatar_url,
             "rating": float(row.rating) if row.rating else None,
             "portfolio_links": parse_pg_array(row.portfolio_links),
-            "created_at": row.created_at
+            "created_at": row.created_at,
+            "hourly_rate": float(row.hourly_rate) if row.hourly_rate else None,
+            "bids_count": int(row.bids_count) or 0,
+            "completed_projects_count": int(row.completed_projects_count) or 0
         }
         for row in rows
     ]
