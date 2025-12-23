@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 
 interface Props {
@@ -17,6 +17,26 @@ const PURCHASE_OPTIONS = [
   { tokens: 2000, price: 2000, bonus: 400, label: "尊榮方案", color: "bg-amber-50 border-amber-200" },
 ];
 
+// 從環境變數讀取折扣碼設定
+// 格式: "CODE1:100,CODE2:500,CODE3:1000" (折扣碼:折扣金額)
+const parseDiscountCodes = (): Record<string, number> => {
+  const discountCodesEnv = process.env.NEXT_PUBLIC_DISCOUNT_CODES || "";
+  const codes: Record<string, number> = {};
+  
+  if (!discountCodesEnv) return codes;
+  
+  discountCodesEnv.split(",").forEach((item) => {
+    const [code, amount] = item.trim().split(":");
+    if (code && amount) {
+      codes[code.toUpperCase().trim()] = parseInt(amount.trim(), 10);
+    }
+  });
+  
+  return codes;
+};
+
+const DISCOUNT_CODES = parseDiscountCodes();
+
 export const TokenPurchaseModal: React.FC<Props> = ({ isOpen, onClose, onPurchase }) => {
   const [selectedAmount, setSelectedAmount] = useState<number>(500);
   const [customAmount, setCustomAmount] = useState<string>("");
@@ -31,6 +51,7 @@ export const TokenPurchaseModal: React.FC<Props> = ({ isOpen, onClose, onPurchas
     message: string;
   } | null>(null);
   const [validatingDiscount, setValidatingDiscount] = useState(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // 當 Modal 開啟時重置狀態
   useEffect(() => {
@@ -43,52 +64,61 @@ export const TokenPurchaseModal: React.FC<Props> = ({ isOpen, onClose, onPurchas
     }
   }, [isOpen]);
 
+  // 清理 debounce timer
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
   if (!isOpen) return null;
 
-  // 驗證折扣碼 API
-  const validateDiscountCode = async (code: string) => {
+  // 前端驗證折扣碼（從環境變數）
+  const validateDiscountCode = (code: string) => {
     if (!code.trim()) {
       setDiscountValidation(null);
       return;
     }
 
     setValidatingDiscount(true);
-    try {
-      const response = await fetch("/api/v1/tokens/validate-discount?discount_code=" + encodeURIComponent(code), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setDiscountValidation(result.data);
+    
+    // 模擬短暫延遲讓 UI 更自然
+    setTimeout(() => {
+      const upperCode = code.toUpperCase().trim();
+      const discountAmount = DISCOUNT_CODES[upperCode];
+      
+      if (discountAmount !== undefined && discountAmount > 0) {
+        setDiscountValidation({
+          valid: true,
+          discount_amount: discountAmount,
+          message: `折扣 NT$ ${discountAmount}`,
+        });
       } else {
         setDiscountValidation({
           valid: false,
           discount_amount: 0,
-          message: "驗證失敗",
+          message: "無效的折扣碼",
         });
       }
-    } catch (error) {
-      console.error("Discount validation error:", error);
-      setDiscountValidation({
-        valid: false,
-        discount_amount: 0,
-        message: "驗證失敗",
-      });
-    } finally {
       setValidatingDiscount(false);
-    }
+    }, 300);
   };
 
   const handleDiscountCodeChange = (code: string) => {
     setDiscountCode(code);
+    
+    // 清除之前的 timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
     if (code.trim()) {
       // 防抖動驗證
-      const timer = setTimeout(() => {
+      debounceTimerRef.current = setTimeout(() => {
         validateDiscountCode(code.toUpperCase());
       }, 500);
-      return () => clearTimeout(timer);
     } else {
       setDiscountValidation(null);
     }
